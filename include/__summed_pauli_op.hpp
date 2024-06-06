@@ -214,7 +214,6 @@ template <std::floating_point T> struct SummedPauliOp {
   }
 
   // TODO IMPLEMENT
-  // equivalent to get_state_iteration_unequal_weights in the python code
   template <std::floating_point data_dtype>
   void apply_parallel_weighted_data(
       Tensor<2> new_states, Tensor<2> states,

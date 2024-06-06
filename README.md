@@ -15,7 +15,7 @@
 - [ ] Build out pauli decomposer
 - [X] Remove the weights argument and rename to data
 - [X] Add namespace
-- [ ] Add function equivalent of `get_state_iteration_unequal_weights` to SummedPauliOp
+- [ ] Add apply method to SummedPauliOp that takes precomputed weighted data
 - [ ] Writeup for docs
 - [ ] Add pybind11 interface and python examples
 - [ ] Change functions names over to default to parallel impl and use `_serial` for the serial implementation
