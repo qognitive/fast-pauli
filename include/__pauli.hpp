@@ -160,7 +160,6 @@ struct Pauli {
 } // namespace fast_pauli
 
 // Adding specialization to the fmt library so we can easily print Pauli
-namespace fmt {
 template <> struct fmt::formatter<fast_pauli::Pauli> {
   constexpr auto parse(format_parse_context &ctx) { return ctx.begin(); }
 
@@ -198,7 +197,5 @@ template <> struct fmt::formatter<std::complex<double>> {
     return fmt::format_to(ctx.out(), "({}, {}i)", v.real(), v.imag());
   }
 };
-
-} // namespace fmt
 
 #endif // __PAULI_HPP

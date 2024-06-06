@@ -1,6 +1,7 @@
 #ifndef __FAST_PAULI_FACTORY_HPP
 #define __FAST_PAULI_FACTORY_HPP
 
+#include <algorithm>
 #include <array>
 #include <complex>
 #include <experimental/mdspan>
