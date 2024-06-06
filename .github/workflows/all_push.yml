@@ -1,0 +1,46 @@
+name: All push
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        compiler: [g++-12, clang++-17]
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Setup compiler
+      run: python3 ./.github/compiler_setup.py ${{ matrix.compiler }}
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Python dependencies
+      run: python -m pip install numpy pytest cmake
+
+    - name: Configure CMake
+      env:
+        CXX: ${{ matrix.compiler }}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build --parallel
+
+    - name: Test C++
+      run: ctest --test-dir build --parallel
+
+    # - name: Test Python
+      # run: PYTHONPATH=build:$PYTHONPATH pytest -v test
