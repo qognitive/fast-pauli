@@ -156,8 +156,6 @@ TEST_CASE("test apply multistate multistring") {
   // Check
   for (size_t t = 0; t < n_states; ++t) {
     for (size_t i = 0; i < dims; ++i) {
-      fmt::println("new_states(i, t): {}, expected_span(i, t): {}",
-                   new_states(i, t), expected_span(i, t));
       CHECK(abs(new_states(i, t) - expected_span(i, t)) < 1e-6);
     }
   }
@@ -175,7 +173,7 @@ TEST_CASE("test apply multistate multistring identity") {
 
   // Set up random states
   size_t const n_states = 10;
-  std::vector<std::complex<double>> states_raw;
+  std::vector<std::complex<double>> states_raw(dims * n_states, 1);
   std::mdspan states =
       fast_pauli::rand<std::complex<double>, 2>(states_raw, {dims, n_states});
 
