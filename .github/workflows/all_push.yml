@@ -37,7 +37,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --parallel
 
     - name: Test C++
-      run: ctest --test-dir build --verbose --parallel
+      run: OMP_NUM_THREADS=1 ctest --test-dir build --verbose
 
     # - name: Test Python
       # run: PYTHONPATH=build:$PYTHONPATH pytest -v test
