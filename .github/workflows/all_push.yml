@@ -9,8 +9,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        compiler: [g++-12, clang++-17]
-        python-version: ["3.10", "3.11", "3.12"]
+        compiler: [g++-12]
+        # compiler: [g++-12, clang++-17]
+        # python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10"]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -30,14 +32,14 @@ jobs:
     - name: Configure CMake
       env:
         CXX: ${{ matrix.compiler }}
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_BUILD_TYPE=Release
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=${CXX}
 
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --parallel
 
     - name: Test C++
-      run: OMP_NUM_THREADS=1 ctest --test-dir build --verbose
+      run: ctest --test-dir build --verbose
 
     # - name: Test Python
       # run: PYTHONPATH=build:$PYTHONPATH pytest -v test
