@@ -110,10 +110,10 @@ TEST_CASE("test apply multistate") {
 
 TEST_CASE("test apply multistate multistring") {
   // Set up PauliOp
-  std::vector<PauliString> pauli_strings = {"IXYZ", "XXXX", "YZZZ", "ZIII",
-                                            "IIII"};
-  std::vector<std::complex<double>> coeffs = {1i, -2., 42i, 0.5,
-                                              std::complex<double>(1e-3, -1e1)};
+  std::vector<PauliString> pauli_strings = {"IXYZ", "XXXX", "YZZZ",
+                                            "ZIII", "IIII", "ZZYY"};
+  std::vector<std::complex<double>> coeffs = {
+      1i, -2., 42i, 0.5, std::complex<double>(1e-3, -1e1), 0.1};
   PauliOp<double> pauli_op(coeffs, pauli_strings);
 
   size_t const dims = pauli_strings[0].dims();
