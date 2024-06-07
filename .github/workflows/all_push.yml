@@ -6,6 +6,7 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: true
       matrix:
         os: [ubuntu-latest]
         compiler: [g++-12, clang++-17]
@@ -36,7 +37,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --parallel
 
     - name: Test C++
-      run: ctest --test-dir build --parallel
+      run: ctest --test-dir build --verbose --parallel
 
     # - name: Test Python
       # run: PYTHONPATH=build:$PYTHONPATH pytest -v test
