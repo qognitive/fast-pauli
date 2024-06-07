@@ -155,6 +155,8 @@ TEST_CASE("test apply multistate multistring") {
   // Check
   for (size_t t = 0; t < n_states; ++t) {
     for (size_t i = 0; i < dims; ++i) {
+      fmt::println("new_states(i, t): {}, expected_span(i, t): {}",
+                   new_states(i, t), expected_span(i, t));
       CHECK(abs(new_states(i, t) - expected_span(i, t)) < 1e-6);
     }
   }

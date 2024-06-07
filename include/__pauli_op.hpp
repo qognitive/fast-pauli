@@ -19,11 +19,11 @@ template <std::floating_point T> struct PauliOp {
   // possible combinations up to and including weight 3 strings?)
   std::vector<PauliString> pauli_strings;
 
-  constexpr PauliOp() = default;
+  PauliOp() = default;
 
   //
-  constexpr PauliOp(std::vector<std::complex<T>> const &coeffs,
-                    std::vector<PauliString> const &pauli_strings)
+  PauliOp(std::vector<std::complex<T>> const &coeffs,
+          std::vector<PauliString> const &pauli_strings)
       : coeffs(coeffs), pauli_strings(pauli_strings) {
     // TODO may want to wrap this in a #IFDEF DEBUG block to avoid the overhead
     // input check
@@ -44,7 +44,7 @@ template <std::floating_point T> struct PauliOp {
     }
   }
 
-  constexpr size_t dims() const {
+  size_t dims() const {
     if (pauli_strings.size() > 0) {
       return pauli_strings[0].dims();
     } else {
@@ -52,7 +52,7 @@ template <std::floating_point T> struct PauliOp {
     }
   }
 
-  constexpr std::vector<std::complex<T>>
+  std::vector<std::complex<T>>
   apply(std::vector<std::complex<T>> const &state) const {
     // input check
     if (state.size() != dims()) {
@@ -170,7 +170,7 @@ template <std::floating_point T> struct PauliOp {
   //
   // Helpers (mostly for debugging)
   //
-  constexpr std::vector<std::vector<std::complex<T>>> get_dense_repr() const {
+  std::vector<std::vector<std::complex<T>>> get_dense_repr() const {
     size_t const dim = 1UL << pauli_strings[0].paulis.size();
 
     std::vector<std::vector<std::complex<T>>> res(
