@@ -164,6 +164,14 @@ TEST_CASE("test apply multistate") {
   __check_apply(pauli_op, 10);
 }
 
+TEST_CASE("test apply single states multistring") {
+  // Set up PauliOp
+  std::vector<PauliString> pauli_strings = {"XXY", "YYZ"};
+  std::vector<std::complex<double>> coeffs = {1i, -1.23};
+  PauliOp<double> pauli_op(coeffs, pauli_strings);
+  __check_apply(pauli_op, 1);
+}
+
 TEST_CASE("test apply multistate multistring") {
   // Set up PauliOp
   std::vector<PauliString> pauli_strings = {"IXXZYZ", "XXXXZX", "YZZXZZ",
@@ -172,17 +180,6 @@ TEST_CASE("test apply multistate multistring") {
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   __check_apply(pauli_op, 10);
 }
-
-// TEST_CASE("test apply multistate multistring big strings") {
-//   // Set up PauliOp
-//   std::vector<PauliString> pauli_strings = {"IXYYXYZYZ", "XZXXXZXXX",
-//                                             "YZIIZZXZZ", "ZXYYZYIII",
-//                                             "IZIIXZXXI", "ZZIIZXZYY"};
-//   std::vector<std::complex<double>> coeffs = {
-//       1i, -2., 42i, 0.5, std::complex<double>(1e-1, -9e1), 0.1};
-//   PauliOp<double> pauli_op(coeffs, pauli_strings);
-//   __check_apply(pauli_op, 10);
-// }
 
 TEST_CASE("test apply multistate multistring identity") {
   // Set up PauliOp
@@ -206,10 +203,7 @@ TEST_CASE("test apply multistate multistring identity") {
       new_states_raw.data(), dims, n_states);
   pauli_op.apply(new_states, states);
 
-  //
   // States should be unchanged
-  //
-
   // Check
   for (size_t t = 0; t < n_states; ++t) {
     for (size_t i = 0; i < dims; ++i) {
