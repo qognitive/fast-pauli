@@ -156,7 +156,7 @@ TEST_CASE("apply 2 operators 2 PauliString") {
 }
 
 TEST_CASE("apply many operators many PauliString") {
-  fmt::print("\n\napply many operators mansize_t Ranky PauliString\n");
+  fmt::print("\n\napply many operators many PauliString\n");
   // Setup operator
   std::vector<PauliString> pauli_strings{"XIXXX", "IIXII", "ZYYZI",
                                          "ZYIIZ", "YXZZY", "IZYII"};
