@@ -36,7 +36,7 @@ jobs:
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --parallel
+      run: cmake --build ${{github.workspace}}/build --verbose --parallel
 
     - name: Test C++
       run: ctest --test-dir build --verbose
