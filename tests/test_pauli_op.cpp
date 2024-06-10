@@ -31,7 +31,8 @@ void __check_apply(PauliOp<double> &pauli_op, size_t n_states) {
   //
   // Calculate the expected new states
   //
-  auto pop_dense = pauli_op.get_dense_repr();
+  std::vector<std::vector<std::complex<double>>> pop_dense =
+      pauli_op.get_dense_repr();
 
   // pop_dense : d x d
   // states : n x d
@@ -62,6 +63,10 @@ void __check_apply(PauliOp<double> &pauli_op, size_t n_states) {
 // Tests
 //
 
+//
+// Constructors
+//
+
 TEST_CASE("test pauli op") {
   std::vector<PauliString> pauli_strings = {"IXYZ", "XIII", "XXYZ"};
   std::vector<std::complex<double>> coeffs = {1i, 2., -1i};
@@ -82,6 +87,29 @@ TEST_CASE("test bad apply") {
   std::vector<std::complex<double>> state(5, 0);
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   CHECK_THROWS(pauli_op.apply(state));
+}
+
+//
+// Member functions
+//
+
+TEST_CASE("test get_dense_repr") {
+  std::vector<PauliString> pauli_strings = {"III", "III", "III"};
+  std::vector<std::complex<double>> coeffs = {1, 2., 1};
+  PauliOp<double> pauli_op(coeffs, pauli_strings);
+  auto pop_dense = pauli_op.get_dense_repr();
+
+  size_t const dim = pauli_op.dims();
+
+  for (size_t i = 0; i < dim; ++i) {
+    for (size_t j = 0; j < dim; ++j) {
+      if (i == j) {
+        CHECK(abs(pop_dense[i][j] - std::complex<double>(4)) < 1e-6);
+      } else {
+        CHECK(abs(pop_dense[i][j]) < 1e-6);
+      }
+    }
+  }
 }
 
 // TODO add tests for multiple pauli strings
