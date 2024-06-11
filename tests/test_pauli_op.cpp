@@ -182,17 +182,18 @@ TEST_CASE("test apply multistate multistring") {
 }
 
 TEST_CASE("test apply multistate multistring identity") {
+  fmt::println("test apply multistate multistring identity");
+
   // Set up PauliOp
-  std::vector<PauliString> pauli_strings(10, "IIII");
+  std::vector<PauliString> pauli_strings(16, "IIII");
   std::vector<std::complex<double>> coeffs(pauli_strings.size(),
                                            1. / pauli_strings.size());
   PauliOp<double> pauli_op(coeffs, pauli_strings);
-
   size_t const dims = pauli_strings[0].dims();
 
   // Set up random states
   size_t const n_states = 10;
-  std::vector<std::complex<double>> states_raw(dims * n_states, 1);
+  std::vector<std::complex<double>> states_raw;
   std::mdspan states =
       fast_pauli::rand<std::complex<double>, 2>(states_raw, {dims, n_states});
 
@@ -207,6 +208,11 @@ TEST_CASE("test apply multistate multistring identity") {
   for (size_t t = 0; t < n_states; ++t) {
     for (size_t i = 0; i < dims; ++i) {
       CHECK(abs(new_states(i, t) - states(i, t)) < 1e-6);
+      if (abs(new_states(i, t) - states(i, t)) > 1e-6) {
+        fmt::print("new_states(i, t): {}, states(i, t): {}", new_states(i, t),
+                   states(i, t));
+        fmt::println(" ratio {}", new_states(i, t) / states(i, t));
+      }
     }
   }
 }

@@ -147,25 +147,30 @@ template <std::floating_point T> struct PauliOp {
     std::mdspan<std::complex<T>, std::dextents<size_t, 3>> new_states_thr(
         new_states_thr_raw.data(), n_threads, n_dim, n_data);
 
-//
-#pragma omp parallel for schedule(static)
-    for (size_t i = 0; i < pauli_strings.size(); ++i) {
-      size_t const tid = omp_get_thread_num();
+    //
 
-      PauliString const &ps = pauli_strings[i];
-      std::complex<T> c = coeffs[i];
-      std::mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states_local =
-          std::submdspan(new_states_thr, tid, std::full_extent,
-                         std::full_extent);
-      ps.apply_batch(new_states_local, states, c);
-    }
+#pragma omp parallel
+    {
+#pragma omp for schedule(static)
+      for (size_t i = 0; i < pauli_strings.size(); ++i) {
+        size_t const tid = omp_get_thread_num();
+        fmt::println("thread {}  index {}", tid, i);
 
-    // Do the reduction and tranpose back
-#pragma omp parallel for schedule(static) collapse(2)
-    for (size_t i = 0; i < new_states.extent(0); ++i) {
-      for (size_t t = 0; t < new_states.extent(1); ++t) {
-        for (size_t th = 0; th < n_threads; ++th) {
-          new_states(i, t) += new_states_thr(th, i, t);
+        PauliString const &ps = pauli_strings[i];
+        std::complex<T> c = coeffs[i];
+        std::mdspan<std::complex<T>, std::dextents<size_t, 2>>
+            new_states_local = std::submdspan(
+                new_states_thr, tid, std::full_extent, std::full_extent);
+        ps.apply_batch(new_states_local, states, c);
+      }
+
+      // Do the reduction and tranpose back
+#pragma omp for schedule(static) collapse(2)
+      for (size_t i = 0; i < new_states.extent(0); ++i) {
+        for (size_t t = 0; t < new_states.extent(1); ++t) {
+          for (size_t th = 0; th < n_threads; ++th) {
+            new_states(i, t) += new_states_thr(th, i, t);
+          }
         }
       }
     }
