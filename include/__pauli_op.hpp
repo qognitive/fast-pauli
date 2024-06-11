@@ -110,6 +110,10 @@ template <std::floating_point T> struct PauliOp {
   void
   apply(mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
         mdspan<std::complex<T>, std::dextents<size_t, 2>> const states) const {
+
+    fmt::println(
+        "[WARNING] Apply function causes problems on CI, use with caution.");
+
     // input check
     if (states.extent(0) != this->dims()) {
       throw std::invalid_argument(

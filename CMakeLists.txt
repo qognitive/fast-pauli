@@ -59,8 +59,9 @@ target_compile_options(
             -Wall
             -Wextra
             -Werror
+            -Wpedantic
             # -stdlib=libc++
-            ${FAST_PAULI_EXTRA_CXX_COMPILE_FLAGS})
+)
 # target_link_options(fast_pauli INTERFACE ${FAST_PAULI_EXTRA_CXX_LD_FLAGS}
 # -fuse-ld=mold) target_compile_definitions(fast_pauli INTERFACE)
 
