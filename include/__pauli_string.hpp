@@ -242,6 +242,7 @@ struct PauliString {
    * @brief Apply the PauliString to a batch of states. This function takes a
    * different shape of the states than the other apply functions. here all the
    * states (new and old) are transposed so their shape is (n_dims x n_states).
+   * All the new_stats are overwritten, no need to initialize.
    *
    * @tparam T The floating point base to use for all the complex numbers
    * @param new_states_T The outpus states after applying the PauliString

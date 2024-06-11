@@ -154,7 +154,6 @@ template <std::floating_point T> struct PauliOp {
 #pragma omp for schedule(static)
       for (size_t i = 0; i < pauli_strings.size(); ++i) {
         size_t const tid = omp_get_thread_num();
-        fmt::println("thread {}  index {}", tid, i);
 
         PauliString const &ps = pauli_strings[i];
         std::complex<T> c = coeffs[i];
