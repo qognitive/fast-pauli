@@ -39,7 +39,7 @@ struct PauliString {
    * calculates the weight.
    *
    */
-  constexpr PauliString(std::span<fast_pauli::Pauli> const &paulis)
+  constexpr PauliString(std::span<fast_pauli::Pauli> const paulis)
       : weight(0), paulis(paulis.begin(), paulis.end()) {
     for (auto const &pauli : paulis) {
       weight += pauli.code > 0;
