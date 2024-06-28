@@ -21,24 +21,24 @@ struct Pauli {
    * @brief Default constructor, initializes to I.
    *
    */
-  constexpr Pauli() : code(0) {}
+  Pauli() : code(0) {}
 
   /**
    * @brief Constructor given a numeric code. TODO add input checking
    *
    * @tparam T Any type convertible to uint8_t
    * @param code 0: I, 1: X, 2: Y, 3: Z
-   * @return requires constexpr
+   * @return requires
    */
   template <class T>
     requires std::convertible_to<T, uint8_t>
-  constexpr Pauli(T const code) : code(code) {}
+  Pauli(T const code) : code(code) {}
 
   // Copy ctor
-  constexpr Pauli(Pauli const &other) = default;
+  Pauli(Pauli const &other) = default;
 
   // Copy assignment
-  constexpr Pauli &operator=(Pauli const &other) noexcept = default;
+  Pauli &operator=(Pauli const &other) noexcept = default;
 
   // The default operator does everything we want and make this more composable
   friend auto operator<=>(Pauli const &, Pauli const &) = default;
@@ -48,10 +48,10 @@ struct Pauli {
    *
    * @param lhs
    * @param rhs
-   * @return constexpr std::pair<std::complex<double>, Pauli>
+   * @return  std::pair<std::complex<double>, Pauli>
    */
-  friend constexpr std::pair<std::complex<double>, Pauli>
-  operator*(Pauli lhs, Pauli const &rhs) {
+  friend std::pair<std::complex<double>, Pauli> operator*(Pauli lhs,
+                                                          Pauli const &rhs) {
     switch (lhs.code) {
     case 0:
       switch (rhs.code) {
@@ -130,10 +130,10 @@ struct Pauli {
    * @brief Returns the pauli matrix as a 2D vector of complex numbers.
    *
    * @tparam T floating point type
-   * @return constexpr std::vector<std::vector<std::complex<T>>>
+   * @return  std::vector<std::vector<std::complex<T>>>
    */
   template <std::floating_point T>
-  constexpr std::vector<std::vector<std::complex<T>>> to_tensor() const {
+  std::vector<std::vector<std::complex<T>>> to_tensor() const {
     std::vector<std::vector<std::complex<T>>> result;
     switch (code) {
     case 0:
@@ -160,7 +160,6 @@ struct Pauli {
 } // namespace fast_pauli
 
 // Adding specialization to the fmt library so we can easily print Pauli
-namespace fmt {
 template <> struct fmt::formatter<fast_pauli::Pauli> {
   constexpr auto parse(format_parse_context &ctx) { return ctx.begin(); }
 
@@ -198,7 +197,5 @@ template <> struct fmt::formatter<std::complex<double>> {
     return fmt::format_to(ctx.out(), "({}, {}i)", v.real(), v.imag());
   }
 };
-
-} // namespace fmt
 
 #endif // __PAULI_HPP

@@ -23,7 +23,7 @@
 
 ## Requirements
 
-- CMake >= 3.20
+- CMake >= 3.25
 - C++ compiler with OpenMP and C++20 support (LLVM recommended)
   - Tested Compilers GCC@12, LLVM@17, LLVM@18
 - Python >= 3.10

@@ -22,11 +22,11 @@ template <std::floating_point T> struct SummedPauliOp {
   size_t _dim;
   size_t _n_operators;
 
-  constexpr SummedPauliOp() noexcept = default;
+  SummedPauliOp() noexcept = default;
 
   //
-  constexpr SummedPauliOp(std::vector<PauliString> const &pauli_strings,
-                          std::vector<std::complex<T>> const &coeffs_raw)
+  SummedPauliOp(std::vector<PauliString> const &pauli_strings,
+                std::vector<std::complex<T>> const &coeffs_raw)
       : pauli_strings(pauli_strings), coeffs_raw(coeffs_raw) {
 
     // TODO add more checks
@@ -47,8 +47,8 @@ template <std::floating_point T> struct SummedPauliOp {
     }
   }
 
-  constexpr SummedPauliOp(std::vector<PauliString> const &pauli_strings,
-                          Tensor<2> const coeffs)
+  SummedPauliOp(std::vector<PauliString> const &pauli_strings,
+                Tensor<2> const coeffs)
       : pauli_strings(pauli_strings) {
 
     // Check that the dims are all the same
@@ -77,11 +77,9 @@ template <std::floating_point T> struct SummedPauliOp {
   //
   // Accessors/helpers
   //
-  constexpr size_t n_dimensions() const noexcept { return _dim; }
-  constexpr size_t n_operators() const noexcept { return _n_operators; }
-  constexpr size_t n_pauli_strings() const noexcept {
-    return pauli_strings.size();
-  }
+  size_t n_dimensions() const noexcept { return _dim; }
+  size_t n_operators() const noexcept { return _n_operators; }
+  size_t n_pauli_strings() const noexcept { return pauli_strings.size(); }
 
   //
   // Primary (TODO "primary" is vague here) functions

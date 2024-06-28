@@ -32,14 +32,14 @@ struct PauliString {
    * @brief Default constructor, initialize weight and empty vector for paulis.
    *
    */
-  constexpr PauliString() noexcept = default;
+  PauliString() noexcept = default;
 
   /**
    * @brief Constructs a PauliString from a span of pauli operators and
    * calculates the weight.
    *
    */
-  constexpr PauliString(std::span<fast_pauli::Pauli> const &paulis)
+  PauliString(std::span<fast_pauli::Pauli> const &paulis)
       : weight(0), paulis(paulis.begin(), paulis.end()) {
     for (auto const &pauli : paulis) {
       weight += pauli.code > 0;
@@ -51,7 +51,7 @@ struct PauliString {
    * This is often the most compact way to initialize a PauliString.
    *
    */
-  constexpr PauliString(std::string const &str) : weight(0) {
+  PauliString(std::string const &str) : weight(0) {
     for (auto const &c : str) {
       switch (c) {
       case 'I':
@@ -81,11 +81,11 @@ struct PauliString {
    * @brief
    *
    */
-  constexpr PauliString(char const *str) : PauliString(std::string(str)) {}
+  PauliString(char const *str) : PauliString(std::string(str)) {}
 
-  constexpr PauliString(PauliString const &other)
+  PauliString(PauliString const &other)
       : weight(other.weight), paulis(other.paulis){};
-  constexpr PauliString &operator=(PauliString const &other) {
+  PauliString &operator=(PauliString const &other) {
     this->weight = other.weight;
     this->paulis = other.paulis;
     return *this;
@@ -98,16 +98,16 @@ struct PauliString {
   /**
    * @brief Return the number of qubits in the PauliString.
    *
-   * @return constexpr size_t
+   * @return  size_t
    */
-  constexpr size_t n_qubits() const noexcept { return paulis.size(); }
+  size_t n_qubits() const noexcept { return paulis.size(); }
 
   /**
    * @brief Return the dimension (2^n_qubits) of the PauliString.
    *
-   * @return constexpr size_t
+   * @return  size_t
    */
-  constexpr size_t dims() const noexcept { return 1UL << paulis.size(); }
+  size_t dims() const noexcept { return 1UL << paulis.size(); }
 
   /**
    * @brief Get the sparse representation of the pauli string matrix.
@@ -126,8 +126,8 @@ struct PauliString {
    * @param m The values of the matrix
    */
   template <std::floating_point T>
-  constexpr void get_sparse_repr(std::vector<size_t> &j, std::vector<size_t> &k,
-                                 std::vector<std::complex<T>> &m) const {
+  void get_sparse_repr(std::vector<size_t> &j, std::vector<size_t> &k,
+                       std::vector<std::complex<T>> &m) const {
     // We reverse the view here because the tensor product is taken from right
     // to left
     auto ps = paulis | std::views::reverse;
@@ -184,11 +184,11 @@ struct PauliString {
    * @tparam T The floating point base to use for all the complex numbers
    * @param v The input vector to apply the PauliString to. Must be the same
    * size as PauliString.dims().
-   * @return constexpr std::vector<std::complex<T>> The output state after
+   * @return  std::vector<std::complex<T>> The output state after
    * applying the PauliString.
    */
   template <std::floating_point T>
-  constexpr std::vector<std::complex<T>>
+  std::vector<std::complex<T>>
   apply(std::vector<std::complex<T>> const &v) const {
     // Input check
     if (v.size() != dims()) {
@@ -214,11 +214,11 @@ struct PauliString {
    * @tparam T The floating point base to use for all the complex numbers
    * @param v The input vector to apply the PauliString to. Must be the same
    * size as PauliString.dims().
-   * @return constexpr std::vector<std::complex<T>> The output state after
+   * @return  std::vector<std::complex<T>> The output state after
    * applying the PauliString.
    */
   template <std::floating_point T>
-  constexpr std::vector<std::complex<T>>
+  std::vector<std::complex<T>>
   apply(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> v) const {
     // Input check
     if (v.size() != dims()) {
@@ -242,6 +242,7 @@ struct PauliString {
    * @brief Apply the PauliString to a batch of states. This function takes a
    * different shape of the states than the other apply functions. here all the
    * states (new and old) are transposed so their shape is (n_dims x n_states).
+   * All the new_stats are overwritten, no need to initialize.
    *
    * @tparam T The floating point base to use for all the complex numbers
    * @param new_states_T The outpus states after applying the PauliString
@@ -251,12 +252,11 @@ struct PauliString {
    * @param c Multiplication factor to apply to the PauliString
    */
   template <std::floating_point T>
-  constexpr void
-  apply_batch(std::mdspan<std::complex<T>, std::dextents<size_t, 2>>
-                  new_states_T, // extent(0) = dims, extent(1) = n_states
-              std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const
-                  states_T, // extent(0) = dims, extent(1) = n_states
-              std::complex<T> const c) const {
+  void apply_batch(std::mdspan<std::complex<T>, std::dextents<size_t, 2>>
+                       new_states_T, // extent(0) = dims, extent(1) = n_states
+                   std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const
+                       states_T, // extent(0) = dims, extent(1) = n_states
+                   std::complex<T> const c) const {
     // Input check
     if (states_T.extent(0) != dims()) {
       auto error_msg =
@@ -297,10 +297,10 @@ struct PauliString {
    * @brief Get the dense representation of the object as a 2D-std::vector
    *
    * @tparam T The floating point base to use for all the complex numbers
-   * @return constexpr std::vector<std::vector<std::complex<T>>>
+   * @return  std::vector<std::vector<std::complex<T>>>
    */
   template <std::floating_point T>
-  constexpr std::vector<std::vector<std::complex<T>>> get_dense_repr() const {
+  std::vector<std::vector<std::complex<T>>> get_dense_repr() const {
     //
     std::vector<size_t> j, k;
     std::vector<std::complex<T>> m;
@@ -450,7 +450,6 @@ std::vector<PauliString> calculate_pauli_strings_max_weight(size_t n_qubits,
 // fmt::formatter specialization
 //
 
-namespace fmt {
 //
 template <> struct fmt::formatter<fast_pauli::PauliString> {
   constexpr auto parse(format_parse_context &ctx) { return ctx.begin(); }
@@ -461,7 +460,5 @@ template <> struct fmt::formatter<fast_pauli::PauliString> {
     return fmt::format_to(ctx.out(), "{}", fmt::join(paulis, "x"));
   }
 };
-
-} // namespace fmt
 
 #endif // __PAULI_STRING_HPP
