@@ -452,7 +452,7 @@ std::vector<PauliString> calculate_pauli_strings_max_weight(size_t n_qubits,
 
 namespace fmt {
 //
-template <> struct fmt::formatter<fast_pauli::PauliString> {
+template <> struct formatter<fast_pauli::PauliString> {
   constexpr auto parse(format_parse_context &ctx) { return ctx.begin(); }
 
   template <typename FormatContext>

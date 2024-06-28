@@ -161,7 +161,7 @@ struct Pauli {
 
 // Adding specialization to the fmt library so we can easily print Pauli
 namespace fmt {
-template <> struct fmt::formatter<fast_pauli::Pauli> {
+template <> struct formatter<fast_pauli::Pauli> {
   constexpr auto parse(format_parse_context &ctx) { return ctx.begin(); }
 
   template <typename FormatContext>
@@ -190,7 +190,7 @@ template <> struct fmt::formatter<fast_pauli::Pauli> {
 
 // Add complex numbers because they aren't in there already, TODO __pauli.hpp
 // may not be the best place for these
-template <> struct fmt::formatter<std::complex<double>> {
+template <> struct formatter<std::complex<double>> {
   constexpr auto parse(format_parse_context &ctx) { return ctx.begin(); }
 
   template <typename FormatContext>
