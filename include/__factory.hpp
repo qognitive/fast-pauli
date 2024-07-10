@@ -86,11 +86,13 @@ auto rand(std::vector<T> &blob, std::array<size_t, n_dim> extents) {
   if constexpr (is_complex<T>::value) {
     std::uniform_real_distribution<typename T::value_type> dis(0, 1.0);
 
-    std::ranges::generate(blob, [&]() { return T{dis(gen), dis(gen)}; });
+    std::generate(blob.begin(), blob.end(), [&]() {
+      return T{dis(gen), dis(gen)};
+    });
   } else {
     std::uniform_real_distribution<T> dis(0, 1.0);
 
-    std::ranges::generate(blob, [&]() { return T{dis(gen)}; });
+    std::generate(blob.begin(), blob.end(), [&]() { return T{dis(gen)}; });
   }
 
   return std::mdspan<T, std::dextents<size_t, n_dim>>(blob.data(), extents);
