@@ -75,7 +75,7 @@ auto rand(std::vector<T> &blob, std::array<size_t, n_dim> extents) {
   for (auto ei : extents) {
     total_size *= ei;
   }
-  blob.reserve(total_size);
+  blob = std::vector<T>(total_size);
 
   // Fill with random numbers
   std::random_device rd;

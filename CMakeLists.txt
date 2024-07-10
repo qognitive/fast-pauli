@@ -17,7 +17,6 @@ include(cmake/CPM.cmake)
 
 # Dependencies
 cpmaddpackage("gh:doctest/doctest@2.4.11")
-# cpmaddpackage("gh:p-ranav/argparse@3.0")
 cpmaddpackage("gh:pybind/pybind11@2.11.1")
 cpmaddpackage("gh:fmtlib/fmt#10.2.1")
 cpmaddpackage("gh:kokkos/mdspan#b885a2c60ad42f9e1aaa0d317a38105b950cbed0")
@@ -60,10 +59,9 @@ target_compile_options(
             -Wall
             -Wextra
             -Werror
+            -Wpedantic
             # -stdlib=libc++
-            ${FAST_PAULI_EXTRA_CXX_COMPILE_FLAGS})
-# target_link_options(fast_pauli INTERFACE ${FAST_PAULI_EXTRA_CXX_LD_FLAGS}
-# -fuse-ld=mold) target_compile_definitions(fast_pauli INTERFACE)
+)
 
 # Testing
 include(CTest)
