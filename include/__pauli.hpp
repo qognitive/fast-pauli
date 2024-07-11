@@ -14,6 +14,11 @@ using namespace std::literals;
 
 namespace fast_pauli {
 
+/**
+ * @brief A class for efficient representation of a 
+ * 2x2 Pauli matrix \f$ \sigma_i \in \{ I,X,Y,Z \} \f$
+ *
+ */
 struct Pauli {
   uint8_t code; // 0: I, 1: X, 2: Y, 3: Z
 
@@ -24,7 +29,7 @@ struct Pauli {
   Pauli() : code(0) {}
 
   /**
-   * @brief Constructor given a numeric code. TODO add input checking
+   * @brief Constructor given a numeric code.
    *
    * @tparam T Any type convertible to uint8_t
    * @param code 0: I, 1: X, 2: Y, 3: Z
@@ -32,7 +37,10 @@ struct Pauli {
    */
   template <class T>
     requires std::convertible_to<T, uint8_t>
-  Pauli(T const code) : code(code) {}
+  Pauli(T const code) : code(code) {
+    if (code < 0 || code > 3)
+      throw std::invalid_argument("Pauli code must be 0, 1, 2, or 3");
+  }
 
   // Copy ctor
   Pauli(Pauli const &other) = default;
@@ -149,8 +157,7 @@ struct Pauli {
       result = {{1, 0}, {0, -1}};
       break;
     default:
-      // TODO dangerous
-      result = {{}};
+      throw std::runtime_error("Unexpected Pauli code");
       break;
     }
     return result;
@@ -180,7 +187,7 @@ template <> struct fmt::formatter<fast_pauli::Pauli> {
       code_char = 'Z';
       break;
     default:
-      code_char = 'I';
+      throw std::runtime_error("Unexpected Pauli code");
       break;
     }
     return fmt::format_to(ctx.out(), "{}", code_char);

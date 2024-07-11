@@ -17,7 +17,8 @@ namespace fast_pauli {
 
 /**
  * @brief A class representation of a Pauli string (i.e. a tensor product of 2x2
- * pauli matrices)
+ * pauli matrices) \f$ $\mathcal{\hat{P}} = \bigotimes_i \sigma_i \f$
+ * where \f$ \sigma_i \in \{ I,X,Y,Z \} \f$
  *
  */
 struct PauliString {
@@ -75,10 +76,9 @@ struct PauliString {
     }
   }
 
-  // Allow for explicit conversion of literals:
-  // Ex: std::vector<PauliString> pauli_strings = {"IXYZ", "IIIII"};
   /**
-   * @brief
+   * @brief Allows implicit conversion of string literals to PauliStrings.
+   * Ex: std::vector<PauliString> pauli_strings = {"IXYZ", "IIIII"};
    *
    */
   PauliString(char const *str) : PauliString(std::string(str)) {}
@@ -111,9 +111,10 @@ struct PauliString {
 
   /**
    * @brief Get the sparse representation of the pauli string matrix.
-   *
-   * PauliStrings are always sparse and have only N non-zero elements where N is
-   * 2^N_qubits. Therefore j, k, and m will always have N elements.
+   * 
+   * PauliStrings are always sparse and have only single non-zero element per row. 
+   * It's N non-zero elements for NxN matrix where N is 2^n_qubits. 
+   * Therefore j, k, and m will always have N elements.
    *
    * TODO remove j because it's unused (and redundant).
    * See Algorithm 1 in https://arxiv.org/pdf/2301.00560.pdf for details about
@@ -180,7 +181,8 @@ struct PauliString {
 
   /**
    * @brief Apply the PauliString (using the sparse representation) to a vector.
-   *
+   * This performs following matrix-vector multiplication \f$ \mathcal{\hat{P}} \ket{\psi} \f$
+   * 
    * @tparam T The floating point base to use for all the complex numbers
    * @param v The input vector to apply the PauliString to. Must be the same
    * size as PauliString.dims().
@@ -209,7 +211,7 @@ struct PauliString {
   }
 
   /**
-   * @brief Apply the PauliString (using the sparse representation) to a vector.
+   * @brief @copybrief PauliString::apply(std::vector<std::complex<T>>)
    *
    * @tparam T The floating point base to use for all the complex numbers
    * @param v The input vector to apply the PauliString to. Must be the same
@@ -243,6 +245,9 @@ struct PauliString {
    * different shape of the states than the other apply functions. here all the
    * states (new and old) are transposed so their shape is (n_dims x n_states).
    * All the new_stats are overwritten, no need to initialize.
+   * 
+   * This performs following matrix-matrix multiplication \f$ \mathcal{\hat{P}} \hat{\Psi} \f$ 
+   * where matrix \f$ \hat{\Psi} \f$ has \f$ \ket{\psi_t} \f$ as columns
    *
    * @tparam T The floating point base to use for all the complex numbers
    * @param new_states_T The outpus states after applying the PauliString
