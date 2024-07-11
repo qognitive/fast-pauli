@@ -32,7 +32,10 @@ struct Pauli {
    */
   template <class T>
     requires std::convertible_to<T, uint8_t>
-  Pauli(T const code) : code(code) {}
+  Pauli(T const code) : code(code) {
+    if (code < 0 || code > 3)
+      throw std::invalid_argument("Pauli code must be 0, 1, 2, or 3");
+  }
 
   // Copy ctor
   Pauli(Pauli const &other) = default;
@@ -149,8 +152,7 @@ struct Pauli {
       result = {{1, 0}, {0, -1}};
       break;
     default:
-      // TODO dangerous
-      result = {{}};
+      throw std::runtime_error("Unexpected Pauli code");
       break;
     }
     return result;
@@ -180,7 +182,7 @@ template <> struct fmt::formatter<fast_pauli::Pauli> {
       code_char = 'Z';
       break;
     default:
-      code_char = 'I';
+      throw std::runtime_error("Unexpected Pauli code");
       break;
     }
     return fmt::format_to(ctx.out(), "{}", code_char);
