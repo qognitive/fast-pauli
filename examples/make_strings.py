@@ -19,4 +19,20 @@ for indices in combinations(range(qubits), weight):  # n(n-1)/2 terms
 
 print(strings)
 
-"XXIII", "XYIII", "XZIII", "YXIII", "YYIII", "YZIII", "ZXIII", "ZYIII", "ZZIII", "XIXII", "XIYII", "XIZII", "YIXII", "YIYII", "YIZII"
+(
+    "XXIII",
+    "XYIII",
+    "XZIII",
+    "YXIII",
+    "YYIII",
+    "YZIII",
+    "ZXIII",
+    "ZYIII",
+    "ZZIII",
+    "XIXII",
+    "XIYII",
+    "XIZII",
+    "YIXII",
+    "YIYII",
+    "YIZII",
+)

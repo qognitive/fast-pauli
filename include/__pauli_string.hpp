@@ -84,7 +84,7 @@ struct PauliString {
   PauliString(char const *str) : PauliString(std::string(str)) {}
 
   PauliString(PauliString const &other)
-      : weight(other.weight), paulis(other.paulis){};
+      : weight(other.weight), paulis(other.paulis) {};
   PauliString &operator=(PauliString const &other) {
     this->weight = other.weight;
     this->paulis = other.paulis;
@@ -111,9 +111,9 @@ struct PauliString {
 
   /**
    * @brief Get the sparse representation of the pauli string matrix.
-   * 
-   * PauliStrings are always sparse and have only single non-zero element per row. 
-   * It's N non-zero elements for NxN matrix where N is 2^n_qubits. 
+   *
+   * PauliStrings are always sparse and have only single non-zero element per
+   * row. It's N non-zero elements for NxN matrix where N is 2^n_qubits.
    * Therefore j, k, and m will always have N elements.
    *
    * TODO remove j because it's unused (and redundant).
@@ -181,8 +181,9 @@ struct PauliString {
 
   /**
    * @brief Apply the PauliString (using the sparse representation) to a vector.
-   * This performs following matrix-vector multiplication \f$ \mathcal{\hat{P}} \ket{\psi} \f$
-   * 
+   * This performs following matrix-vector multiplication \f$ \mathcal{\hat{P}}
+   * \ket{\psi} \f$
+   *
    * @tparam T The floating point base to use for all the complex numbers
    * @param v The input vector to apply the PauliString to. Must be the same
    * size as PauliString.dims().
@@ -245,9 +246,10 @@ struct PauliString {
    * different shape of the states than the other apply functions. here all the
    * states (new and old) are transposed so their shape is (n_dims x n_states).
    * All the new_stats are overwritten, no need to initialize.
-   * 
-   * This performs following matrix-matrix multiplication \f$ \mathcal{\hat{P}} \hat{\Psi} \f$ 
-   * where matrix \f$ \hat{\Psi} \f$ has \f$ \ket{\psi_t} \f$ as columns
+   *
+   * This performs following matrix-matrix multiplication \f$ \mathcal{\hat{P}}
+   * \hat{\Psi} \f$ where matrix \f$ \hat{\Psi} \f$ has \f$ \ket{\psi_t} \f$ as
+   * columns
    *
    * @tparam T The floating point base to use for all the complex numbers
    * @param new_states_T The outpus states after applying the PauliString

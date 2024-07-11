@@ -2,7 +2,6 @@ import os
 import sys
 
 if __name__ == "__main__":
-
     # TODO only for ubuntu
 
     compiler = sys.argv[1]

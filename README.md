@@ -22,6 +22,16 @@
   - Tested Compilers GCC@12, LLVM@17, LLVM@18
 - Python >= 3.10
 
+### Dev Requirements
+- [`pre-commit`](https://pre-commit.com/)
+
+
+### Developer Standards
+
+- C/C++: `clang-format` defaults
+- Python: `ruff` lint/format
+- CMake: `cmake-format`
+
 
 ## Build and Test
 
