@@ -14,6 +14,11 @@ using namespace std::literals;
 
 namespace fast_pauli {
 
+/**
+ * @brief A class for efficient representation of a 
+ * 2x2 Pauli matrix \f$ \sigma_i \in \{ I,X,Y,Z \} \f$
+ *
+ */
 struct Pauli {
   uint8_t code; // 0: I, 1: X, 2: Y, 3: Z
 
@@ -24,7 +29,7 @@ struct Pauli {
   Pauli() : code(0) {}
 
   /**
-   * @brief Constructor given a numeric code. TODO add input checking
+   * @brief Constructor given a numeric code.
    *
    * @tparam T Any type convertible to uint8_t
    * @param code 0: I, 1: X, 2: Y, 3: Z
