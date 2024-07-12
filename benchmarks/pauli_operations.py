@@ -2,22 +2,53 @@ import numpy as np
 from dataclasses import dataclass
 
 
+def pauli_matrices() -> dict:
+    s0 = np.array([[1,0],[0,1]], dtype=np.complex128)
+    s1 = np.array([[0,1],[1,0]], dtype=np.complex128)
+    s2 = np.array([[0,-1j],[1j,0]], dtype=np.complex128)
+    s3 = np.array([[1,0],[0,-1]], dtype=np.complex128)
+    return {'I': s0, 'X': s1, 'Y': s2, 'Z': s3, 0: s0, 1: s1, 2: s2, 3: s3}
+
+
 @dataclass
 class PauliString:
     string: str
     weight: float = 1.0
+
+    def dense(self) -> np.ndarray:
+        paulis = pauli_matrices()
+        matrix = paulis[self.string[-1]]
+        for p in reversed(self.string[:-1]):
+            matrix = np.kron(paulis[p], matrix)
+        return self.weight * matrix
+
+
+# TODO more validation for the shape of inputs
+@dataclass
+class SparsePauliString:
+    columns: np.ndarray
+    values: np.ndarray
+    weight: float = 1.0
+
+    def multiply(self, state: np.ndarray) -> np.ndarray:
+        if state.ndim == 1:
+            return self.weight * self.values * state[self.columns]
+        elif state.ndim == 2:
+            return self.weight * self.values[:, np.newaxis] * state[self.columns]
+        else:
+            raise ValueError("state must be a 1D or 2D array")
+
+    def dense(self) -> np.ndarray:
+        matrix = np.zeros((len(self.columns), len(self.columns)), dtype=np.complex128)
+        matrix[np.arange(len(self.columns)), self.columns] = self.weight * self.values
+        return matrix
+
 
 @dataclass
 class SparseMatrix:
     rows: np.ndarray
     columns: np.ndarray
     values: np.ndarray
-
-@dataclass
-class SparsePauliString:
-    columns: np.ndarray
-    values: np.ndarray
-    weight: float = 1.0
 
 
 class PauliComposer:
@@ -133,20 +164,3 @@ class PauliComposer:
             product[new_slice] = self.pauli.weight * vals[new_slice, np.newaxis] * state[cols[new_slice]]
 
         return product
-
-
-def sparse_pauli_multiply(pauli_string: SparsePauliString, state: np.ndarray) -> np.ndarray:
-    if state.ndim == 1:
-        return pauli_string.weight * pauli_string.values * state[pauli_string.columns]
-    elif state.ndim == 2:
-        return pauli_string.weight * pauli_string.values[:, np.newaxis] * state[pauli_string.columns]
-    else:
-        raise ValueError("state must be a 1D or 2D array")
-
-
-def dense_pauli_string():
-    pass
-
-
-def dense_pauli_multiply():
-    pass
