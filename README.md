@@ -22,6 +22,20 @@
   - Tested Compilers GCC@12, LLVM@17, LLVM@18
 - Python >= 3.10
 
+## Developer Setup
+
+### Dev Requirements
+
+- C/C++: `clang-format` defaults
+- Python: `ruff` lint/format, [`pre-commit`](https://pre-commit.com/)
+- CMake: `cmake-format`
+
+> **You need to install the `pre-commit` hooks to ensure they run before you commit code.**
+
+```shell
+# From root project dir
+pre-commit install # installs the checks as pre-commit hooks
+```
 
 ## Build and Test
 

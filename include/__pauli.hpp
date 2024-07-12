@@ -15,7 +15,7 @@ using namespace std::literals;
 namespace fast_pauli {
 
 /**
- * @brief A class for efficient representation of a 
+ * @brief A class for efficient representation of a
  * 2x2 Pauli matrix \f$ \sigma_i \in \{ I,X,Y,Z \} \f$
  *
  */
