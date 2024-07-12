@@ -107,7 +107,7 @@ class PauliComposer:
         cols[0], vals[0] = self.__resolve_init_conditions()
 
         product = np.empty((self.n_vals, state.shape[1]), dtype=np.complex128)
-        product[0] = vals[0] * state[cols[0]]
+        product[0] = self.pauli.weight * vals[0] * state[cols[0]]
 
         for l in range(self.n_qubits):
             p = self.pauli.string[self.n_qubits - l - 1]
@@ -130,9 +130,8 @@ class PauliComposer:
                     cols[new_slice] = cols[old_slice] + pow_of_two
                     vals[new_slice] = -vals[old_slice]
 
-            vals[new_slice] *= self.pauli.weight
-            product[new_slice] = vals[new_slice, np.newaxis] * state[cols[new_slice]]
-        
+            product[new_slice] = self.pauli.weight * vals[new_slice, np.newaxis] * state[cols[new_slice]]
+
         return product
 
 
