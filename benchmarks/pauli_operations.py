@@ -3,11 +3,11 @@ from dataclasses import dataclass
 
 
 def pauli_matrices() -> dict:
-    s0 = np.array([[1,0],[0,1]], dtype=np.complex128)
-    s1 = np.array([[0,1],[1,0]], dtype=np.complex128)
-    s2 = np.array([[0,-1j],[1j,0]], dtype=np.complex128)
-    s3 = np.array([[1,0],[0,-1]], dtype=np.complex128)
-    return {'I': s0, 'X': s1, 'Y': s2, 'Z': s3, 0: s0, 1: s1, 2: s2, 3: s3}
+    s0 = np.array([[1, 0], [0, 1]], dtype=np.complex128)
+    s1 = np.array([[0, 1], [1, 0]], dtype=np.complex128)
+    s2 = np.array([[0, -1j], [1j, 0]], dtype=np.complex128)
+    s3 = np.array([[1, 0], [0, -1]], dtype=np.complex128)
+    return {"I": s0, "X": s1, "Y": s2, "Z": s3, 0: s0, 1: s1, 2: s2, 3: s3}
 
 
 @dataclass
@@ -58,7 +58,6 @@ class PauliComposer:
         self.n_vals = 1 << self.n_qubits
         self.n_ys = pauli.string.count("Y")
 
-
     def __resolve_init_conditions(self) -> None:
         first_col = 0
         for p in self.pauli.string:
@@ -75,20 +74,19 @@ class PauliComposer:
                 first_val = -1.0
             case 3:
                 first_val = 1.0j
-        
-        return first_col, first_val
 
+        return first_col, first_val
 
     def sparse_pauli(self) -> SparsePauliString:
         cols = np.empty(self.n_vals, dtype=np.int32)
         vals = np.empty(self.n_vals, dtype=np.complex128)
         cols[0], vals[0] = self.__resolve_init_conditions()
 
-        for l in range(self.n_qubits):
-            p = self.pauli.string[self.n_qubits - l - 1]
-            pow_of_two = 1 << l
-            
-            new_slice = slice(pow_of_two, 2*pow_of_two)
+        for q in range(self.n_qubits):
+            p = self.pauli.string[self.n_qubits - q - 1]
+            pow_of_two = 1 << q
+
+            new_slice = slice(pow_of_two, 2 * pow_of_two)
             old_slice = slice(0, pow_of_two)
 
             match p:
@@ -107,18 +105,17 @@ class PauliComposer:
 
         return SparsePauliString(weight=self.pauli.weight, columns=cols, values=vals)
 
-
     def sparse_diag_pauli(self) -> SparsePauliString:
         assert self.pauli.string.count("X") + self.pauli.string.count("Y") == 0
 
         cols = np.arange(self.n_vals, dtype=np.int32)
         vals = np.ones(self.n_vals, dtype=np.complex128)
 
-        for l in range(self.n_qubits):
-            p = self.pauli.string[self.n_qubits - l - 1]
-            pow_of_two = 1 << l
-            
-            new_slice = slice(pow_of_two, 2*pow_of_two)
+        for q in range(self.n_qubits):
+            p = self.pauli.string[self.n_qubits - q - 1]
+            pow_of_two = 1 << q
+
+            new_slice = slice(pow_of_two, 2 * pow_of_two)
             old_slice = slice(0, pow_of_two)
 
             match p:
@@ -128,7 +125,6 @@ class PauliComposer:
                     vals[new_slice] = -vals[old_slice]
 
         return SparsePauliString(weight=self.pauli.weight, columns=cols, values=vals)
-
 
     def efficient_sparse_multiply(self, state: np.ndarray) -> np.ndarray:
         assert state.ndim == 2
@@ -140,11 +136,11 @@ class PauliComposer:
         product = np.empty((self.n_vals, state.shape[1]), dtype=np.complex128)
         product[0] = self.pauli.weight * vals[0] * state[cols[0]]
 
-        for l in range(self.n_qubits):
-            p = self.pauli.string[self.n_qubits - l - 1]
-            pow_of_two = 1 << l
-            
-            new_slice = slice(pow_of_two, 2*pow_of_two)
+        for q in range(self.n_qubits):
+            p = self.pauli.string[self.n_qubits - q - 1]
+            pow_of_two = 1 << q
+
+            new_slice = slice(pow_of_two, 2 * pow_of_two)
             old_slice = slice(0, pow_of_two)
 
             match p:
@@ -161,6 +157,8 @@ class PauliComposer:
                     cols[new_slice] = cols[old_slice] + pow_of_two
                     vals[new_slice] = -vals[old_slice]
 
-            product[new_slice] = self.pauli.weight * vals[new_slice, np.newaxis] * state[cols[new_slice]]
+            product[new_slice] = (
+                self.pauli.weight * vals[new_slice, np.newaxis] * state[cols[new_slice]]
+            )
 
         return product
