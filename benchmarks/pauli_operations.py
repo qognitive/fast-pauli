@@ -44,13 +44,6 @@ class SparsePauliString:
         return matrix
 
 
-@dataclass
-class SparseMatrix:
-    rows: np.ndarray
-    columns: np.ndarray
-    values: np.ndarray
-
-
 class PauliComposer:
     def __init__(self, pauli: PauliString) -> None:
         self.pauli = pauli
