@@ -12,29 +12,37 @@ def paulis():
 
 
 def test_pauli_strings(paulis):
-    for p in "IXYZ":
+    for p in ["I", "X", "Y", "Z"]:
+        assert PauliString(p).weight == 1 or p == "I"
         np.testing.assert_array_equal(PauliString(p).dense(), paulis[p])
 
-    ps = PauliString("III", 0.5)
-    np.testing.assert_array_equal(ps.dense(), np.eye(8) * 0.5)
+    ps = PauliString("III")
+    assert ps.weight == 0
+    np.testing.assert_array_equal(ps.dense(), np.eye(8))
 
-    ps = PauliString(weight=1.0, string="IZ")
+    ps = PauliString(string="IZ")
+    assert ps.weight == 1
     np.testing.assert_array_equal(ps.dense(), np.kron(paulis["I"], paulis["Z"]))
 
-    ps = PauliString(weight=0.5, string="XYZ")
+    ps = PauliString(string="XYZ")
+    assert ps.weight == 3
     np.testing.assert_array_equal(
-        ps.dense(), np.kron(paulis["X"], np.kron(paulis["Y"], paulis["Z"])) * 0.5
+        ps.dense(), np.kron(paulis["X"], np.kron(paulis["Y"], paulis["Z"]))
     )
 
-    ps = SparsePauliString(np.arange(8), np.ones(8), 0.5)
-    np.testing.assert_array_equal(ps.dense(), np.eye(8) * 0.5)
+    assert PauliString("XYIZXYZ").weight == 6
+    assert PauliString("XXIYYIZZ").weight == 6
+    assert PauliString("ZIXIZYXXY").weight == 7
+
+    ps = SparsePauliString(np.arange(8), np.ones(8))
+    np.testing.assert_array_equal(ps.dense(), np.eye(8))
     m = np.array([[0, 1, 0], [0, 0, 2], [3, 0, 0]])
     ps = SparsePauliString(columns=np.array([1, 2, 0]), values=np.array([1, 2, 3]))
     np.testing.assert_array_equal(ps.dense(), m)
 
 
 def test_pauli_composer(paulis):
-    for p in "IXYZ":
+    for p in ["I", "X", "Y", "Z"]:
         pc = PauliComposer(PauliString(p))
         assert pc.n_qubits == 1
         assert pc.n_vals == 2
@@ -42,21 +50,21 @@ def test_pauli_composer(paulis):
         assert pc.n_ys == 1 or p != "Y"
         np.testing.assert_array_equal(pc.sparse_pauli().dense(), paulis[p])
 
-    pc = PauliComposer(PauliString("II", weight=0.2))
+    pc = PauliComposer(PauliString("II"))
     assert pc.n_vals == 4
-    np.testing.assert_array_equal(pc.sparse_pauli().dense(), np.eye(4) * 0.2)
-    np.testing.assert_array_equal(pc.sparse_diag_pauli().dense(), np.eye(4) * 0.2)
+    np.testing.assert_array_equal(pc.sparse_pauli().dense(), np.eye(4))
+    np.testing.assert_array_equal(pc.sparse_diag_pauli().dense(), np.eye(4))
 
     pc = PauliComposer(PauliString("IIII"))
     assert pc.n_vals == 16
     np.testing.assert_array_equal(pc.sparse_pauli().dense(), np.eye(16))
     np.testing.assert_array_equal(pc.sparse_diag_pauli().dense(), np.eye(16))
 
-    pc = PauliComposer(PauliString("II", weight=0.2))
+    pc = PauliComposer(PauliString("II"))
     assert pc.n_vals == 4
-    np.testing.assert_array_equal(pc.sparse_pauli().dense(), np.eye(4) * 0.2)
+    np.testing.assert_array_equal(pc.sparse_pauli().dense(), np.eye(4))
 
-    pc = PauliComposer(PauliString("XXX", weight=1.0))
+    pc = PauliComposer(PauliString("XXX"))
     assert pc.n_vals == 8
     np.testing.assert_array_equal(pc.sparse_pauli().dense(), np.fliplr(np.eye(8)))
 
@@ -74,29 +82,24 @@ def test_pauli_composer(paulis):
 
 
 def test_pauli_composer_equivalence():
-    rng = np.random.default_rng(321)
-
-    for c in "IXYZ":
-        w = rng.random()
+    for c in ["I", "X", "Y", "Z"]:
         np.testing.assert_array_equal(
-            PauliComposer(PauliString(c, w)).sparse_pauli().dense(),
-            PauliString(c, w).dense(),
+            PauliComposer(PauliString(c)).sparse_pauli().dense(),
+            PauliString(c).dense(),
         )
 
     for s in permutations("XYZ", 2):
         s = "".join(s)
-        w = rng.random()
         np.testing.assert_array_equal(
-            PauliComposer(PauliString(s, w)).sparse_pauli().dense(),
-            PauliString(s, w).dense(),
+            PauliComposer(PauliString(s)).sparse_pauli().dense(),
+            PauliString(s).dense(),
         )
 
     for s in permutations("IXYZ", 3):
         s = "".join(s)
-        w = rng.random()
         np.testing.assert_array_equal(
-            PauliComposer(PauliString(s, w)).sparse_pauli().dense(),
-            PauliString(s, w).dense(),
+            PauliComposer(PauliString(s)).sparse_pauli().dense(),
+            PauliString(s).dense(),
         )
 
     ixyz = PauliComposer(PauliString("IXYZ")).sparse_pauli().dense()
@@ -121,18 +124,17 @@ def test_sparse_pauli_multiply():
     ):
         s = "".join(s)
         n = 2 ** len(s)
-        w = rng.random()
         psi = rng.random(n)
         psi_batch = rng.random((n, 25))
 
         np.testing.assert_allclose(
-            PauliComposer(PauliString(s, w)).sparse_pauli().multiply(psi),
-            PauliString(s, w).dense().dot(psi),
+            PauliComposer(PauliString(s)).sparse_pauli().multiply(psi),
+            PauliString(s).dense().dot(psi),
             atol=1e-15,
         )
         np.testing.assert_allclose(
-            PauliComposer(PauliString(s, w)).sparse_pauli().multiply(psi_batch),
-            PauliString(s, w).dense() @ psi_batch,
+            PauliComposer(PauliString(s)).sparse_pauli().multiply(psi_batch),
+            PauliString(s).dense() @ psi_batch,
             atol=1e-15,
         )
 
@@ -145,20 +147,19 @@ def test_pauli_composer_multiply():
     ):
         s = "".join(s)
         n = 2 ** len(s)
-        w = rng.random()
         psi = rng.random(n)
         psi_batch = rng.random((n, 20))
 
         np.testing.assert_allclose(
-            PauliComposer(PauliString(s, w))
+            PauliComposer(PauliString(s))
             .efficient_sparse_multiply(psi.reshape(-1, 1))
             .ravel(),
-            PauliString(s, w).dense().dot(psi),
+            PauliString(s).dense().dot(psi),
             atol=1e-15,
         )
         np.testing.assert_allclose(
-            PauliComposer(PauliString(s, w)).efficient_sparse_multiply(psi_batch),
-            PauliString(s, w).dense() @ psi_batch,
+            PauliComposer(PauliString(s)).efficient_sparse_multiply(psi_batch),
+            PauliString(s).dense() @ psi_batch,
             atol=1e-15,
         )
 

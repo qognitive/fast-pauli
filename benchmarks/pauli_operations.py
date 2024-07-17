@@ -10,17 +10,18 @@ def pauli_matrices() -> dict:
     return {"I": s0, "X": s1, "Y": s2, "Z": s3, 0: s0, 1: s1, 2: s2, 3: s3}
 
 
-@dataclass
 class PauliString:
-    string: str
-    weight: float = 1.0
+    def __init__(self, string: str) -> None:
+        # TODO validate chars in string
+        self.string = string
+        self.weight = len(string) - string.count("I")
 
     def dense(self) -> np.ndarray:
         paulis = pauli_matrices()
         matrix = paulis[self.string[-1]]
         for p in reversed(self.string[:-1]):
             matrix = np.kron(paulis[p], matrix)
-        return self.weight * matrix
+        return matrix
 
 
 # TODO more validation for the shape of inputs
@@ -28,19 +29,18 @@ class PauliString:
 class SparsePauliString:
     columns: np.ndarray
     values: np.ndarray
-    weight: float = 1.0
 
     def multiply(self, state: np.ndarray) -> np.ndarray:
         if state.ndim == 1:
-            return self.weight * self.values * state[self.columns]
+            return self.values * state[self.columns]
         elif state.ndim == 2:
-            return self.weight * self.values[:, np.newaxis] * state[self.columns]
+            return self.values[:, np.newaxis] * state[self.columns]
         else:
             raise ValueError("state must be a 1D or 2D array")
 
     def dense(self) -> np.ndarray:
         matrix = np.zeros((len(self.columns), len(self.columns)), dtype=np.complex128)
-        matrix[np.arange(len(self.columns)), self.columns] = self.weight * self.values
+        matrix[np.arange(len(self.columns)), self.columns] = self.values
         return matrix
 
 
@@ -96,7 +96,7 @@ class PauliComposer:
                     cols[new_slice] = cols[old_slice] + pow_of_two
                     vals[new_slice] = -vals[old_slice]
 
-        return SparsePauliString(weight=self.pauli.weight, columns=cols, values=vals)
+        return SparsePauliString(columns=cols, values=vals)
 
     def sparse_diag_pauli(self) -> SparsePauliString:
         assert self.pauli.string.count("X") + self.pauli.string.count("Y") == 0
@@ -117,7 +117,7 @@ class PauliComposer:
                 case "Z":
                     vals[new_slice] = -vals[old_slice]
 
-        return SparsePauliString(weight=self.pauli.weight, columns=cols, values=vals)
+        return SparsePauliString(columns=cols, values=vals)
 
     def efficient_sparse_multiply(self, state: np.ndarray) -> np.ndarray:
         assert state.ndim == 2
@@ -127,7 +127,7 @@ class PauliComposer:
         cols[0], vals[0] = self.__resolve_init_conditions()
 
         product = np.empty((self.n_vals, state.shape[1]), dtype=np.complex128)
-        product[0] = self.pauli.weight * vals[0] * state[cols[0]]
+        product[0] = vals[0] * state[cols[0]]
 
         for q in range(self.n_qubits):
             p = self.pauli.string[self.n_qubits - q - 1]
@@ -150,8 +150,6 @@ class PauliComposer:
                     cols[new_slice] = cols[old_slice] + pow_of_two
                     vals[new_slice] = -vals[old_slice]
 
-            product[new_slice] = (
-                self.pauli.weight * vals[new_slice, np.newaxis] * state[cols[new_slice]]
-            )
+            product[new_slice] = vals[new_slice, np.newaxis] * state[cols[new_slice]]
 
         return product
