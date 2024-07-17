@@ -1,0 +1,111 @@
+[build-system]
+requires = [
+  "setuptools>=64",
+  "build",
+  "setuptools_scm[toml]>=8",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fast_pauli"
+readme = "README.md"
+description = "fast pauli"
+dependencies = [
+  "numpy",
+  "scipy",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+  "clang-format",
+  "cmake-format",
+  "pre-commit",
+  "build",
+  "mypy",
+  "ruff",
+  "pytest",
+  "setuptools_scm[toml]>=8",
+  "sphinx",
+  "sphinx_rtd_theme",
+  "sphinx-autobuild",
+]
+examples = [
+]
+
+[tool.setuptools]
+py-modules = ["fast_pauli"]
+
+[tool.setuptools_scm]
+version_file = "fast_pauli/__version__.py"
+
+[tool.mypy]
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+# Needed because of bug in MyPy
+disallow_subclassing_any = false
+
+mypy_path = "stubs"
+
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+warn_return_any = true
+no_implicit_optional = true
+strict_optional = true
+ignore_missing_imports = true
+
+exclude = []
+
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    ".venv",
+    "fast_pauli/__version__.py",
+]
+
+line-length = 88
+indent-width = 4
+
+target-version="py38"
+
+[tool.ruff.lint]
+
+# Ruff Rules https://docs.astral.sh/ruff/rules/
+# F - PyFlakes (https://docs.astral.sh/ruff/rules/#pyflakes-f)
+# E, W - pycodestyle (https://docs.astral.sh/ruff/rules/#pycodestyle-e-w)
+# I  - Isort (https://docs.astral.sh/ruff/rules/#isort-i)
+# N - PEP-8 Naming (https://docs.astral.sh/ruff/rules/#pep8-naming-n)
+# D - pydocstyle (https://docs.astral.sh/ruff/rules/#pydocstyle-d)
+# YTT - flake8-2020 (https://docs.astral.sh/ruff/rules/#flake8-2020-ytt)
+# ASYNC flake8-async (https://docs.astral.sh/ruff/rules/#flake8-async-async)
+
+select = ["F", "E", "W", "I", "N", "D", "YTT", "ASYNC"]
+
+ignore = []
