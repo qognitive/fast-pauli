@@ -29,17 +29,18 @@ jobs:
         # Build your program with the given configuration
         run: |
           cmake --build ${{github.workspace}}/build --verbose --parallel
-          du build/tests/test_pauli_op
       - name: Test C++
         env:
           OMP_NUM_THREADS: 2
+          CPP_TEST_DIR: build/fast_pauli/cpp/tests
         run: |
+          du ${CPP_TEST_DIR}/test_pauli_op
           # ctest --test-dir build --verbose # TODO not using bc of PauliOp problems on CI
-          ./build/tests/test_factory
-          ./build/tests/test_pauli
-          ./build/tests/test_pauli_op --test-case-exclude="*multistring*"
-          ./build/tests/test_pauli_string
-          ./build/tests/test_summed_pauli_op
+          ./${CPP_TEST_DIR}/test_factory
+          ./${CPP_TEST_DIR}/test_pauli
+          ./${CPP_TEST_DIR}/test_pauli_op --test-case-exclude="*multistring*"
+          ./${CPP_TEST_DIR}/test_pauli_string
+          ./${CPP_TEST_DIR}/test_summed_pauli_op
 
 # - name: Test Python
 # run: PYTHONPATH=build:$PYTHONPATH pytest -v test
