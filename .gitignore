@@ -72,10 +72,12 @@ __pycache__
 *.xwm
 
 # Misc
+.venv
 .vscode
 .coverage
 *.zip
 *_package
+venv
 logs
 scratch
 notes
