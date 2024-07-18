@@ -1,155 +1,103 @@
 import numpy as np
-from dataclasses import dataclass
-
-
-def pauli_matrices() -> dict:
-    s0 = np.array([[1, 0], [0, 1]], dtype=np.complex128)
-    s1 = np.array([[0, 1], [1, 0]], dtype=np.complex128)
-    s2 = np.array([[0, -1j], [1j, 0]], dtype=np.complex128)
-    s3 = np.array([[1, 0], [0, -1]], dtype=np.complex128)
-    return {"I": s0, "X": s1, "Y": s2, "Z": s3, 0: s0, 1: s1, 2: s2, 3: s3}
 
 
 class PauliString:
     def __init__(self, string: str) -> None:
-        # TODO validate chars in string
+        if not all([c in "IXYZ" for c in string]):
+            raise ValueError(f"Invalid pauli string {string}")
+
         self.string = string
+        self.dim = 1 << len(string)
         self.weight = len(string) - string.count("I")
 
     def dense(self) -> np.ndarray:
-        paulis = pauli_matrices()
-        matrix = paulis[self.string[-1]]
-        for p in reversed(self.string[:-1]):
-            matrix = np.kron(paulis[p], matrix)
+        columns, values = compose_sparse_pauli(self.string)
+
+        matrix = np.zeros((columns.size, values.size), dtype=np.complex128)
+        matrix[np.arange(columns.size), columns] = values
         return matrix
-
-
-# TODO more validation for the shape of inputs
-@dataclass
-class SparsePauliString:
-    columns: np.ndarray
-    values: np.ndarray
 
     def multiply(self, state: np.ndarray) -> np.ndarray:
-        if state.ndim == 1:
-            return self.values * state[self.columns]
-        elif state.ndim == 2:
-            return self.values[:, np.newaxis] * state[self.columns]
+        if state.shape[0] != self.dim or state.ndim > 2:
+            raise ValueError(f"Provided state has inconsistent shape {state.shape}")
+
+        columns, values = compose_sparse_pauli(self.string)
+
+        if state.ndim == 2:
+            return values[:, np.newaxis] * state[columns]
         else:
-            raise ValueError("state must be a 1D or 2D array")
-
-    def dense(self) -> np.ndarray:
-        matrix = np.zeros((len(self.columns), len(self.columns)), dtype=np.complex128)
-        matrix[np.arange(len(self.columns)), self.columns] = self.values
-        return matrix
+            return values * state[columns]
 
 
-class PauliComposer:
-    def __init__(self, pauli: PauliString) -> None:
-        self.pauli = pauli
-        self.n_qubits = len(pauli.string)
-        self.n_vals = 1 << self.n_qubits
-        self.n_ys = pauli.string.count("Y")
+def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:
+    n_qubits = len(string)
+    n_vals = 1 << n_qubits
+    n_ys = string.count("Y")
 
-    def __resolve_init_conditions(self) -> None:
-        first_col = 0
-        for p in self.pauli.string:
-            first_col <<= 1
-            if p == "X" or p == "Y":
-                first_col += 1
+    # initialize cols array with zeros as we need first element to be 0
+    cols = np.zeros(n_vals, dtype=np.int32)
+    vals = np.empty(n_vals, dtype=np.complex128)
 
-        match self.n_ys % 4:
-            case 0:
-                first_val = 1.0
-            case 1:
-                first_val = -1.0j
-            case 2:
-                first_val = -1.0
-            case 3:
-                first_val = 1.0j
+    for p in string:
+        cols[0] <<= 1
+        if p == "X" or p == "Y":
+            cols[0] += 1
 
-        return first_col, first_val
+    match n_ys % 4:
+        case 0:
+            vals[0] = 1.0
+        case 1:
+            vals[0] = -1.0j
+        case 2:
+            vals[0] = -1.0
+        case 3:
+            vals[0] = 1.0j
 
-    def sparse_pauli(self) -> SparsePauliString:
-        cols = np.empty(self.n_vals, dtype=np.int32)
-        vals = np.empty(self.n_vals, dtype=np.complex128)
-        cols[0], vals[0] = self.__resolve_init_conditions()
+    for q in range(n_qubits):
+        p = string[n_qubits - q - 1]
+        pow_of_two = 1 << q
 
-        for q in range(self.n_qubits):
-            p = self.pauli.string[self.n_qubits - q - 1]
-            pow_of_two = 1 << q
+        new_slice = slice(pow_of_two, 2 * pow_of_two)
+        old_slice = slice(0, pow_of_two)
 
-            new_slice = slice(pow_of_two, 2 * pow_of_two)
-            old_slice = slice(0, pow_of_two)
+        match p:
+            case "I":
+                cols[new_slice] = cols[old_slice] + pow_of_two
+                vals[new_slice] = vals[old_slice]
+            case "X":
+                cols[new_slice] = cols[old_slice] - pow_of_two
+                vals[new_slice] = vals[old_slice]
+            case "Y":
+                cols[new_slice] = cols[old_slice] - pow_of_two
+                vals[new_slice] = -vals[old_slice]
+            case "Z":
+                cols[new_slice] = cols[old_slice] + pow_of_two
+                vals[new_slice] = -vals[old_slice]
 
-            match p:
-                case "I":
-                    cols[new_slice] = cols[old_slice] + pow_of_two
-                    vals[new_slice] = vals[old_slice]
-                case "X":
-                    cols[new_slice] = cols[old_slice] - pow_of_two
-                    vals[new_slice] = vals[old_slice]
-                case "Y":
-                    cols[new_slice] = cols[old_slice] - pow_of_two
-                    vals[new_slice] = -vals[old_slice]
-                case "Z":
-                    cols[new_slice] = cols[old_slice] + pow_of_two
-                    vals[new_slice] = -vals[old_slice]
+    return cols, vals
 
-        return SparsePauliString(columns=cols, values=vals)
 
-    def sparse_diag_pauli(self) -> SparsePauliString:
-        assert self.pauli.string.count("X") + self.pauli.string.count("Y") == 0
+def compose_sparse_diag_pauli(string) -> np.ndarray:
+    if "X" in string or "Y" in string:
+        raise ValueError("Pauli string must contain only I and Z characters")
 
-        cols = np.arange(self.n_vals, dtype=np.int32)
-        vals = np.ones(self.n_vals, dtype=np.complex128)
+    n_qubits = len(string)
+    n_vals = 1 << n_qubits
 
-        for q in range(self.n_qubits):
-            p = self.pauli.string[self.n_qubits - q - 1]
-            pow_of_two = 1 << q
+    # initialize vals array with ones as we need first element to be 1
+    vals = np.ones(n_vals, dtype=np.complex128)
 
-            new_slice = slice(pow_of_two, 2 * pow_of_two)
-            old_slice = slice(0, pow_of_two)
+    for q in range(n_qubits):
+        p = string[n_qubits - q - 1]
+        pow_of_two = 1 << q
 
-            match p:
-                case "I":
-                    vals[new_slice] = vals[old_slice]
-                case "Z":
-                    vals[new_slice] = -vals[old_slice]
+        new_slice = slice(pow_of_two, 2 * pow_of_two)
+        old_slice = slice(0, pow_of_two)
 
-        return SparsePauliString(columns=cols, values=vals)
+        match p:
+            case "I":
+                vals[new_slice] = vals[old_slice]
+            case "Z":
+                vals[new_slice] = -vals[old_slice]
 
-    def efficient_sparse_multiply(self, state: np.ndarray) -> np.ndarray:
-        assert state.ndim == 2
-
-        cols = np.empty(self.n_vals, dtype=np.int32)
-        vals = np.empty(self.n_vals, dtype=np.complex128)
-        cols[0], vals[0] = self.__resolve_init_conditions()
-
-        product = np.empty((self.n_vals, state.shape[1]), dtype=np.complex128)
-        product[0] = vals[0] * state[cols[0]]
-
-        for q in range(self.n_qubits):
-            p = self.pauli.string[self.n_qubits - q - 1]
-            pow_of_two = 1 << q
-
-            new_slice = slice(pow_of_two, 2 * pow_of_two)
-            old_slice = slice(0, pow_of_two)
-
-            match p:
-                case "I":
-                    cols[new_slice] = cols[old_slice] + pow_of_two
-                    vals[new_slice] = vals[old_slice]
-                case "X":
-                    cols[new_slice] = cols[old_slice] - pow_of_two
-                    vals[new_slice] = vals[old_slice]
-                case "Y":
-                    cols[new_slice] = cols[old_slice] - pow_of_two
-                    vals[new_slice] = -vals[old_slice]
-                case "Z":
-                    cols[new_slice] = cols[old_slice] + pow_of_two
-                    vals[new_slice] = -vals[old_slice]
-
-            product[new_slice] = vals[new_slice, np.newaxis] * state[cols[new_slice]]
-
-        return product
+    return vals
