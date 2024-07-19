@@ -34,7 +34,6 @@ jobs:
           OMP_NUM_THREADS: 2
           CPP_TEST_DIR: build/fast_pauli/cpp/tests
         run: |
-          du ${CPP_TEST_DIR}/test_pauli_op
           # ctest --test-dir build --verbose # TODO not using bc of PauliOp problems on CI
           ./${CPP_TEST_DIR}/test_factory
           ./${CPP_TEST_DIR}/test_pauli

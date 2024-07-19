@@ -109,7 +109,22 @@ target-version="py38"
 # D - pydocstyle (https://docs.astral.sh/ruff/rules/#pydocstyle-d)
 # YTT - flake8-2020 (https://docs.astral.sh/ruff/rules/#flake8-2020-ytt)
 # ASYNC flake8-async (https://docs.astral.sh/ruff/rules/#flake8-async-async)
+# B flake8-bugbear (https://docs.astral.sh/ruff/rules/#flake8-bugbear-b)
+# UP flake8-bandit (https://docs.astral.sh/ruff/rules/#flake8-bandit-up)
+# SIM flake8-simplify (https://docs.astral.sh/ruff/rules/#flake8-simplify-sim)
 
-select = ["F", "E", "W", "I", "N", "D", "YTT", "ASYNC"]
+select = ["F", "E", "W", "I", "N", "D", "YTT", "ASYNC", "B", "UP", "SIM"]
 
-ignore = []
+ignore = [
+  # Allow non-lowercase variable names to help the code match the math better
+  "N806",
+  # mypy doesn't support PEP695 (upgrading to `type` python keyword)
+  "UP040",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true

@@ -37,7 +37,7 @@ class PauliString:
         ----
             state: The input state as a numpy array.
 
-        Returns:
+        Returns
         -------
             The result of multiplying the Pauli string with the state.
 
@@ -61,7 +61,7 @@ def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:
         string: The input string representing the Pauli string.
         Must contain only I, X, Y, Z characters.
 
-    Returns:
+    Returns
     -------
         A tuple containing the column numbers and values of the sparse matrix.
 
@@ -120,7 +120,7 @@ def compose_sparse_diag_pauli(string) -> np.ndarray:
     ----
         string: A Pauli string containing only 'I' and 'Z' characters.
 
-    Returns:
+    Returns
     -------
         np.ndarray: diagonal values from resulting sparse matrix.
 

@@ -19,17 +19,6 @@ tests:
 clean:
 	rm -rf build dist
 
-docs-build:
-	cd docs && \
-	python -m sphinx -T -W --keep-going -b html -d _build/doctrees -D language=en . ./html
-
-livehtml:
-	sphinx-autobuild docs docs/_build/html
-
-.PHONY: clean-docs
-clean-docs:
-	rm -rf docs/html docs/_build
-
 lint-check:
 	ruff check ./fast_pauli/py ./tests && \
 	mypy ./fast_pauli/py ./tests
