@@ -13,12 +13,12 @@ from pypauli.operations import (
 
 
 @pytest.fixture
-def paulis():
+def paulis() -> dict[str | int, np.ndarray]:
     """Fixture to provide dict with Pauli matrices."""
-    return pauli_matrices()
+    return pauli_matrices()  # type: ignore
 
 
-def test_pauli_string(paulis):
+def test_pauli_string(paulis: dict) -> None:
     """Test the PauliString class."""
     for p in ["I", "X", "Y", "Z"]:
         ps = PauliString(p)
@@ -60,7 +60,7 @@ def test_pauli_string(paulis):
     assert PauliString("ZIXIZYXXY").weight == 7
 
 
-def test_sparse_pauli_composer(paulis):
+def test_sparse_pauli_composer(paulis: dict) -> None:
     """Test sparsepauli composer functions."""
     ps = PauliString("II")
     assert ps.dim == 4
@@ -104,7 +104,7 @@ def test_sparse_pauli_composer(paulis):
     )
 
 
-def test_sparse_pauli_composer_equivalence():
+def test_sparse_pauli_composer_equivalence() -> None:
     """Test the equivalence of sparse Pauli composer with naive method."""
     for c in ["I", "X", "Y", "Z"]:
         np.testing.assert_array_equal(
@@ -112,15 +112,15 @@ def test_sparse_pauli_composer_equivalence():
             naive_pauli_converter(c),
         )
 
-    for s in permutations("XYZ", 2):
-        s = "".join(s)
+    for p2 in permutations("XYZ", 2):
+        s = "".join(p2)
         np.testing.assert_array_equal(
             PauliString(s).dense(),
             naive_pauli_converter(s),
         )
 
-    for s in permutations("IXYZ", 3):
-        s = "".join(s)
+    for p3 in permutations("IXYZ", 3):
+        s = "".join(p3)
         np.testing.assert_array_equal(
             PauliString(s).dense(),
             naive_pauli_converter(s),
@@ -138,7 +138,7 @@ def test_sparse_pauli_composer_equivalence():
         np.testing.assert_array_equal(PauliString(s).dense(), naive_pauli_converter(s))
 
 
-def test_sparse_pauli_multiply():
+def test_sparse_pauli_multiply() -> None:
     """Test the equivalence of multiply method that relies on sparse Pauli composer."""
     rng = np.random.default_rng(321)
 

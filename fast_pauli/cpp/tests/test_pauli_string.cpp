@@ -201,7 +201,7 @@ TEST_CASE("test apply batch") {
   size_t const n_states = 10;
 
   // Testing each of these pauli strings individually
-  // NOTE: apply_batch takes the tranpose of the states and new_states
+  // NOTE: apply_batch takes the transpose of the states and new_states
   for (PauliString ps : {"IXYZ", "YYIX", "XXYIYZ", "IZIXYYZ"}) {
     size_t const dims = ps.dims();
 

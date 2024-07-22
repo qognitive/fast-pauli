@@ -113,7 +113,7 @@ def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:
     return cols, vals
 
 
-def compose_sparse_diag_pauli(string) -> np.ndarray:
+def compose_sparse_diag_pauli(string: str) -> np.ndarray:
     """Produce sparse representation of diagonal pauli string.
 
     Args:

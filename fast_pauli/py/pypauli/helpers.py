@@ -3,7 +3,7 @@
 import numpy as np
 
 
-def pauli_matrices() -> dict:
+def pauli_matrices() -> dict[str | int, np.ndarray]:
     """Provide a dictionary containing the Pauli matrices.
 
     The Pauli matrices are a set of 2x2 matrices commonly used in quantum mechanics.

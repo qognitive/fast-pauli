@@ -6,7 +6,7 @@
   - [X] PauliString
   - [ ] PauliOp
   - [ ] SummedPauliOp
-- [ ] Figure out the tranpose non-sense or support both (some functions take the transpose of the states and others don't)
+- [ ] Figure out the transpose non-sense or support both (some functions take the transpose of the states and others don't)
 - [ ] Clean up `apply_batch` we shouldn't need to pass a coeff
 - [ ] Clean up tests
 - [ ] Add apply method to SummedPauliOp that takes precomputed weighted data

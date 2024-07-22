@@ -163,7 +163,7 @@ template <std::floating_point T> struct PauliOp {
         ps.apply_batch(new_states_local, states, c);
       }
 
-      // Do the reduction and tranpose back
+      // Do the reduction and transpose back
 #pragma omp for schedule(static) collapse(2)
       for (size_t i = 0; i < new_states.extent(0); ++i) {
         for (size_t t = 0; t < new_states.extent(1); ++t) {
