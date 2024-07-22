@@ -1,8 +1,20 @@
+"""Efficient operations on Pauli string using numpy."""
+
 import numpy as np
 
 
 class PauliString:
+    """Class representing a Pauli string with efficient operations."""
+
     def __init__(self, string: str) -> None:
+        """Initialize the PauliString object.
+
+        Args:
+        ----
+            string: The input string representing the Pauli string.
+            Must contain only I, X, Y, Z characters.
+
+        """
         if not all([c in "IXYZ" for c in string]):
             raise ValueError(f"Invalid pauli string {string}")
 
@@ -11,6 +23,7 @@ class PauliString:
         self.weight = len(string) - string.count("I")
 
     def dense(self) -> np.ndarray:
+        """Return the dense matrix representation of the Pauli string."""
         columns, values = compose_sparse_pauli(self.string)
 
         matrix = np.zeros((columns.size, values.size), dtype=np.complex128)
@@ -18,6 +31,17 @@ class PauliString:
         return matrix
 
     def multiply(self, state: np.ndarray) -> np.ndarray:
+        """Efficient multiplication of Pauli string with a given state.
+
+        Args:
+        ----
+            state: The input state as a numpy array.
+
+        Returns
+        -------
+            The result of multiplying the Pauli string with the state.
+
+        """
         if state.shape[0] != self.dim or state.ndim > 2:
             raise ValueError(f"Provided state has inconsistent shape {state.shape}")
 
@@ -30,6 +54,18 @@ class PauliString:
 
 
 def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:
+    """Produce sparse representation of the pauli string.
+
+    Args:
+    ----
+        string: The input string representing the Pauli string.
+        Must contain only I, X, Y, Z characters.
+
+    Returns
+    -------
+        A tuple containing the column numbers and values of the sparse matrix.
+
+    """
     n_qubits = len(string)
     n_vals = 1 << n_qubits
     n_ys = string.count("Y")
@@ -77,7 +113,18 @@ def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:
     return cols, vals
 
 
-def compose_sparse_diag_pauli(string) -> np.ndarray:
+def compose_sparse_diag_pauli(string: str) -> np.ndarray:
+    """Produce sparse representation of diagonal pauli string.
+
+    Args:
+    ----
+        string: A Pauli string containing only 'I' and 'Z' characters.
+
+    Returns
+    -------
+        np.ndarray: diagonal values from resulting sparse matrix.
+
+    """
     if "X" in string or "Y" in string:
         raise ValueError("Pauli string must contain only I and Z characters")
 

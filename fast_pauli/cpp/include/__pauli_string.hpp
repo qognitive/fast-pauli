@@ -252,7 +252,7 @@ struct PauliString {
    * columns
    *
    * @tparam T The floating point base to use for all the complex numbers
-   * @param new_states_T The outpus states after applying the PauliString
+   * @param new_states_T The output states after applying the PauliString
    * (n_data x n_dim)
    * @param states_T THe original states to apply the PauliString to (n_data x
    * n_dim)

@@ -48,8 +48,8 @@ find_package(OpenMP REQUIRED)
 
 # Our primary target
 add_library(fast_pauli INTERFACE)
-target_include_directories(fast_pauli
-                           INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include/)
+target_include_directories(
+  fast_pauli INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/fast_pauli/cpp/include/)
 target_link_libraries(fast_pauli INTERFACE fmt::fmt mdspan OpenMP::OpenMP_CXX)
 target_compile_options(
   fast_pauli
@@ -66,7 +66,8 @@ target_compile_options(
 # Testing
 include(CTest)
 enable_testing()
-add_subdirectory(tests)
+# TODO use proper variable for project root
+add_subdirectory(fast_pauli/cpp/tests)
 
 # Examples
-add_subdirectory(examples)
+add_subdirectory(fast_pauli/cpp/examples)
