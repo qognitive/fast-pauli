@@ -19,12 +19,17 @@ tests:
 clean:
 	rm -rf build dist
 
-lint-check:
-	ruff check ./fast_pauli/py ./tests && \
-	mypy ./fast_pauli/py ./tests
+lint:
+	pre-commit run --all-files -- ruff
+	pre-commit run --all-files -- mypy
+	pre-commit run --all-files -- codespell
 
-lint-fix:
-	ruff check --fix ./fast_pauli/py ./tests
+# run with make -i to ignore errors and run all three formatters
+format:
+	pre-commit run --all-files -- ruff-format
+	pre-commit run --all-files -- yamlfmt
+	pre-commit run --all-files -- trailing-whitespace
 
-lint-write:
-	ruff format ./fast_pauli/py ./tests
+.PHONY: pre-commit-setup
+pre-commit-setup:
+	pre-commit install

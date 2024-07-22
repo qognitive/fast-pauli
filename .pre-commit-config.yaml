@@ -8,6 +8,10 @@ repos:
     rev: v0.10.0
     hooks:
       - id: yamlfmt
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      - id: trailing-whitespace
   # C/C++
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v18.1.8
@@ -20,5 +24,22 @@ repos:
     hooks:
       # Run the linter.
       - id: ruff
+        types_or: [python, pyi, jupyter]
+        args: ["--config", "pyproject.toml", "--fix", "--show-fixes"]
       # Run the formatter.
       - id: ruff-format
+        types_or: [python, pyi, jupyter]
+        args: ["--config", "pyproject.toml"]
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.9.0
+    hooks:
+      - id: mypy
+        args: ["--config", "pyproject.toml"]
+  # Misc
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.4
+    hooks:
+      - id: codespell
+        args: ["--ignore-words-list", "bra,ket"]
+        additional_dependencies:
+          - tomli # So we can configure it to use pyproject.toml
