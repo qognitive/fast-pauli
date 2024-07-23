@@ -42,6 +42,7 @@ pre-commit install # installs the checks as pre-commit hooks
 ```bash
 cmake -B build -DCMAKE_CXX_COMPILER=clang++
 cmake --build build
+cmake --install build
 ctest --test-dir build
 ```
 
