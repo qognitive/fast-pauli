@@ -71,7 +71,8 @@ struct PauliString {
         weight += 1;
         break;
       default:
-        throw std::invalid_argument(std::string("Invalid Pauli character") + c);
+        throw std::invalid_argument(std::string("Invalid Pauli character ") +
+                                    c);
       }
     }
   }
