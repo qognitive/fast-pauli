@@ -197,6 +197,22 @@ struct PauliString {
   }
 
   /**
+   * @brief @copybrief PauliString::apply(std::mdspan)
+   *
+   * @tparam T The floating point base to use for all the complex numbers
+   * @param v The input vector to apply the PauliString to. Must be the same
+   * size as PauliString.dims().
+   * @return  std::vector<std::complex<T>> The output state after
+   * applying the PauliString.
+   */
+  template <std::floating_point T>
+  std::vector<std::complex<T>>
+  apply(std::vector<std::complex<T>> const &v) const {
+    // route this to implementation we have for mdspan specialization
+    return this->apply(std::mdspan(v.data(), v.size()));
+  }
+
+  /**
    * @brief Apply the PauliString (using the sparse representation) to a vector.
    * This performs following matrix-vector multiplication \f$ \mathcal{\hat{P}}
    * \ket{\psi} \f$
@@ -209,37 +225,7 @@ struct PauliString {
    */
   template <std::floating_point T>
   std::vector<std::complex<T>>
-  apply(std::vector<std::complex<T>> const &v) const {
-    // Input check
-    if (v.size() != dims()) {
-      throw std::invalid_argument(
-          "Input vector size must match the number of qubits");
-    }
-
-    std::vector<size_t> k;
-    std::vector<std::complex<T>> m;
-    get_sparse_repr(k, m);
-
-    std::vector<std::complex<T>> result(v.size(), 0);
-    for (size_t i = 0; i < k.size(); ++i) {
-      result[i] += m[i] * v[k[i]];
-    }
-
-    return result;
-  }
-
-  /**
-   * @brief @copybrief PauliString::apply(std::vector<std::complex<T>>)
-   *
-   * @tparam T The floating point base to use for all the complex numbers
-   * @param v The input vector to apply the PauliString to. Must be the same
-   * size as PauliString.dims().
-   * @return  std::vector<std::complex<T>> The output state after
-   * applying the PauliString.
-   */
-  template <std::floating_point T>
-  std::vector<std::complex<T>>
-  apply(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> v) const {
+  apply(std::mdspan<const std::complex<T>, std::dextents<size_t, 1>> v) const {
     // Input check
     if (v.size() != dims()) {
       throw std::invalid_argument(
@@ -270,9 +256,9 @@ struct PauliString {
    *
    * @tparam T The floating point base to use for all the complex numbers
    * @param new_states_T The output states after applying the PauliString
-   * (n_data x n_dim)
-   * @param states_T THe original states to apply the PauliString to (n_data x
-   * n_dim)
+   * (n_dim x n_states)
+   * @param states_T THe original states to apply the PauliString to
+   * (n_dim x n_states)
    * @param c Multiplication factor to apply to the PauliString
    */
   template <std::floating_point T>
@@ -300,16 +286,12 @@ struct PauliString {
     std::vector<std::complex<T>> m;
     get_sparse_repr(k, m);
 
-    // TODO we have bad memory access patterns
-    // std::vector<std::complex<T>> col(states_T.extent(1), 0);
     for (size_t i = 0; i < states_T.extent(0); ++i) {
-      std::complex<T> c_m_i = c * m[i];
-      size_t k_i = k[i];
-      std::memcpy(&new_states_T(i, 0), &states_T(k_i, 0),
-                  states_T.extent(1) * sizeof(std::complex<T>));
-
+      // std::memcpy(&new_states_T(i, 0), &states_T(k_i, 0),
+      //             states_T.extent(1) * sizeof(std::complex<T>));
+      const std::complex<T> c_m_i = c * m[i];
       for (size_t t = 0; t < states_T.extent(1); ++t) {
-        new_states_T(i, t) *= c_m_i; // * states_T(k_i, t);
+        new_states_T(i, t) = c_m_i * states_T(k[i], t);
       }
     }
   }

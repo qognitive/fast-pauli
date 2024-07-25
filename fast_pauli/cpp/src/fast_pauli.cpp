@@ -74,8 +74,8 @@ PYBIND11_MODULE(_fast_pauli, m) {
               if (vec.size() != n_states)
                 throw std::invalid_argument("Bad shape of states array");
               else
-                std::copy(vec.begin(), vec.end(),
-                          std::back_inserter(flat_inputs));
+                std::ranges::copy(vec.begin(), vec.end(),
+                                  std::back_inserter(flat_inputs));
 
             std::vector<std::complex<double>> flat_outputs(flat_inputs.size(),
                                                            0);
@@ -90,7 +90,8 @@ PYBIND11_MODULE(_fast_pauli, m) {
                 inputs.size());
             for (size_t i = 0; i < inputs.size(); i++) {
               auto it = flat_outputs.begin() + i * n_states;
-              std::copy(it, it + n_states, std::back_inserter(results[i]));
+              std::ranges::copy(it, it + n_states,
+                                std::back_inserter(results[i]));
             }
             return results;
           },
