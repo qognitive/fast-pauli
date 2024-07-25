@@ -115,21 +115,25 @@ struct PauliString {
    *
    * PauliStrings are always sparse and have only single non-zero element per
    * row. It's N non-zero elements for NxN matrix where N is 2^n_qubits.
-   * Therefore j, k, and m will always have N elements.
+   * Therefore k and m will always have N elements.
    *
-   * TODO remove j because it's unused (and redundant).
    * See Algorithm 1 in https://arxiv.org/pdf/2301.00560.pdf for details about
    * the algorithm.
    *
    * @tparam T The floating point type (i.e. std::complex<T> for the values of
    * the PauliString matrix)
-   * @param j (unused)
    * @param k The column index of the matrix
    * @param m The values of the matrix
    */
   template <std::floating_point T>
-  void get_sparse_repr(std::vector<size_t> &j, std::vector<size_t> &k,
+  void get_sparse_repr(std::vector<size_t> &k,
                        std::vector<std::complex<T>> &m) const {
+    // TODO should we simply return a tuple of k,m instead of modifying args?
+    // for now there are no use-cases where we'd re-use already allocated k, m
+    // TODO also should get_sparse_repr be a non-member helper function
+    // that operates on PauliString?
+    // gonna be like: auto [k, m] = fast_pauli::internal::get_sparse_repr(ps);
+
     // We reverse the view here because the tensor product is taken from right
     // to left
     auto ps = paulis | std::views::reverse;
@@ -140,8 +144,6 @@ struct PauliString {
     size_t const dim = 1 << n;
 
     // Safe, but expensive, we overwrite the vectors
-    j = std::vector<size_t>(dim);
-    // j.clear();
     k = std::vector<size_t>(dim);
     m = std::vector<std::complex<T>>(dim);
 
@@ -160,7 +162,20 @@ struct PauliString {
     for (size_t i = 0; i < ps.size(); ++i) {
       k[0] += (1UL << i) * diag(ps[i]);
     }
-    m[0] = std::pow(-1i, nY % 4);
+    switch (nY % 4) {
+    case 0:
+      m[0] = 1.0;
+      break;
+    case 1:
+      m[0] = -1.0i;
+      break;
+    case 2:
+      m[0] = -1.0;
+      break;
+    case 3:
+      m[0] = 1.0i;
+      break;
+    }
 
     // Populate the rest of the values in a recursive-like manner
     for (size_t l = 0; l < n; ++l) {
@@ -171,8 +186,9 @@ struct PauliString {
         eps = -1;
       }
 
-      T sign = std::pow(-1., diag(po)); // Keep this outside the loop
+      T sign = diag(po) ? -1.0 : 1.0;
 
+      // TODO any benefit from defining 1UL << l in a const auto var?
       for (size_t li = (1UL << l); li < (1UL << (l + 1)); li++) {
         k[li] = k[li - (1UL << l)] + (1UL << l) * sign;
         m[li] = m[li - (1UL << l)] * eps;
@@ -200,9 +216,9 @@ struct PauliString {
           "Input vector size must match the number of qubits");
     }
 
-    std::vector<size_t> j, k; // TODO reminder that j is unused
+    std::vector<size_t> k;
     std::vector<std::complex<T>> m;
-    get_sparse_repr(j, k, m);
+    get_sparse_repr(k, m);
 
     std::vector<std::complex<T>> result(v.size(), 0);
     for (size_t i = 0; i < k.size(); ++i) {
@@ -230,9 +246,9 @@ struct PauliString {
           "Input vector size must match the number of qubits");
     }
 
-    std::vector<size_t> j, k; // TODO reminder that j is unused
+    std::vector<size_t> k;
     std::vector<std::complex<T>> m;
-    get_sparse_repr(j, k, m);
+    get_sparse_repr(k, m);
 
     std::vector<std::complex<T>> result(v.size(), 0);
     for (size_t i = 0; i < k.size(); ++i) {
@@ -280,9 +296,9 @@ struct PauliString {
           "[PauliString] new_states must have the same dimensions as states");
     }
 
-    std::vector<size_t> j, k; // TODO reminder that j is unused
+    std::vector<size_t> k;
     std::vector<std::complex<T>> m;
-    get_sparse_repr(j, k, m);
+    get_sparse_repr(k, m);
 
     // TODO we have bad memory access patterns
     // std::vector<std::complex<T>> col(states_T.extent(1), 0);
@@ -310,14 +326,13 @@ struct PauliString {
   template <std::floating_point T>
   std::vector<std::vector<std::complex<T>>> get_dense_repr() const {
     //
-    std::vector<size_t> j, k;
+    std::vector<size_t> k;
     std::vector<std::complex<T>> m;
-    get_sparse_repr(j, k, m);
+    get_sparse_repr(k, m);
 
     // Convert to dense representation
-    size_t const dim = 1UL << paulis.size();
     std::vector<std::vector<std::complex<T>>> result(
-        dim, std::vector<std::complex<T>>(dim, 0));
+        dims(), std::vector<std::complex<T>>(dims(), 0));
 
     for (size_t i = 0; i < k.size(); ++i) {
       result[i][k[i]] = m[i];
@@ -330,6 +345,7 @@ struct PauliString {
 //
 // Helper
 //
+// TODO arrange following functions in a separate header __pauli_utils.hpp
 
 /**
  * @brief Get the nontrivial sets of pauli matrices given a weight.
@@ -353,7 +369,7 @@ std::vector<std::string> get_nontrivial_paulis(size_t const weight) {
         updated_set_of_nontrivial_paulis.push_back(str + pauli);
       }
     }
-    set_of_nontrivial_paulis = updated_set_of_nontrivial_paulis;
+    set_of_nontrivial_paulis = std::move(updated_set_of_nontrivial_paulis);
   }
   return set_of_nontrivial_paulis;
 }
