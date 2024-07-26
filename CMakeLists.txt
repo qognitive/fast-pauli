@@ -1,13 +1,27 @@
 #
 # Boilerplate CMakeLists.txt for C++ projects
 #
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.27)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS
     TRUE
     CACHE BOOL "Export compile commands to build directory" FORCE)
 
 include(cmake/CPM.cmake)
+
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+# Need to enforce -fPIC across whole project to build shared libraries
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# TODO different compilation flags for Debug/Release modes; also pull in
+# target_compile_options for fast_pauli target defined below
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
 # TODO adding a package lock to help with SBOM
 # cpmusepackagelock(package-lock.cmake)
 
@@ -38,11 +52,6 @@ cpmaddpackage("gh:kokkos/mdspan#b885a2c60ad42f9e1aaa0d317a38105b950cbed0")
 
 project(fast_pauli LANGUAGES CXX)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 # Set up OpenMP
 find_package(OpenMP REQUIRED)
 
@@ -66,8 +75,10 @@ target_compile_options(
 # Testing
 include(CTest)
 enable_testing()
-# TODO use proper variable for project root
 add_subdirectory(fast_pauli/cpp/tests)
 
 # Examples
 add_subdirectory(fast_pauli/cpp/examples)
+
+# Python bindings
+add_subdirectory(fast_pauli/cpp/src)

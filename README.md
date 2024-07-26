@@ -41,9 +41,11 @@ pre-commit install # installs the checks as pre-commit hooks
 
 ```bash
 cmake -B build -DCMAKE_CXX_COMPILER=clang++
-cmake --build build
+cmake --build build --parallel
+cmake --install build
 ctest --test-dir build
 ```
+Compiled `_fast_pauli` python module gets installed into `fast_pauli` directory.
 
 ## Design Choices
 

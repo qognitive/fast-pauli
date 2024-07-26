@@ -26,7 +26,7 @@ struct Pauli {
    * @brief Default constructor, initializes to I.
    *
    */
-  Pauli() : code(0) {}
+  constexpr Pauli() : code(0) {}
 
   /**
    * @brief Constructor given a numeric code.
@@ -37,9 +37,34 @@ struct Pauli {
    */
   template <class T>
     requires std::convertible_to<T, uint8_t>
-  Pauli(T const code) : code(code) {
+  constexpr Pauli(T const code) : code(code) {
     if (code < 0 || code > 3)
       throw std::invalid_argument("Pauli code must be 0, 1, 2, or 3");
+  }
+
+  /**
+   * @brief Constructor given Pauli matrix symbol.
+   *
+   * @param symbol pauli matrix - I, X, Y, Z
+   * @return
+   */
+  constexpr Pauli(char const symbol) {
+    switch (symbol) {
+    case 'I':
+      this->code = 0;
+      break;
+    case 'X':
+      this->code = 1;
+      break;
+    case 'Y':
+      this->code = 2;
+      break;
+    case 'Z':
+      this->code = 3;
+      break;
+    default:
+      throw std::invalid_argument("Invalid Pauli matrix symbol");
+    }
   }
 
   // Copy ctor
@@ -58,7 +83,7 @@ struct Pauli {
    * @param rhs
    * @return  std::pair<std::complex<double>, Pauli>
    */
-  friend std::pair<std::complex<double>, Pauli> operator*(Pauli lhs,
+  friend std::pair<std::complex<double>, Pauli> operator*(Pauli const &lhs,
                                                           Pauli const &rhs) {
     switch (lhs.code) {
     case 0:

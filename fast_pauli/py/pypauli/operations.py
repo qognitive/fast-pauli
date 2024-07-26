@@ -15,12 +15,30 @@ class PauliString:
             Must contain only I, X, Y, Z characters.
 
         """
-        if not all([c in "IXYZ" for c in string]):
-            raise ValueError(f"Invalid pauli string {string}")
+        if len(string) == 0 or not all([c in "IXYZ" for c in string]):
+            raise ValueError(f"Invalid pauli string '{string}'")
 
         self.string = string
         self.dim = 1 << len(string)
         self.weight = len(string) - string.count("I")
+
+    def __str__(self) -> str:
+        """Convert pauli string object to regular string.
+
+        Returns
+        -------
+            str: Plain pauli string.
+        """
+        return self.string
+
+    def __repr__(self) -> str:
+        """Get a string representation of the PauliString object.
+
+        Returns
+        -------
+            str: A string representation of the PauliString object.
+        """
+        return f'PauliString("{self.string}")'
 
     def dense(self) -> np.ndarray:
         """Return the dense matrix representation of the Pauli string."""

@@ -26,6 +26,8 @@ lint:
 
 # run with make -i to ignore errors and run all three formatters
 format:
+	pre-commit run --all-files -- cmake-format
+	pre-commit run --all-files -- clang-format
 	pre-commit run --all-files -- ruff-format
 	pre-commit run --all-files -- yamlfmt
 	pre-commit run --all-files -- trailing-whitespace
