@@ -188,10 +188,10 @@ struct PauliString {
 
       T sign = diag(po) ? -1.0 : 1.0;
 
-      // TODO any benefit from defining 1UL << l in a const auto var?
-      for (size_t li = (1UL << l); li < (1UL << (l + 1)); li++) {
-        k[li] = k[li - (1UL << l)] + (1UL << l) * sign;
-        m[li] = m[li - (1UL << l)] * eps;
+      auto const lower_bound = 1UL << l;
+      for (size_t li = lower_bound; li < (lower_bound << 1); li++) {
+        k[li] = k[li - lower_bound] + lower_bound * sign;
+        m[li] = m[li - lower_bound] * eps;
       }
     }
   }
