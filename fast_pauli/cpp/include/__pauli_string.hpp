@@ -1,12 +1,10 @@
 #ifndef __PAULI_STRING_HPP
 #define __PAULI_STRING_HPP
 
-#include <cstddef>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
 #include <algorithm>
-#include <cstring>
 #include <experimental/mdspan>
 #include <ranges>
 #include <string>
@@ -156,26 +154,27 @@ struct PauliString {
         return 1UL;
       }
     };
+    // Helper function that resolves first value of pauli string
+    auto inital_value = [&nY]() -> std::complex<T> {
+      switch (nY % 4) {
+      case 0:
+        return 1.0;
+      case 1:
+        return {0.0, -1.0};
+      case 2:
+        return -1.0;
+      case 3:
+        return {0.0, 1.0};
+      }
+      return {};
+    };
 
     // Populate the initial values of our output
     k[0] = 0;
     for (size_t i = 0; i < ps.size(); ++i) {
       k[0] += (1UL << i) * diag(ps[i]);
     }
-    switch (nY % 4) {
-    case 0:
-      m[0] = 1.0;
-      break;
-    case 1:
-      m[0] = -1.0i;
-      break;
-    case 2:
-      m[0] = -1.0;
-      break;
-    case 3:
-      m[0] = 1.0i;
-      break;
-    }
+    m[0] = inital_value();
 
     // Populate the rest of the values in a recursive-like manner
     for (size_t l = 0; l < n; ++l) {
@@ -287,11 +286,10 @@ struct PauliString {
     get_sparse_repr(k, m);
 
     for (size_t i = 0; i < states_T.extent(0); ++i) {
-      // std::memcpy(&new_states_T(i, 0), &states_T(k_i, 0),
-      //             states_T.extent(1) * sizeof(std::complex<T>));
+      std::copy_n(&states_T(k[i], 0), states_T.extent(1), &new_states_T(i, 0));
       const std::complex<T> c_m_i = c * m[i];
       for (size_t t = 0; t < states_T.extent(1); ++t) {
-        new_states_T(i, t) = c_m_i * states_T(k[i], t);
+        new_states_T(i, t) *= c_m_i;
       }
     }
   }
