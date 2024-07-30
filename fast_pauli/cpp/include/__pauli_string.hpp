@@ -229,7 +229,7 @@ struct PauliString {
    */
   template <std::floating_point T>
   std::vector<std::complex<T>>
-  apply(std::mdspan<const std::complex<T>, std::dextents<size_t, 1>> v) const {
+  apply(std::mdspan<std::complex<T> const, std::dextents<size_t, 1>> v) const {
     // Input check
     if (v.size() != dims()) {
       throw std::invalid_argument(

@@ -45,12 +45,14 @@ PYBIND11_MODULE(_fast_pauli, m) {
           [](fp::PauliString const &self,
              std::vector<std::vector<std::complex<double>>> inputs,
              std::complex<double> coef) {
+            if (inputs.empty())
+              return std::vector<std::vector<std::complex<double>>>{};
             // for now we expect row major inputs which have states as columns
-            const size_t n_states = inputs[0].size();
+            size_t const n_states = inputs.front().size();
             std::vector<std::complex<double>> flat_inputs;
             flat_inputs.reserve(inputs.size() * n_states);
 
-            for (const auto &vec : inputs)
+            for (auto const &vec : inputs)
               if (vec.size() != n_states)
                 throw std::invalid_argument("Bad shape of states array");
               else
@@ -66,6 +68,7 @@ PYBIND11_MODULE(_fast_pauli, m) {
                     flat_inputs.data(), inputs.size(), n_states},
                 coef);
 
+            // TODO arrange this ugly converters into utility functions at least
             std::vector<std::vector<std::complex<double>>> results(
                 inputs.size());
             for (size_t i = 0; i < inputs.size(); i++) {
