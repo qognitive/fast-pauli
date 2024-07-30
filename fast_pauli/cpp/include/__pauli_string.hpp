@@ -466,7 +466,7 @@ template <> struct fmt::formatter<fast_pauli::PauliString> {
   template <typename FormatContext>
   auto format(fast_pauli::PauliString const &ps, FormatContext &ctx) const {
     std::vector<fast_pauli::Pauli> paulis = ps.paulis;
-    return fmt::format_to(ctx.out(), "{}", fmt::join(paulis, "x"));
+    return fmt::format_to(ctx.out(), "{}", fmt::join(paulis, ""));
   }
 };
 

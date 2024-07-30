@@ -124,7 +124,7 @@ TEST_CASE("getters") {
   {
     PauliString ps;
     CHECK(ps.n_qubits() == 0);
-    CHECK(ps.dims() == 1);
+    CHECK(ps.dims() == 0);
   }
 }
 
