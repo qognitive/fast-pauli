@@ -106,7 +106,9 @@ struct PauliString {
    *
    * @return  size_t
    */
-  size_t dims() const noexcept { return 1UL << paulis.size(); }
+  size_t dims() const noexcept {
+    return paulis.size() ? 1UL << paulis.size() : 0;
+  }
 
   /**
    * @brief Get the sparse representation of the pauli string matrix.
@@ -139,7 +141,10 @@ struct PauliString {
     size_t const nY =
         std::count_if(ps.begin(), ps.end(),
                       [](fast_pauli::Pauli const &p) { return p.code == 2; });
-    size_t const dim = 1 << n;
+    size_t const dim = n ? 1 << n : 0;
+
+    if (dim == 0)
+      return;
 
     // Safe, but expensive, we overwrite the vectors
     k = std::vector<size_t>(dim);
@@ -155,7 +160,7 @@ struct PauliString {
       }
     };
     // Helper function that resolves first value of pauli string
-    auto inital_value = [&nY]() -> std::complex<T> {
+    auto initial_value = [&nY]() -> std::complex<T> {
       switch (nY % 4) {
       case 0:
         return 1.0;
@@ -174,7 +179,7 @@ struct PauliString {
     for (size_t i = 0; i < ps.size(); ++i) {
       k[0] += (1UL << i) * diag(ps[i]);
     }
-    m[0] = inital_value();
+    m[0] = initial_value();
 
     // Populate the rest of the values in a recursive-like manner
     for (size_t l = 0; l < n; ++l) {
