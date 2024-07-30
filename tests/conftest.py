@@ -11,3 +11,6 @@ from fast_pauli.pypauli.helpers import pauli_matrices
 def paulis() -> dict[str | int, np.ndarray]:
     """Fixture to provide dict with Pauli matrices."""
     return pauli_matrices()  # type: ignore
+
+
+# TODO: fixtures to wrap around numpy testing functions with default tolerances
