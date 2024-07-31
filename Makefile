@@ -19,6 +19,10 @@ test-py:
 .PHONY: test
 test: test-cpp test-py
 
+.PHONY: benchmark
+benchmark:
+	pytest benchmarks -v
+
 .PHONY: clean
 clean:
 	rm -rf build dist
