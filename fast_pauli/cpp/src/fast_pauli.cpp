@@ -78,7 +78,7 @@ PYBIND11_MODULE(_fast_pauli, m) {
             }
             return results;
           },
-          "states"_a, "coef"_a = std::complex<double>{1.0})
+          "states"_a, "coeff"_a = std::complex<double>{1.0})
       .def("__str__",
            [](fp::PauliString const &self) { return fmt::format("{}", self); });
 
