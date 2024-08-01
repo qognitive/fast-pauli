@@ -119,7 +119,7 @@ def benchmark_apply_batch_py(paulis: list, states: list) -> None:
 def test_apply_batch_n_qubits(  # type: ignore[no-untyped-def]
     benchmark, all_strings_for_qubits, lang, qubits, states, pauli_class, bench_func
 ) -> None:
-    """Benchmark PauliString multiplication with provided set of state vector.
+    """Benchmark PauliString multiplication with provided set of state vectors.
 
     Parametrized test case to run the benchmark across
     all Pauli strings of given length for given PauliString class.
