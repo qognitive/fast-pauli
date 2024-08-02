@@ -41,22 +41,8 @@ def test_pauli_wrapper(paulis: dict) -> None:
 
 def test_pauli_wrapper_multiply(paulis: dict) -> None:
     """Test custom __mul__ in c++ wrapper."""
-    c, pcpp = fp.Pauli("I") * fp.Pauli("I")
     # TODO: counter-intuitive interface for * operator
-    np.testing.assert_array_equal(
-        np.array(pcpp.to_tensor()),
-        np.eye(2),
-    )
-    np.testing.assert_equal(c, 1)
-
-    c, pcpp = fp.Pauli("Z") * fp.Pauli("Z")
-    np.testing.assert_array_equal(
-        np.array(pcpp.to_tensor()),
-        np.eye(2),
-    )
-    np.testing.assert_equal(c, 1)
-
-    for p1, p2 in it.permutations("IXYZ", 2):
+    for p1, p2 in it.product("IXYZ", repeat=2):
         c, pcpp = fp.Pauli(p1) * fp.Pauli(p2)
         np.testing.assert_allclose(
             c * np.array(pcpp.to_tensor()),
@@ -78,4 +64,4 @@ def test_pauli_wrapper_exceptions() -> None:
 
 
 if __name__ == "__main__":
-    pytest.main()
+    pytest.main([__file__])

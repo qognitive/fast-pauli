@@ -1,6 +1,7 @@
 """Test pauli c++ objects against python implementations."""
 
 import itertools as it
+from typing import Callable
 
 import numpy as np
 import pytest
@@ -50,13 +51,14 @@ def test_pauli_string_representations(sample_strings: list[str]) -> None:
         assert pcpp.weight == ppy.weight
 
 
-def test_pauli_string_apply_batch(sample_strings: list[str]) -> None:
+def test_pauli_string_apply_batch(
+    sample_strings: list[str], generate_random_complex: Callable
+) -> None:
     """Test that C++ PauliString is numerically equivalent to Python PauliString."""
-    rng = np.random.default_rng(321)
-
     for s in sample_strings:
-        n = 2 ** len(s)
-        psis = rng.random((n, 42))
+        n_dim = 2 ** len(s)
+        n_states = 42
+        psis = generate_random_complex(n_dim, n_states)
 
         np.testing.assert_allclose(
             np.array(fp.PauliString(s).apply_batch(psis.tolist())),

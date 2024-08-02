@@ -1,6 +1,7 @@
 """Test pauli objects from c++ against python implementations."""
 
 import itertools as it
+from typing import Callable
 
 import numpy as np
 import pytest
@@ -101,10 +102,8 @@ def test_sparse_pauli_composer(paulis: dict) -> None:
         )
 
 
-def test_pauli_string_apply() -> None:
+def test_pauli_string_apply(generate_random_complex: Callable) -> None:
     """Test pauli string multiplication with 1d vector."""
-    rng = np.random.default_rng(321)
-
     np.testing.assert_allclose(
         np.array(fp.PauliString("IXYZ").apply(np.zeros(16).tolist())),
         np.zeros(16),
@@ -128,8 +127,8 @@ def test_pauli_string_apply() -> None:
         map(lambda x: "".join(x), it.permutations("IXYZ", 3)),
         ["XYIZXYZ", "XXIYYIZZ", "ZIXIZYXX"],
     ):
-        n = 2 ** len(s)
-        psi = rng.random(n)
+        n_dim = 2 ** len(s)
+        psi = generate_random_complex(n_dim)
         np.testing.assert_allclose(
             np.array(fp.PauliString(s).apply(psi.tolist())),
             naive_pauli_converter(s).dot(psi),
@@ -137,10 +136,8 @@ def test_pauli_string_apply() -> None:
         )
 
 
-def test_pauli_string_apply_batch() -> None:
+def test_pauli_string_apply_batch(generate_random_complex: Callable) -> None:
     """Test pauli string multiplication with 2d tensor."""
-    rng = np.random.default_rng(321)
-
     np.testing.assert_allclose(
         np.array(fp.PauliString("IXYZ").apply_batch(np.zeros((16, 16)).tolist())),
         np.zeros((16, 16)),
@@ -166,8 +163,9 @@ def test_pauli_string_apply_batch() -> None:
         map(lambda x: "".join(x), it.permutations("IXYZ", 3)),
         ["XYIZXYZ", "XXIYYIZZ", "ZIXIZYXX"],
     ):
-        n = 2 ** len(s)
-        psis = rng.random((n, 42))
+        n_dim = 2 ** len(s)
+        n_states = 42
+        psis = generate_random_complex(n_dim, n_states)
         np.testing.assert_allclose(
             np.array(fp.PauliString(s).apply_batch(psis.tolist())),
             naive_pauli_converter(s) @ psis,
@@ -175,12 +173,14 @@ def test_pauli_string_apply_batch() -> None:
         )
 
     for s in map(lambda x: "".join(x), it.permutations("IXYZ", 2)):
-        n = 2 ** len(s)
-        coef = rng.random()
-        psis = rng.random((n, 7))
+        n_dim = 2 ** len(s)
+        n_states = 7
+        coeff = generate_random_complex(1)[0]
+        psis = generate_random_complex(n_dim, n_states)
+
         np.testing.assert_allclose(
-            np.array(fp.PauliString(s).apply_batch(psis.tolist(), coef)),
-            coef * naive_pauli_converter(s) @ psis,
+            np.array(fp.PauliString(s).apply_batch(psis.tolist(), coeff)),
+            coeff * naive_pauli_converter(s) @ psis,
             atol=1e-15,
         )
 
@@ -208,4 +208,4 @@ def test_pauli_string_exceptions() -> None:
 
 
 if __name__ == "__main__":
-    pytest.main()
+    pytest.main([__file__])

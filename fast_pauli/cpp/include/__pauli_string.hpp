@@ -103,6 +103,7 @@ struct PauliString {
 
   /**
    * @brief Return the dimension (2^n_qubits) of the PauliString.
+   * @note this returns 0 if the PauliString is empty.
    *
    * @return  size_t
    */
