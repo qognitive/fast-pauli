@@ -9,11 +9,15 @@ build:
 	python -m pip install ".[dev]"
 	python -m build .
 
-.PHONY: tests
-tests:
+test-cpp:
 	ctest --test-dir build
-	python -m pytest fast_pauli/py/tests
-	python -m pytest tests
+
+test-py:
+	python -m pytest -v fast_pauli/py/tests
+	python -m pytest -v tests
+
+.PHONY: test
+test: test-cpp test-py
 
 .PHONY: clean
 clean:
