@@ -29,6 +29,10 @@ jobs:
         # Build your program with the given configuration
         run: |
           cmake --build ${{github.workspace}}/build --verbose --parallel
+      - name: Install
+        run: |
+          cmake --install ${{github.workspace}}/build
+          python -m pip install .[dev]
       - name: Test C++
         env:
           OMP_NUM_THREADS: 2
@@ -40,6 +44,8 @@ jobs:
           ./${CPP_TEST_DIR}/test_pauli_op --test-case-exclude="*multistring*"
           ./${CPP_TEST_DIR}/test_pauli_string
           ./${CPP_TEST_DIR}/test_summed_pauli_op
+      - name: Test Python
+        run: make test-py
 
 # - name: Test Python
 # run: PYTHONPATH=build:$PYTHONPATH pytest -v test
