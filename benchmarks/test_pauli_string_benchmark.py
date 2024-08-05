@@ -127,7 +127,7 @@ def test_apply_n_qubits(  # type: ignore[no-untyped-def]
 def benchmark_apply_batch_cpp(paulis: list, states: list) -> None:
     """Benchmark apply_batch method."""
     for p, psi in zip(paulis, states):
-        result = p.apply_batch(psi)  # noqa: F841
+        result = p.apply_batch(psi.tolist())  # noqa: F841
 
 
 def benchmark_apply_batch_py(paulis: list, states: list) -> None:
