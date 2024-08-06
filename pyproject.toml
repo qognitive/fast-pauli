@@ -25,6 +25,7 @@ dev = [
   "mypy",
   "ruff",
   "pytest",
+  "pytest-benchmark",
   "setuptools_scm[toml]>=8",
   "sphinx",
   "sphinx_rtd_theme",

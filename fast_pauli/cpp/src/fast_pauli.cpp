@@ -11,6 +11,10 @@ using namespace pybind11::literals;
 
 PYBIND11_MODULE(_fast_pauli, m) {
   // TODO init default threading behaviour for the module
+  // TODO give up GIL when calling into long-running C++ code
+
+  // TODO add hierarchy with more submodules like
+  // _fast_pauli.helpers, _fast_pauli._core to expose internal algos ?
 
   py::class_<fp::Pauli>(m, "Pauli")
       .def(py::init<>())

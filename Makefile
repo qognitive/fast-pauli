@@ -2,6 +2,7 @@
 build:
 	cmake -B build
 	cmake --build build --parallel
+	cmake --install build
 	# TODO in general python build should internally trigger cmake, but for now
 	# let's keep cmake lines here as we don't have any python build process yet
 	python -m pip cache purge
@@ -18,6 +19,11 @@ test-py:
 
 .PHONY: test
 test: test-cpp test-py
+
+.PHONY: benchmark
+benchmark:
+	pytest -v benchmarks --benchmark-group-by=func --benchmark-sort=fullname \
+	--benchmark-columns='mean,median,min,max,stddev,iqr,outliers,ops,rounds,iterations'
 
 .PHONY: clean
 clean:
