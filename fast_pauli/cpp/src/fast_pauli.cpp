@@ -9,6 +9,25 @@ namespace fp = fast_pauli;
 namespace py = pybind11;
 using namespace pybind11::literals;
 
+namespace fast_pauli {
+template <std::floating_point T>
+inline std::vector<std::complex<T>>
+flatten_vector(std::vector<std::vector<std::complex<T>>> const &inputs) {
+  auto const n_rows = inputs.size();
+  auto const n_cols = inputs.front().size();
+  std::vector<std::complex<T>> flat;
+  flat.reserve(n_rows * n_cols);
+
+  for (auto const &vec : inputs)
+    if (vec.size() != n_cols)
+      throw std::invalid_argument("Bad shape of input array");
+    else
+      std::ranges::copy(vec.begin(), vec.end(), std::back_inserter(flat));
+
+  return flat;
+}
+} // namespace fast_pauli
+
 PYBIND11_MODULE(_fast_pauli, m) {
   // TODO init default threading behaviour for the module
   // TODO give up GIL when calling into long-running C++ code
@@ -21,11 +40,10 @@ PYBIND11_MODULE(_fast_pauli, m) {
       .def(py::init<int const>(), "code"_a)
       .def(py::init<char const>(), "symbol"_a)
       .def("to_tensor", &fp::Pauli::to_tensor<double>)
+      .def("multiply", [](fp::Pauli const &self,
+                          fp::Pauli const &rhs) { return self * rhs; })
       .def("__str__",
-           [](fp::Pauli const &self) { return fmt::format("{}", self); })
-      .def("__mul__", [](fp::Pauli const &self, fp::Pauli const &rhs) {
-        return self * rhs;
-      });
+           [](fp::Pauli const &self) { return fmt::format("{}", self); });
 
   py::class_<fp::PauliString>(m, "PauliString")
       .def(py::init<>())
@@ -48,21 +66,12 @@ PYBIND11_MODULE(_fast_pauli, m) {
           // TODO: this should be handled by proper adapters for mdspan
           [](fp::PauliString const &self,
              std::vector<std::vector<std::complex<double>>> inputs,
-             std::complex<double> coef) {
+             std::complex<double> coeff) {
             if (inputs.empty())
               return std::vector<std::vector<std::complex<double>>>{};
             // for now we expect row major inputs which have states as columns
-            size_t const n_states = inputs.front().size();
-            std::vector<std::complex<double>> flat_inputs;
-            flat_inputs.reserve(inputs.size() * n_states);
-
-            for (auto const &vec : inputs)
-              if (vec.size() != n_states)
-                throw std::invalid_argument("Bad shape of states array");
-              else
-                std::ranges::copy(vec.begin(), vec.end(),
-                                  std::back_inserter(flat_inputs));
-
+            auto flat_inputs = fp::flatten_vector(inputs);
+            auto const n_states = inputs.front().size();
             std::vector<std::complex<double>> flat_outputs(flat_inputs.size(),
                                                            0);
             self.apply_batch(
@@ -70,7 +79,7 @@ PYBIND11_MODULE(_fast_pauli, m) {
                     flat_outputs.data(), inputs.size(), n_states},
                 std::mdspan<std::complex<double>, std::dextents<size_t, 2>>{
                     flat_inputs.data(), inputs.size(), n_states},
-                coef);
+                coeff);
 
             // TODO arrange this ugly converters into utility functions at least
             std::vector<std::vector<std::complex<double>>> results(
@@ -81,6 +90,30 @@ PYBIND11_MODULE(_fast_pauli, m) {
                                 std::back_inserter(results[i]));
             }
             return results;
+          },
+          "states"_a, "coeff"_a = std::complex<double>{1.0})
+      .def(
+          "expected_value",
+          [](fp::PauliString const &self,
+             std::vector<std::complex<double>> state,
+             std::complex<double> coeff) {
+            std::mdspan<std::complex<double> const, std::dextents<size_t, 2>>
+                span_state{state.data(), state.size(), 1};
+            return self.expected_value(span_state, coeff);
+          },
+          "state"_a, "coeff"_a = std::complex<double>{1.0})
+      .def(
+          "expected_value",
+          [](fp::PauliString const &self,
+             std::vector<std::vector<std::complex<double>>> states,
+             std::complex<double> coeff) {
+            if (states.empty())
+              return std::vector<std::complex<double>>{};
+            auto flat_states = fp::flatten_vector(states);
+            std::mdspan<std::complex<double> const, std::dextents<size_t, 2>>
+                span_states{flat_states.data(), states.size(),
+                            states.front().size()};
+            return self.expected_value(span_states, coeff);
           },
           "states"_a, "coeff"_a = std::complex<double>{1.0})
       .def("__str__",
