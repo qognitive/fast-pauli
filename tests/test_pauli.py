@@ -6,44 +6,39 @@ import numpy as np
 import pytest
 
 import fast_pauli._fast_pauli as fp
-import fast_pauli.pypauli.operations as pp
+from tests.conftest import resolve_parameter_repr
 
 
-def test_pauli_wrapper(paulis: dict) -> None:
+@pytest.mark.parametrize("Pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
+def test_pauli_wrapper(paulis: dict, Pauli: type) -> None:  # noqa: N803
     """Test pauli wrapper in python land."""
     np.testing.assert_array_equal(
-        np.array(fp.Pauli().to_tensor()),
+        Pauli().to_tensor(),
         paulis["I"],
     )
 
     for i in [0, 1, 2, 3]:
-        pcpp = fp.Pauli(code=i)
+        pcpp = Pauli(code=i)
         np.testing.assert_array_equal(
-            np.array(pcpp.to_tensor()),
+            pcpp.to_tensor(),
             paulis[i],
         )
 
     for c in ["I", "X", "Y", "Z"]:
-        pcpp = fp.Pauli(symbol=c)
+        pcpp = Pauli(symbol=c)
         np.testing.assert_allclose(
-            np.array(pcpp.to_tensor()),
+            pcpp.to_tensor(),
             paulis[c],
             atol=1e-15,
         )
-        np.testing.assert_allclose(
-            np.array(pcpp.to_tensor()),
-            pp.PauliString(c).dense(),
-            atol=1e-15,
-        )
         np.testing.assert_string_equal(str(pcpp), c)
-        np.testing.assert_string_equal(str(pcpp), str(pp.PauliString(c)))
 
 
-def test_pauli_wrapper_multiply(paulis: dict) -> None:
+@pytest.mark.parametrize("Pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
+def test_pauli_wrapper_multiply(paulis: dict, Pauli: type) -> None:  # noqa: N803
     """Test custom __mul__ in c++ wrapper."""
-    # TODO: counter-intuitive interface for * operator
     for p1, p2 in it.product("IXYZ", repeat=2):
-        c, pcpp = fp.Pauli(p1) * fp.Pauli(p2)
+        c, pcpp = Pauli(p1).multiply(Pauli(p2))
         np.testing.assert_allclose(
             c * np.array(pcpp.to_tensor()),
             paulis[p1] @ paulis[p2],
@@ -51,17 +46,18 @@ def test_pauli_wrapper_multiply(paulis: dict) -> None:
         )
 
 
-def test_pauli_wrapper_exceptions() -> None:
+@pytest.mark.parametrize("Pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
+def test_pauli_wrapper_exceptions(Pauli: type) -> None:  # noqa: N803
     """Test that exceptions from c++ are raised and propagated correctly."""
     with np.testing.assert_raises(ValueError):
-        fp.Pauli("II")
+        Pauli("II")
     with np.testing.assert_raises(ValueError):
-        fp.Pauli("A")
+        Pauli("A")
     with np.testing.assert_raises(ValueError):
-        fp.Pauli(-1)
+        Pauli(-1)
     with np.testing.assert_raises(ValueError):
-        fp.Pauli(5)
+        Pauli(5)
 
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    pytest.main()
