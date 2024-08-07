@@ -48,27 +48,46 @@ class PauliString:
         matrix[np.arange(columns.size), columns] = values
         return matrix
 
-    def multiply(self, state: np.ndarray) -> np.ndarray:
+    def multiply(self, states: np.ndarray, coeff: np.complex128 = 1.0) -> np.ndarray:
         """Efficient multiplication of Pauli string with a given state.
 
         Args:
         ----
             state: The input state as a numpy array.
+            coeff: Multiplication factor to apply to the PauliString
 
         Returns
         -------
             The result of multiplying the Pauli string with the state.
 
         """
-        if state.shape[0] != self.dim or state.ndim > 2:
-            raise ValueError(f"Provided state has inconsistent shape {state.shape}")
+        if states.shape[0] != self.dim or states.ndim > 2:
+            raise ValueError(f"Provided state has inconsistent shape {states.shape}")
 
         columns, values = compose_sparse_pauli(self.string)
+        values *= coeff
 
-        if state.ndim == 2:
-            return values[:, np.newaxis] * state[columns]
+        if states.ndim == 2:
+            return values[:, np.newaxis] * states[columns]
         else:
-            return values * state[columns]
+            return values * states[columns]
+
+    def expected_value(
+        self, state: np.ndarray, coeff: np.complex128 = 1.0
+    ) -> np.complex128 | np.ndarray:
+        """Compute the expected value of Pauli string for a given state.
+
+        Args:
+        ----
+            state: The input state as a numpy array.
+            coeff: Multiplication factor to apply to the PauliString
+
+        Returns
+        -------
+            The expected value of the Pauli string with the state.
+
+        """
+        return np.multiply(state.conj(), self.multiply(state, coeff)).sum(axis=0)
 
 
 def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:
