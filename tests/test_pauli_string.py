@@ -7,13 +7,9 @@ import numpy as np
 import pytest
 
 import fast_pauli._fast_pauli as fp
+import fast_pauli.pypauli.operations as pp
 from fast_pauli.pypauli.helpers import naive_pauli_converter
-
-# TODO: consider unifying unit tests (+ numerical validations) for equivalent structures
-#       from pypauli and _fast_pauli submodules. Essentially, we would have unified
-#       test cases parametrized by _fast_pauli.PauliString and pypauli.PauliString.
-#       This would require identical interface for both things
-#       (which is probably what are aiming for in a long term)
+from tests.conftest import resolve_parameter_repr
 
 
 def test_pauli_string_wrapper(paulis: dict) -> None:
@@ -207,5 +203,60 @@ def test_pauli_string_exceptions() -> None:
         fp.PauliString("XYZ").apply_batch(np.eye(4).tolist())
 
 
+@pytest.mark.consistency
+@pytest.mark.parametrize(
+    "PauliString,", [(fp.PauliString), (pp.PauliString)], ids=resolve_parameter_repr
+)
+def test_expected_value(
+    sample_pauli_strings: list,
+    generate_random_complex: Callable,
+    PauliString: type,  # noqa: N803
+) -> None:
+    """Test the expected value method."""
+    np.testing.assert_allclose(
+        PauliString("IXYZ").expected_value(np.zeros(16)),
+        0,
+        atol=1e-15,
+    )
+    np.testing.assert_allclose(
+        PauliString("IXYZ").expected_value(np.zeros((16, 16))),
+        np.zeros(16),
+        atol=1e-15,
+    )
+
+    np.testing.assert_allclose(
+        PauliString("III").expected_value(np.arange(8)),
+        np.square(np.arange(8)).sum(),
+        atol=1e-15,
+    )
+    np.testing.assert_allclose(
+        PauliString("III").expected_value(np.arange(8 * 8).reshape(8, 8)),
+        np.square(np.arange(8 * 8)).reshape(8, 8).sum(0),
+        atol=1e-15,
+    )
+
+    for s in sample_pauli_strings:
+        n_dim = 2 ** len(s)
+        n_states = 21
+
+        psi = generate_random_complex(n_dim)
+        np.testing.assert_allclose(
+            PauliString(s).expected_value(psi),
+            naive_pauli_converter(s).dot(psi).dot(psi.conj()),
+            atol=1e-15,
+        )
+
+        coeff = generate_random_complex(1)[0]
+        psis = generate_random_complex(n_dim, n_states)
+        expected = [
+            coeff * naive_pauli_converter(s).dot(psi).dot(psi.conj()) for psi in psis.T
+        ]
+        np.testing.assert_allclose(
+            PauliString(s).expected_value(psis, coeff),
+            expected,
+            atol=1e-15,
+        )
+
+
 if __name__ == "__main__":
-    pytest.main([__file__])
+    pytest.main()
