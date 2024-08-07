@@ -149,6 +149,7 @@ def test_sparse_pauli_multiply() -> None:
         n = 2 ** len(s)
         psi = rng.random(n)
         psi_batch = rng.random((n, 21))
+        coeff = rng.random()
 
         np.testing.assert_allclose(
             PauliString(s).multiply(psi),
@@ -156,11 +157,11 @@ def test_sparse_pauli_multiply() -> None:
             atol=1e-15,
         )
         np.testing.assert_allclose(
-            PauliString(s).multiply(psi_batch),
-            naive_pauli_converter(s) @ psi_batch,
+            PauliString(s).multiply(psi_batch, coeff),
+            coeff * naive_pauli_converter(s) @ psi_batch,
             atol=1e-15,
         )
 
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    pytest.main()
