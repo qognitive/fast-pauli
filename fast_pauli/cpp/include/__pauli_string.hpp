@@ -300,6 +300,45 @@ struct PauliString {
     }
   }
 
+  /**
+   * @brief Calculate expected values for a given batch of states.
+   * This function takes in transposed states with (n_dims x n_states) shape
+   *
+   * It computes following inner product
+   * \f$ \bra{\psi_t} \mathcal{x_{ti}\hat{P_i}} \ket{\psi_t} \f$
+   * for each state \f$ \ket{\psi_t} \f$ from provided batch.
+   *
+   * @tparam T The floating point base to use for all the complex numbers
+   * @param states_T THe original states to apply the PauliString to
+   * (n_dim x n_states)
+   * @param c Multiplication factor to apply to the PauliString
+   */
+  template <std::floating_point T>
+  std::vector<std::complex<T>> expected_value(
+      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states_T,
+      std::complex<T> const c) const {
+    // Input check
+    if (states_T.extent(0) != dims())
+      throw std::invalid_argument(
+          fmt::format("[PauliString] states shape ({}) must match the dimension"
+                      " of the operators ({})",
+                      states_T.extent(0), dims()));
+
+    std::vector<size_t> k;
+    std::vector<std::complex<T>> m;
+    get_sparse_repr(k, m);
+
+    std::vector<std::complex<T>> exp_val(states_T.extent(1), 0);
+    for (size_t i = 0; i < states_T.extent(0); ++i) {
+      const auto c_m_i = c * m[i];
+      for (size_t t = 0; t < states_T.extent(1); ++t) {
+        exp_val[t] += std::conj(states_T(i, t)) * c_m_i * states_T(k[i], t);
+      }
+    }
+
+    return exp_val;
+  }
+
   //
   // Debugging Helpers
   //
