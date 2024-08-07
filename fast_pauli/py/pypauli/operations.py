@@ -72,9 +72,7 @@ class PauliString:
         else:
             return values * states[columns]
 
-    def expected_value(
-        self, state: np.ndarray, coeff: np.complex128 = 1.0
-    ) -> np.complex128 | np.ndarray:
+    def expected_value(self, state: np.ndarray) -> np.complex128 | np.ndarray:
         """Compute the expected value of Pauli string for a given state.
 
         Args:
@@ -87,7 +85,7 @@ class PauliString:
             The expected value of the Pauli string with the state.
 
         """
-        return np.multiply(state.conj(), self.multiply(state, coeff)).sum(axis=0)
+        return np.multiply(state.conj(), self.multiply(state)).sum(axis=0)
 
 
 def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:

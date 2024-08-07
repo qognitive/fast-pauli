@@ -305,7 +305,7 @@ struct PauliString {
    * This function takes in transposed states with (n_dims x n_states) shape
    *
    * It computes following inner product
-   * \f$ \bra{\psi_t} \mathcal{x_{ti}\hat{P_i}} \ket{\psi_t} \f$
+   * \f$ \bra{\psi_t} \mathcal{\hat{P_i}} \ket{\psi_t} \f$
    * for each state \f$ \ket{\psi_t} \f$ from provided batch.
    *
    * @tparam T The floating point base to use for all the complex numbers
@@ -315,8 +315,8 @@ struct PauliString {
    */
   template <std::floating_point T>
   std::vector<std::complex<T>> expected_value(
-      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states_T,
-      std::complex<T> const c) const {
+      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states_T)
+      const {
     // Input check
     if (states_T.extent(0) != dims())
       throw std::invalid_argument(
@@ -330,9 +330,8 @@ struct PauliString {
 
     std::vector<std::complex<T>> exp_val(states_T.extent(1), 0);
     for (size_t i = 0; i < states_T.extent(0); ++i) {
-      const auto c_m_i = c * m[i];
       for (size_t t = 0; t < states_T.extent(1); ++t) {
-        exp_val[t] += std::conj(states_T(i, t)) * c_m_i * states_T(k[i], t);
+        exp_val[t] += std::conj(states_T(i, t)) * m[i] * states_T(k[i], t);
       }
     }
 

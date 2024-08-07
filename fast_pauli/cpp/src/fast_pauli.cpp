@@ -10,6 +10,14 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 
 namespace fast_pauli {
+
+/**
+ * @brief Flatten row major matrix represented as a 2D-std::vector into single
+ * std::vector
+ *
+ * @tparam T The floating point base to use for all the complex numbers
+ * @return  std::vector<std::complex<T>> flattened vector with rows concatenated
+ */
 template <std::floating_point T>
 inline std::vector<std::complex<T>>
 flatten_vector(std::vector<std::vector<std::complex<T>>> const &inputs) {
@@ -26,6 +34,7 @@ flatten_vector(std::vector<std::vector<std::complex<T>>> const &inputs) {
 
   return flat;
 }
+
 } // namespace fast_pauli
 
 PYBIND11_MODULE(_fast_pauli, m) {
@@ -95,27 +104,25 @@ PYBIND11_MODULE(_fast_pauli, m) {
       .def(
           "expected_value",
           [](fp::PauliString const &self,
-             std::vector<std::complex<double>> state,
-             std::complex<double> coeff) {
+             std::vector<std::complex<double>> state) {
             std::mdspan<std::complex<double> const, std::dextents<size_t, 2>>
                 span_state{state.data(), state.size(), 1};
-            return self.expected_value(span_state, coeff);
+            return self.expected_value(span_state);
           },
-          "state"_a, "coeff"_a = std::complex<double>{1.0})
+          "state"_a)
       .def(
           "expected_value",
           [](fp::PauliString const &self,
-             std::vector<std::vector<std::complex<double>>> states,
-             std::complex<double> coeff) {
+             std::vector<std::vector<std::complex<double>>> states) {
             if (states.empty())
               return std::vector<std::complex<double>>{};
             auto flat_states = fp::flatten_vector(states);
             std::mdspan<std::complex<double> const, std::dextents<size_t, 2>>
                 span_states{flat_states.data(), states.size(),
                             states.front().size()};
-            return self.expected_value(span_states, coeff);
+            return self.expected_value(span_states);
           },
-          "states"_a, "coeff"_a = std::complex<double>{1.0})
+          "states"_a)
       .def("__str__",
            [](fp::PauliString const &self) { return fmt::format("{}", self); });
 
