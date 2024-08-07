@@ -9,6 +9,8 @@ import pytest
 import fast_pauli._fast_pauli as fp
 import fast_pauli.pypauli.operations as pp
 
+# TODO this is going to be blended into main tests/test_pauli_string.py
+
 
 @pytest.fixture
 def sample_strings() -> list[str]:
