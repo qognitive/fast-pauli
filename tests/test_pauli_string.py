@@ -247,7 +247,7 @@ def test_expected_value(
         )
 
         coeff = generate_random_complex(1)[0]
-        psis = generate_random_complex(n_dim, n_states)
+        psis = generate_random_complex(n_states, n_dim)
         expected = np.einsum("ti,ij,tj->t", psi.conj(), naive_pauil_converter(s), psi)
         np.testing.assert_allclose(
             PauliString(s).expected_value(psis, coeff),
