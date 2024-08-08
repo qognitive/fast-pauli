@@ -1,1 +1,1 @@
-"""Test module for testing C++ library against python implementation."""
+"""Module to validate correctness and consistency of C++ and python implementations."""
