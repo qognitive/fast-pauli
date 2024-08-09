@@ -1,4 +1,5 @@
 #include "fast_pauli.hpp"
+#include "__pauli_string.hpp"
 
 #include <experimental/mdspan>
 #include <pybind11/numpy.h>
@@ -40,15 +41,13 @@ flatten_vector(std::vector<std::vector<std::complex<T>>> const &inputs) {
 PYBIND11_MODULE(_fast_pauli, m) {
   // TODO init default threading behaviour for the module
   // TODO give up GIL when calling into long-running C++ code
-
-  // TODO add hierarchy with more submodules like
-  // _fast_pauli.helpers, _fast_pauli._core to expose internal algos ?
+  using float_type = double;
 
   py::class_<fp::Pauli>(m, "Pauli")
       .def(py::init<>())
       .def(py::init<int const>(), "code"_a)
       .def(py::init<char const>(), "symbol"_a)
-      .def("to_tensor", &fp::Pauli::to_tensor<double>)
+      .def("to_tensor", &fp::Pauli::to_tensor<float_type>)
       .def("multiply", [](fp::Pauli const &self,
                           fp::Pauli const &rhs) { return self * rhs; })
       .def("__str__",
@@ -62,50 +61,52 @@ PYBIND11_MODULE(_fast_pauli, m) {
            "paulis"_a)
       .def(py::init<std::string const &>(), "string"_a)
       .def_property_readonly("n_qubits", &fp::PauliString::n_qubits)
-      .def_property_readonly("dims", &fp::PauliString::dims)
+      .def_property_readonly("dim", &fp::PauliString::dims)
       .def_readonly("weight", &fp::PauliString::weight)
-      .def("to_tensor", &fp::PauliString::get_dense_repr<double>)
+      .def("to_tensor", &fp::PauliString::get_dense_repr<float_type>)
       .def(
           "apply",
           [](fp::PauliString const &self,
-             std::vector<std::complex<double>> vec) { return self.apply(vec); },
+             std::vector<std::complex<float_type>> state) {
+            return self.apply(state);
+          },
           "state"_a)
       .def(
-          "apply_batch",
+          "apply",
           // TODO: this should be handled by proper adapters for mdspan
           [](fp::PauliString const &self,
-             std::vector<std::vector<std::complex<double>>> inputs,
-             std::complex<double> coeff) {
-            if (inputs.empty())
-              return std::vector<std::vector<std::complex<double>>>{};
+             std::vector<std::vector<std::complex<float_type>>> states,
+             std::complex<float_type> coeff) {
+            if (states.empty())
+              return std::vector<std::vector<std::complex<float_type>>>{};
             // for now we expect row major inputs which have states as columns
-            auto flat_inputs = fp::flatten_vector(inputs);
-            auto const n_states = inputs.front().size();
-            std::vector<std::complex<double>> flat_outputs(flat_inputs.size(),
-                                                           0);
+            auto flat_inputs = fp::flatten_vector(states);
+            auto const n_states = states.front().size();
+            std::vector<std::complex<float_type>> flat_outputs(
+                flat_inputs.size(), 0);
             self.apply_batch(
-                std::mdspan<std::complex<double>, std::dextents<size_t, 2>>{
-                    flat_outputs.data(), inputs.size(), n_states},
-                std::mdspan<std::complex<double>, std::dextents<size_t, 2>>{
-                    flat_inputs.data(), inputs.size(), n_states},
+                std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>{
+                    flat_outputs.data(), states.size(), n_states},
+                std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>{
+                    flat_inputs.data(), states.size(), n_states},
                 coeff);
 
-            // TODO arrange this ugly converters into utility functions at least
-            std::vector<std::vector<std::complex<double>>> results(
-                inputs.size());
-            for (size_t i = 0; i < inputs.size(); i++) {
+            std::vector<std::vector<std::complex<float_type>>> results(
+                states.size());
+            for (size_t i = 0; i < states.size(); i++) {
               auto it = flat_outputs.begin() + i * n_states;
               std::ranges::copy(it, it + n_states,
                                 std::back_inserter(results[i]));
             }
             return results;
           },
-          "states"_a, "coeff"_a = std::complex<double>{1.0})
+          "states"_a, "coeff"_a = std::complex<float_type>{1.0})
       .def(
           "expected_value",
           [](fp::PauliString const &self,
-             std::vector<std::complex<double>> state) {
-            std::mdspan<std::complex<double> const, std::dextents<size_t, 2>>
+             std::vector<std::complex<float_type>> state) {
+            std::mdspan<std::complex<float_type> const,
+                        std::dextents<size_t, 2>>
                 span_state{state.data(), state.size(), 1};
             return self.expected_value(span_state);
           },
@@ -113,11 +114,12 @@ PYBIND11_MODULE(_fast_pauli, m) {
       .def(
           "expected_value",
           [](fp::PauliString const &self,
-             std::vector<std::vector<std::complex<double>>> states) {
+             std::vector<std::vector<std::complex<float_type>>> states) {
             if (states.empty())
-              return std::vector<std::complex<double>>{};
+              return std::vector<std::complex<float_type>>{};
             auto flat_states = fp::flatten_vector(states);
-            std::mdspan<std::complex<double> const, std::dextents<size_t, 2>>
+            std::mdspan<std::complex<float_type> const,
+                        std::dextents<size_t, 2>>
                 span_states{flat_states.data(), states.size(),
                             states.front().size()};
             return self.expected_value(span_states);
@@ -126,5 +128,17 @@ PYBIND11_MODULE(_fast_pauli, m) {
       .def("__str__",
            [](fp::PauliString const &self) { return fmt::format("{}", self); });
 
-  py::class_<fp::SummedPauliOp<double>>(m, "SummedPauliOp").def(py::init<>());
+  py::class_<fp::SummedPauliOp<float_type>>(m, "SummedPauliOp")
+      .def(py::init<>());
+
+  auto helpers_m = m.def_submodule("helpers");
+  helpers_m.def("get_nontrivial_paulis", &fp::get_nontrivial_paulis,
+                "weight"_a);
+  helpers_m.def("calcutate_pauli_strings", &fp::calcutate_pauli_strings,
+                "n_qubits"_a, "weight"_a);
+  helpers_m.def("calculate_pauli_strings_max_weight",
+                &fp::calculate_pauli_strings_max_weight, "n_qubits"_a,
+                "weight"_a);
+  helpers_m.def("pauli_string_sparse_repr",
+                &fp::PauliString::get_sparse_repr<float_type>, "paulis"_a);
 }

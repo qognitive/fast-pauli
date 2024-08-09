@@ -19,6 +19,7 @@ class PauliString:
             raise ValueError(f"Invalid pauli string '{string}'")
 
         self.string = string
+        self.n_qubits = len(string)
         self.dim = 1 << len(string)
         self.weight = len(string) - string.count("I")
 
@@ -40,7 +41,7 @@ class PauliString:
         """
         return f'PauliString("{self.string}")'
 
-    def dense(self) -> np.ndarray:
+    def to_tensor(self) -> np.ndarray:
         """Return the dense matrix representation of the Pauli string."""
         columns, values = compose_sparse_pauli(self.string)
 
@@ -48,7 +49,7 @@ class PauliString:
         matrix[np.arange(columns.size), columns] = values
         return matrix
 
-    def multiply(self, states: np.ndarray, coeff: np.complex128 = 1.0) -> np.ndarray:
+    def apply(self, states: np.ndarray, coeff: np.complex128 = 1.0) -> np.ndarray:
         """Efficient multiplication of Pauli string with a given state.
 
         Args:
@@ -85,7 +86,7 @@ class PauliString:
             The expected value of the Pauli string with the state.
 
         """
-        return np.multiply(state.conj(), self.multiply(state)).sum(axis=0)
+        return np.multiply(state.conj(), self.apply(state)).sum(axis=0)
 
 
 def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:

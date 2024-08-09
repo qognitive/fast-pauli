@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import fast_pauli._fast_pauli as fp
-import fast_pauli.pypauli.operations as pp
+import fast_pauli.pypauli as pp
 
 # TODO add a separate benchmark for get_sparse_repr vs compose_sparse_pauli
 # TODO control numpy threading in a fixture for fair comparison
@@ -47,7 +47,7 @@ def benchmark_dense_conversion_cpp(paulis: list) -> None:
 def benchmark_dense_conversion_py(paulis: list) -> None:
     """Benchmark dense conversion."""
     for p in paulis:
-        dense_repr = p.dense()  # noqa: F841
+        dense_repr = p.to_tensor()  # noqa: F841
 
 
 @pytest.mark.parametrize(
@@ -87,7 +87,7 @@ def benchmark_apply_cpp(paulis: list, states: list) -> None:
 def benchmark_apply_py(paulis: list, states: list) -> None:
     """Benchmark apply method."""
     for p, psi in zip(paulis, states):
-        result = p.multiply(psi)  # noqa: F841
+        result = p.apply(psi)  # noqa: F841
 
 
 @pytest.mark.parametrize(
@@ -127,13 +127,13 @@ def test_apply_n_qubits(  # type: ignore[no-untyped-def]
 def benchmark_apply_batch_cpp(paulis: list, states: list) -> None:
     """Benchmark apply_batch method."""
     for p, psi in zip(paulis, states):
-        result = p.apply_batch(psi.tolist())  # noqa: F841
+        result = p.apply(psi.tolist())  # noqa: F841
 
 
 def benchmark_apply_batch_py(paulis: list, states: list) -> None:
     """Benchmark apply_batch method."""
     for p, psi in zip(paulis, states):
-        result = p.multiply(psi)  # noqa: F841
+        result = p.apply(psi)  # noqa: F841
 
 
 @pytest.mark.parametrize(
@@ -180,4 +180,4 @@ def test_apply_batch_n_qubits_n_states(  # type: ignore[no-untyped-def]
 
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    pytest.main()

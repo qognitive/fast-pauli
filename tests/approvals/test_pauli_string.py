@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 import fast_pauli._fast_pauli as fp
-import fast_pauli.pypauli.operations as pp
+import fast_pauli.pypauli as pp
 
 # TODO this is going to be blended into main tests/test_pauli_string.py
 
@@ -45,11 +45,11 @@ def test_pauli_string_representations(sample_strings: list[str]) -> None:
 
         np.testing.assert_allclose(
             pcpp.to_tensor(),
-            ppy.dense(),
+            ppy.to_tensor(),
             atol=1e-15,
         )
         np.testing.assert_string_equal(str(pcpp), str(ppy))
-        assert pcpp.dims == ppy.dim
+        assert pcpp.dim == ppy.dim
         assert pcpp.weight == ppy.weight
 
 
@@ -63,11 +63,11 @@ def test_pauli_string_apply_batch(
         psis = generate_random_complex(n_dim, n_states)
 
         np.testing.assert_allclose(
-            np.array(fp.PauliString(s).apply_batch(psis.tolist())),
-            pp.PauliString(s).multiply(psis),
+            np.array(fp.PauliString(s).apply(psis.tolist())),
+            pp.PauliString(s).apply(psis),
             atol=1e-15,
         )
 
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    pytest.main()
