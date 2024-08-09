@@ -112,6 +112,161 @@ struct PauliString {
   }
 
   /**
+   * @brief @copybrief PauliString::apply(std::mdspan)
+   *
+   * @tparam T The floating point base to use for all the complex numbers
+   * @param v The input vector to apply the PauliString to. Must be the same
+   * size as PauliString.dims().
+   * @return  std::vector<std::complex<T>> The output state after
+   * applying the PauliString.
+   */
+  template <std::floating_point T>
+  std::vector<std::complex<T>>
+  apply(std::vector<std::complex<T>> const &v) const {
+    // route this to implementation we have for mdspan specialization
+    return this->apply(std::mdspan(v.data(), v.size()));
+  }
+
+  /**
+   * @brief Apply the PauliString (using the sparse representation) to a vector.
+   * This performs following matrix-vector multiplication \f$ \mathcal{\hat{P}}
+   * \ket{\psi} \f$
+   *
+   * @tparam T The floating point base to use for all the complex numbers
+   * @param v The input vector to apply the PauliString to. Must be the same
+   * size as PauliString.dims().
+   * @return  std::vector<std::complex<T>> The output state after
+   * applying the PauliString.
+   */
+  template <std::floating_point T>
+  std::vector<std::complex<T>>
+  apply(std::mdspan<std::complex<T> const, std::dextents<size_t, 1>> v) const {
+    // Input check
+    if (v.size() != dims()) {
+      throw std::invalid_argument(
+          "Input vector size must match the number of qubits");
+    }
+
+    auto [k, m] = get_sparse_repr<T>(paulis);
+
+    std::vector<std::complex<T>> result(v.size(), 0);
+    for (size_t i = 0; i < k.size(); ++i) {
+      result[i] += m[i] * v(k[i]);
+    }
+
+    return result;
+  }
+
+  /**
+   * @brief Apply the PauliString to a batch of states. This function takes a
+   * different shape of the states than the other apply functions. here all the
+   * states (new and old) are transposed so their shape is (n_dims x n_states).
+   * All the new_stats are overwritten, no need to initialize.
+   *
+   * This performs following matrix-matrix multiplication \f$ \mathcal{\hat{P}}
+   * \hat{\Psi} \f$ where matrix \f$ \hat{\Psi} \f$ has \f$ \ket{\psi_t} \f$ as
+   * columns
+   *
+   * @tparam T The floating point base to use for all the complex numbers
+   * @param new_states_T The output states after applying the PauliString
+   * (n_dim x n_states)
+   * @param states_T THe original states to apply the PauliString to
+   * (n_dim x n_states)
+   * @param c Multiplication factor to apply to the PauliString
+   */
+  template <std::floating_point T>
+  void apply_batch(std::mdspan<std::complex<T>, std::dextents<size_t, 2>>
+                       new_states_T, // extent(0) = dims, extent(1) = n_states
+                   std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const
+                       states_T, // extent(0) = dims, extent(1) = n_states
+                   std::complex<T> const c) const {
+    // Input check
+    if (states_T.extent(0) != dims()) {
+      auto error_msg =
+          fmt::format("[PauliString] states shape ({}) must match the "
+                      "dimension of the operators ({})",
+                      states_T.extent(0), dims());
+      throw std::invalid_argument(error_msg);
+    }
+
+    if ((states_T.extent(0) != new_states_T.extent(0)) ||
+        states_T.extent(1) != new_states_T.extent(1)) {
+      throw std::invalid_argument(
+          "[PauliString] new_states must have the same dimensions as states");
+    }
+
+    auto [k, m] = get_sparse_repr<T>(paulis);
+
+    for (size_t i = 0; i < states_T.extent(0); ++i) {
+      std::copy_n(&states_T(k[i], 0), states_T.extent(1), &new_states_T(i, 0));
+      const std::complex<T> c_m_i = c * m[i];
+      for (size_t t = 0; t < states_T.extent(1); ++t) {
+        new_states_T(i, t) *= c_m_i;
+      }
+    }
+  }
+
+  /**
+   * @brief Calculate expected values for a given batch of states.
+   * This function takes in transposed states with (n_dims x n_states) shape
+   *
+   * It computes following inner product
+   * \f$ \bra{\psi_t} \mathcal{\hat{P_i}} \ket{\psi_t} \f$
+   * for each state \f$ \ket{\psi_t} \f$ from provided batch.
+   *
+   * @tparam T The floating point base to use for all the complex numbers
+   * @param states_T THe original states to apply the PauliString to
+   * (n_dim x n_states)
+   * @param c Multiplication factor to apply to the PauliString
+   */
+  template <std::floating_point T>
+  std::vector<std::complex<T>> expected_value(
+      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states_T)
+      const {
+    // Input check
+    if (states_T.extent(0) != dims())
+      throw std::invalid_argument(
+          fmt::format("[PauliString] states shape ({}) must match the dimension"
+                      " of the operators ({})",
+                      states_T.extent(0), dims()));
+
+    auto [k, m] = get_sparse_repr<T>(paulis);
+
+    std::vector<std::complex<T>> exp_val(states_T.extent(1), 0);
+    for (size_t i = 0; i < states_T.extent(0); ++i) {
+      for (size_t t = 0; t < states_T.extent(1); ++t) {
+        exp_val[t] += std::conj(states_T(i, t)) * m[i] * states_T(k[i], t);
+      }
+    }
+
+    return exp_val;
+  }
+
+  //
+  // Debugging Helpers
+  //
+  /**
+   * @brief Get the dense representation of the object as a 2D-std::vector
+   *
+   * @tparam T The floating point base to use for all the complex numbers
+   * @return  std::vector<std::vector<std::complex<T>>>
+   */
+  template <std::floating_point T>
+  std::vector<std::vector<std::complex<T>>> get_dense_repr() const {
+    // Convert to dense representation
+    auto [k, m] = get_sparse_repr<T>(paulis);
+
+    std::vector<std::vector<std::complex<T>>> result(
+        dims(), std::vector<std::complex<T>>(dims(), 0));
+
+    for (size_t i = 0; i < k.size(); ++i) {
+      result[i][k[i]] = m[i];
+    }
+
+    return result;
+  }
+
+  /**
    * @brief Get the sparse representation of the pauli string matrix.
    *
    * PauliStrings are always sparse and have only single non-zero element per
@@ -127,14 +282,8 @@ struct PauliString {
    * @param m The values of the matrix
    */
   template <std::floating_point T>
-  void get_sparse_repr(std::vector<size_t> &k,
-                       std::vector<std::complex<T>> &m) const {
-    // TODO should we simply return a tuple of k,m instead of modifying args?
-    // for now there are no use-cases where we'd re-use already allocated k, m
-    // TODO also should get_sparse_repr be a non-member helper function
-    // that operates on PauliString?
-    // gonna be like: auto [k, m] = fast_pauli::internal::get_sparse_repr(ps);
-
+  static std::tuple<std::vector<size_t>, std::vector<std::complex<T>>>
+  get_sparse_repr(std::vector<Pauli> const &paulis) {
     // We reverse the view here because the tensor product is taken from right
     // to left
     auto ps = paulis | std::views::reverse;
@@ -145,11 +294,10 @@ struct PauliString {
     size_t const dim = n ? 1 << n : 0;
 
     if (dim == 0)
-      return;
+      return {};
 
-    // Safe, but expensive, we overwrite the vectors
-    k = std::vector<size_t>(dim);
-    m = std::vector<std::complex<T>>(dim);
+    std::vector<size_t> k(dim);
+    std::vector<std::complex<T>> m(dim);
 
     // Helper function that let's us know if a pauli matrix has diagonal (or
     // conversely off-diagonal) elements
@@ -199,170 +347,8 @@ struct PauliString {
         m[li] = m[li - lower_bound] * eps;
       }
     }
-  }
 
-  /**
-   * @brief @copybrief PauliString::apply(std::mdspan)
-   *
-   * @tparam T The floating point base to use for all the complex numbers
-   * @param v The input vector to apply the PauliString to. Must be the same
-   * size as PauliString.dims().
-   * @return  std::vector<std::complex<T>> The output state after
-   * applying the PauliString.
-   */
-  template <std::floating_point T>
-  std::vector<std::complex<T>>
-  apply(std::vector<std::complex<T>> const &v) const {
-    // route this to implementation we have for mdspan specialization
-    return this->apply(std::mdspan(v.data(), v.size()));
-  }
-
-  /**
-   * @brief Apply the PauliString (using the sparse representation) to a vector.
-   * This performs following matrix-vector multiplication \f$ \mathcal{\hat{P}}
-   * \ket{\psi} \f$
-   *
-   * @tparam T The floating point base to use for all the complex numbers
-   * @param v The input vector to apply the PauliString to. Must be the same
-   * size as PauliString.dims().
-   * @return  std::vector<std::complex<T>> The output state after
-   * applying the PauliString.
-   */
-  template <std::floating_point T>
-  std::vector<std::complex<T>>
-  apply(std::mdspan<std::complex<T> const, std::dextents<size_t, 1>> v) const {
-    // Input check
-    if (v.size() != dims()) {
-      throw std::invalid_argument(
-          "Input vector size must match the number of qubits");
-    }
-
-    std::vector<size_t> k;
-    std::vector<std::complex<T>> m;
-    get_sparse_repr(k, m);
-
-    std::vector<std::complex<T>> result(v.size(), 0);
-    for (size_t i = 0; i < k.size(); ++i) {
-      result[i] += m[i] * v(k[i]);
-    }
-
-    return result;
-  }
-
-  /**
-   * @brief Apply the PauliString to a batch of states. This function takes a
-   * different shape of the states than the other apply functions. here all the
-   * states (new and old) are transposed so their shape is (n_dims x n_states).
-   * All the new_stats are overwritten, no need to initialize.
-   *
-   * This performs following matrix-matrix multiplication \f$ \mathcal{\hat{P}}
-   * \hat{\Psi} \f$ where matrix \f$ \hat{\Psi} \f$ has \f$ \ket{\psi_t} \f$ as
-   * columns
-   *
-   * @tparam T The floating point base to use for all the complex numbers
-   * @param new_states_T The output states after applying the PauliString
-   * (n_dim x n_states)
-   * @param states_T THe original states to apply the PauliString to
-   * (n_dim x n_states)
-   * @param c Multiplication factor to apply to the PauliString
-   */
-  template <std::floating_point T>
-  void apply_batch(std::mdspan<std::complex<T>, std::dextents<size_t, 2>>
-                       new_states_T, // extent(0) = dims, extent(1) = n_states
-                   std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const
-                       states_T, // extent(0) = dims, extent(1) = n_states
-                   std::complex<T> const c) const {
-    // Input check
-    if (states_T.extent(0) != dims()) {
-      auto error_msg =
-          fmt::format("[PauliString] states shape ({}) must match the "
-                      "dimension of the operators ({})",
-                      states_T.extent(0), dims());
-      throw std::invalid_argument(error_msg);
-    }
-
-    if ((states_T.extent(0) != new_states_T.extent(0)) ||
-        states_T.extent(1) != new_states_T.extent(1)) {
-      throw std::invalid_argument(
-          "[PauliString] new_states must have the same dimensions as states");
-    }
-
-    std::vector<size_t> k;
-    std::vector<std::complex<T>> m;
-    get_sparse_repr(k, m);
-
-    for (size_t i = 0; i < states_T.extent(0); ++i) {
-      std::copy_n(&states_T(k[i], 0), states_T.extent(1), &new_states_T(i, 0));
-      const std::complex<T> c_m_i = c * m[i];
-      for (size_t t = 0; t < states_T.extent(1); ++t) {
-        new_states_T(i, t) *= c_m_i;
-      }
-    }
-  }
-
-  /**
-   * @brief Calculate expected values for a given batch of states.
-   * This function takes in transposed states with (n_dims x n_states) shape
-   *
-   * It computes following inner product
-   * \f$ \bra{\psi_t} \mathcal{\hat{P_i}} \ket{\psi_t} \f$
-   * for each state \f$ \ket{\psi_t} \f$ from provided batch.
-   *
-   * @tparam T The floating point base to use for all the complex numbers
-   * @param states_T THe original states to apply the PauliString to
-   * (n_dim x n_states)
-   * @param c Multiplication factor to apply to the PauliString
-   */
-  template <std::floating_point T>
-  std::vector<std::complex<T>> expected_value(
-      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states_T)
-      const {
-    // Input check
-    if (states_T.extent(0) != dims())
-      throw std::invalid_argument(
-          fmt::format("[PauliString] states shape ({}) must match the dimension"
-                      " of the operators ({})",
-                      states_T.extent(0), dims()));
-
-    std::vector<size_t> k;
-    std::vector<std::complex<T>> m;
-    get_sparse_repr(k, m);
-
-    std::vector<std::complex<T>> exp_val(states_T.extent(1), 0);
-    for (size_t i = 0; i < states_T.extent(0); ++i) {
-      for (size_t t = 0; t < states_T.extent(1); ++t) {
-        exp_val[t] += std::conj(states_T(i, t)) * m[i] * states_T(k[i], t);
-      }
-    }
-
-    return exp_val;
-  }
-
-  //
-  // Debugging Helpers
-  //
-  /**
-   * @brief Get the dense representation of the object as a 2D-std::vector
-   *
-   * @tparam T The floating point base to use for all the complex numbers
-   * @return  std::vector<std::vector<std::complex<T>>>
-   */
-  template <std::floating_point T>
-  std::vector<std::vector<std::complex<T>>> get_dense_repr() const {
-    //
-    std::vector<size_t> k;
-    std::vector<std::complex<T>> m;
-    get_sparse_repr(k, m);
-
-    // Convert to dense representation
-    std::vector<std::vector<std::complex<T>>> result(
-        dims(), std::vector<std::complex<T>>(dims(), 0));
-
-    for (size_t i = 0; i < k.size(); ++i) {
-      result[i][k[i]] = m[i];
-    }
-
-    return result;
+    return std::make_tuple(std::move(k), std::move(m));
   }
 };
 
