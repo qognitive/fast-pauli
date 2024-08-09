@@ -5,7 +5,8 @@ from itertools import chain, permutations
 import numpy as np
 import pytest
 from pypauli.helpers import naive_pauli_converter, pauli_matrices
-from pypauli.operations import (
+
+from fast_pauli.py.pypauli.pauli_string import (
     PauliString,
     compose_sparse_diag_pauli,
     compose_sparse_pauli,
@@ -24,19 +25,19 @@ def test_pauli_string(paulis: dict) -> None:
         ps = PauliString(p)
         assert ps.dim == 2
         assert ps.weight == 1 or p == "I"
-        np.testing.assert_array_equal(ps.dense(), paulis[p])
+        np.testing.assert_array_equal(ps.to_tensor(), paulis[p])
         np.testing.assert_array_equal(naive_pauli_converter(p), paulis[p])
 
     ps = PauliString("III")
     assert ps.dim == 8
     assert ps.weight == 0
-    np.testing.assert_array_equal(ps.dense(), np.eye(8))
+    np.testing.assert_array_equal(ps.to_tensor(), np.eye(8))
     np.testing.assert_array_equal(naive_pauli_converter(ps.string), np.eye(8))
 
     ps = PauliString(string="IZ")
     assert ps.dim == 4
     assert ps.weight == 1
-    np.testing.assert_array_equal(ps.dense(), np.kron(paulis["I"], paulis["Z"]))
+    np.testing.assert_array_equal(ps.to_tensor(), np.kron(paulis["I"], paulis["Z"]))
     np.testing.assert_array_equal(
         naive_pauli_converter(ps.string), np.kron(paulis["I"], paulis["Z"])
     )
@@ -45,7 +46,7 @@ def test_pauli_string(paulis: dict) -> None:
     assert ps.dim == 8
     assert ps.weight == 3
     np.testing.assert_array_equal(
-        ps.dense(), np.kron(paulis["X"], np.kron(paulis["Y"], paulis["Z"]))
+        ps.to_tensor(), np.kron(paulis["X"], np.kron(paulis["Y"], paulis["Z"]))
     )
     np.testing.assert_array_equal(
         naive_pauli_converter(ps.string),
@@ -64,27 +65,27 @@ def test_sparse_pauli_composer(paulis: dict) -> None:
     """Test sparsepauli composer functions."""
     ps = PauliString("II")
     assert ps.dim == 4
-    np.testing.assert_array_equal(ps.dense(), np.eye(4))
+    np.testing.assert_array_equal(ps.to_tensor(), np.eye(4))
     np.testing.assert_array_equal(compose_sparse_diag_pauli(ps.string), np.ones(4))
 
     ps = PauliString("IIII")
     assert ps.dim == 16
-    np.testing.assert_array_equal(ps.dense(), np.eye(16))
+    np.testing.assert_array_equal(ps.to_tensor(), np.eye(16))
     np.testing.assert_array_equal(compose_sparse_diag_pauli(ps.string), np.ones(16))
 
     ps = PauliString("XXX")
     assert ps.dim == 8
-    np.testing.assert_array_equal(ps.dense(), np.fliplr(np.eye(8)))
+    np.testing.assert_array_equal(ps.to_tensor(), np.fliplr(np.eye(8)))
 
     ps = PauliString("IY")
     np.testing.assert_array_equal(
-        ps.dense(),
+        ps.to_tensor(),
         np.block([[paulis["Y"], np.zeros((2, 2))], [np.zeros((2, 2)), paulis["Y"]]]),
     )
 
     ps = PauliString("IZ")
     np.testing.assert_array_equal(
-        ps.dense(),
+        ps.to_tensor(),
         np.block([[paulis["Z"], np.zeros((2, 2))], [np.zeros((2, 2)), paulis["Z"]]]),
     )
 
@@ -108,34 +109,36 @@ def test_sparse_pauli_composer_equivalence() -> None:
     """Test the equivalence of sparse Pauli composer with naive method."""
     for c in ["I", "X", "Y", "Z"]:
         np.testing.assert_array_equal(
-            PauliString(c).dense(),
+            PauliString(c).to_tensor(),
             naive_pauli_converter(c),
         )
 
     for p2 in permutations("XYZ", 2):
         s = "".join(p2)
         np.testing.assert_array_equal(
-            PauliString(s).dense(),
+            PauliString(s).to_tensor(),
             naive_pauli_converter(s),
         )
 
     for p3 in permutations("IXYZ", 3):
         s = "".join(p3)
         np.testing.assert_array_equal(
-            PauliString(s).dense(),
+            PauliString(s).to_tensor(),
             naive_pauli_converter(s),
         )
 
-    ixyz = PauliString("IXYZ").dense()
+    ixyz = PauliString("IXYZ").to_tensor()
     np.testing.assert_array_equal(ixyz, naive_pauli_converter("IXYZ"))
 
-    zyxi = PauliString("ZYXI").dense()
+    zyxi = PauliString("ZYXI").to_tensor()
     np.testing.assert_array_equal(zyxi, naive_pauli_converter("ZYXI"))
 
     assert np.abs(ixyz - zyxi).sum().sum() > 1e-10
 
     for s in ["XYIZXYZ", "XXIYYIZZ", "ZIXIZYXX"]:
-        np.testing.assert_array_equal(PauliString(s).dense(), naive_pauli_converter(s))
+        np.testing.assert_array_equal(
+            PauliString(s).to_tensor(), naive_pauli_converter(s)
+        )
 
 
 def test_sparse_pauli_multiply() -> None:
@@ -152,12 +155,12 @@ def test_sparse_pauli_multiply() -> None:
         coeff = rng.random()
 
         np.testing.assert_allclose(
-            PauliString(s).multiply(psi),
+            PauliString(s).apply(psi),
             naive_pauli_converter(s).dot(psi),
             atol=1e-15,
         )
         np.testing.assert_allclose(
-            PauliString(s).multiply(psi_batch, coeff),
+            PauliString(s).apply(psi_batch, coeff),
             coeff * naive_pauli_converter(s) @ psi_batch,
             atol=1e-15,
         )
