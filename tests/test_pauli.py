@@ -10,7 +10,7 @@ from tests.conftest import resolve_parameter_repr
 
 
 @pytest.mark.parametrize("Pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
-def test_pauli_wrapper(paulis: dict, Pauli: type) -> None:  # noqa: N803
+def test_basics(paulis: dict, Pauli: type) -> None:  # noqa: N803
     """Test pauli wrapper in python land."""
     np.testing.assert_array_equal(
         Pauli().to_tensor(),
@@ -35,7 +35,7 @@ def test_pauli_wrapper(paulis: dict, Pauli: type) -> None:  # noqa: N803
 
 
 @pytest.mark.parametrize("Pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
-def test_pauli_wrapper_multiply(paulis: dict, Pauli: type) -> None:  # noqa: N803
+def test_multiply(paulis: dict, Pauli: type) -> None:  # noqa: N803
     """Test custom __mul__ in c++ wrapper."""
     for p1, p2 in it.product("IXYZ", repeat=2):
         c, pcpp = Pauli(p1).multiply(Pauli(p2))
@@ -47,7 +47,7 @@ def test_pauli_wrapper_multiply(paulis: dict, Pauli: type) -> None:  # noqa: N80
 
 
 @pytest.mark.parametrize("Pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
-def test_pauli_wrapper_exceptions(Pauli: type) -> None:  # noqa: N803
+def test_exceptions(Pauli: type) -> None:  # noqa: N803
     """Test that exceptions from c++ are raised and propagated correctly."""
     with np.testing.assert_raises(ValueError):
         Pauli("II")
