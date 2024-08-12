@@ -199,7 +199,7 @@ def test_apply_batch(
     sample_pauli_strings: list,
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
-    PauliString: type,  # noqa: N803
+    pauli_string: type[fp.PauliString]|type[pp.PauliString],  
 ) -> None:
     """Test pauli string multiplication with 2d tensor."""
     np.testing.assert_allclose(
