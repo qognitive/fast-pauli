@@ -15,12 +15,12 @@ class PauliString:
             Must contain only I, X, Y, Z characters.
 
         """
-        if len(string) == 0 or not all([c in "IXYZ" for c in string]):
+        if not all([c in "IXYZ" for c in string]):
             raise ValueError(f"Invalid pauli string '{string}'")
 
         self.string = string
         self.n_qubits = len(string)
-        self.dim = 1 << len(string)
+        self.dim = 1 << len(string) if string else 0
         self.weight = len(string) - string.count("I")
 
     def __str__(self) -> str:
@@ -103,12 +103,15 @@ def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:
 
     """
     n_qubits = len(string)
-    n_vals = 1 << n_qubits
+    n_vals = 1 << n_qubits if string else 0
     n_ys = string.count("Y")
 
     # initialize cols array with zeros as we need first element to be 0
     cols = np.zeros(n_vals, dtype=np.int32)
     vals = np.empty(n_vals, dtype=np.complex128)
+
+    if not n_vals:
+        return cols, vals
 
     for p in string:
         cols[0] <<= 1

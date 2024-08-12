@@ -1,13 +1,12 @@
 """pytest configuration file for fast_pauli tests."""
 
 import itertools as it
+from typing import Callable
 
 import numpy as np
 import pytest
 
 from fast_pauli.pypauli.helpers import pauli_matrices
-
-# TODO: fixtures to wrap around numpy testing functions with default tolerances
 
 
 @pytest.fixture
@@ -17,7 +16,7 @@ def paulis() -> dict[str | int, np.ndarray]:
 
 
 @pytest.fixture
-def sample_pauli_strings(limit_strings: int = 1_000) -> list[str]:
+def sample_pauli_strings() -> list[str]:
     """Fixture to provide sample Pauli strings for testing."""
     strings = it.chain(
         ["I", "X", "Y", "Z"],
@@ -25,7 +24,13 @@ def sample_pauli_strings(limit_strings: int = 1_000) -> list[str]:
         it.product("IXYZ", repeat=3),
         ["XYZXYZ", "ZZZIII", "XYIZXYZ", "XXIYYIZZ", "ZIXIZYXX"],
     )
-    return list(map("".join, strings))[:limit_strings]
+    return list(map("".join, strings))
+
+
+@pytest.fixture
+def pauli_strings_with_size() -> Callable:
+    """Fixture to provide Pauli strings of desired size for testing."""
+    return lambda size: list(map(lambda x: "".join(x), it.product("IXYZ", repeat=size)))
 
 
 @pytest.fixture(scope="function")

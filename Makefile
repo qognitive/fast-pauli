@@ -18,7 +18,6 @@ test-cpp:
 	ctest --test-dir build
 
 test-py:
-	python -m pytest -v fast_pauli/py/tests
 	python -m pytest -v tests
 
 .PHONY: test
