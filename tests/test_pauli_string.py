@@ -230,7 +230,7 @@ def test_apply_batch(
             atol=1e-15,
         )
 
-    for s in pauli_strings_with_size(2):
+    for s in pauli_strings_with_size(4):
         n_dim = 2 ** len(s)
         n_states = 7
         coeff = generate_random_complex(1)[0]
