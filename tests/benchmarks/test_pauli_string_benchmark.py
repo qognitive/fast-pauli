@@ -9,11 +9,43 @@ import fast_pauli._fast_pauli as fp
 import fast_pauli.pypauli as pp
 from tests.conftest import resolve_parameter_repr
 
-# TODO add a separate benchmark for get_sparse_repr vs compose_sparse_pauli
-# TODO control numpy threading in a fixture for fair comparison
-
-
 QUBITS_TO_BENCHMARK = [1, 2, 4, 10]
+
+
+def benchmark_sparse_composer(paulis: list, composer: Callable) -> None:
+    """Benchmark algorithm for sparse representation of pauli string."""
+    for ps in paulis:
+        cols, vals = composer(ps)  # noqa: F841
+
+
+@pytest.mark.parametrize(
+    "qubits,composer_func,",
+    it.chain(
+        [(q, fp.helpers.pauli_string_sparse_repr) for q in QUBITS_TO_BENCHMARK],
+        [(q, pp.pauli_string.compose_sparse_pauli) for q in QUBITS_TO_BENCHMARK],
+    ),
+    ids=resolve_parameter_repr,
+)
+def test_string_sparse_composer_n_qubits(
+    benchmark: Callable,
+    pauli_strings_with_size: Callable,
+    composer_func: Callable,
+    qubits: int,
+) -> None:
+    """Benchmark algorithm for sparse representation of pauli string.
+
+    Parametrized test case to run the benchmark across
+    all Pauli strings of given length for given PauliString class.
+    """
+    n_strings_limit = 10 if qubits > 4 else None
+    prepared_paulis = pauli_strings_with_size(qubits, n_strings_limit)
+
+    if "pypauli" not in composer_func.__module__:  # check if it's c++ wrapper
+        prepared_paulis = list(
+            map(lambda pstr: [fp.Pauli(c) for c in pstr], prepared_paulis)
+        )
+
+    benchmark(benchmark_sparse_composer, paulis=prepared_paulis, composer=composer_func)
 
 
 def benchmark_dense_conversion(paulis: list) -> None:
