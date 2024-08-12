@@ -9,23 +9,23 @@ import fast_pauli._fast_pauli as fp
 from tests.conftest import resolve_parameter_repr
 
 
-@pytest.mark.parametrize("Pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
-def test_basics(paulis: dict, Pauli: type) -> None:  # noqa: N803
+@pytest.mark.parametrize("pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
+def test_basics(paulis: dict, pauli: type[fp.Pauli]) -> None:
     """Test pauli wrapper in python land."""
     np.testing.assert_array_equal(
-        Pauli().to_tensor(),
+        pauli().to_tensor(),
         paulis["I"],
     )
 
     for i in [0, 1, 2, 3]:
-        pcpp = Pauli(code=i)
+        pcpp = pauli(code=i)
         np.testing.assert_array_equal(
             pcpp.to_tensor(),
             paulis[i],
         )
 
     for c in ["I", "X", "Y", "Z"]:
-        pcpp = Pauli(symbol=c)
+        pcpp = pauli(symbol=c)
         np.testing.assert_allclose(
             pcpp.to_tensor(),
             paulis[c],
@@ -34,11 +34,11 @@ def test_basics(paulis: dict, Pauli: type) -> None:  # noqa: N803
         np.testing.assert_string_equal(str(pcpp), c)
 
 
-@pytest.mark.parametrize("Pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
-def test_multiply(paulis: dict, Pauli: type) -> None:  # noqa: N803
+@pytest.mark.parametrize("pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
+def test_multiply(paulis: dict, pauli: type[fp.Pauli]) -> None:
     """Test custom __mul__ in c++ wrapper."""
     for p1, p2 in it.product("IXYZ", repeat=2):
-        c, pcpp = Pauli(p1).multiply(Pauli(p2))
+        c, pcpp = pauli(p1).multiply(pauli(p2))
         np.testing.assert_allclose(
             c * np.array(pcpp.to_tensor()),
             paulis[p1] @ paulis[p2],
@@ -46,17 +46,17 @@ def test_multiply(paulis: dict, Pauli: type) -> None:  # noqa: N803
         )
 
 
-@pytest.mark.parametrize("Pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
-def test_exceptions(Pauli: type) -> None:  # noqa: N803
+@pytest.mark.parametrize("pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
+def test_exceptions(pauli: type[fp.Pauli]) -> None:
     """Test that exceptions from c++ are raised and propagated correctly."""
     with np.testing.assert_raises(ValueError):
-        Pauli("II")
+        pauli("II")
     with np.testing.assert_raises(ValueError):
-        Pauli("A")
+        pauli("A")
     with np.testing.assert_raises(ValueError):
-        Pauli(-1)
+        pauli(-1)
     with np.testing.assert_raises(ValueError):
-        Pauli(5)
+        pauli(5)
 
 
 if __name__ == "__main__":

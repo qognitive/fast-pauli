@@ -44,14 +44,16 @@ def test_naive_pauli_converter(paulis: dict) -> None:
 
 
 @pytest.mark.parametrize(
-    "PauliString,", [fp.PauliString, pp.PauliString], ids=resolve_parameter_repr
+    "pauli_string,", [fp.PauliString, pp.PauliString], ids=resolve_parameter_repr
 )
-def test_string_trivial(PauliString: type) -> None:  # noqa: N803
+def test_string_trivial(
+    pauli_string: type[fp.PauliString] | type[pp.PauliString],
+) -> None:
     """Test pauli string class on trivial inputs."""
     empty_paulis = (
-        [PauliString(), PauliString([]), PauliString("")]
-        if isinstance(PauliString, fp.PauliString)
-        else [PauliString("")]
+        [pauli_string(), pauli_string([]), pauli_string("")]
+        if isinstance(pauli_string, fp.PauliString)
+        else [pauli_string("")]
     )
     for empty_ps in empty_paulis:
         assert empty_ps.weight == 0
@@ -60,28 +62,28 @@ def test_string_trivial(PauliString: type) -> None:  # noqa: N803
         assert str(empty_ps) == ""
         assert len(empty_ps.to_tensor()) == 0
 
-    ps = PauliString("III")
+    ps = pauli_string("III")
     assert ps.dim == 8
     assert ps.weight == 0
     np.testing.assert_equal(ps.to_tensor(), np.eye(8))
 
 
 @pytest.mark.parametrize(
-    "PauliString,", [fp.PauliString, pp.PauliString], ids=resolve_parameter_repr
+    "pauli_string,", [fp.PauliString, pp.PauliString], ids=resolve_parameter_repr
 )
 def test_string_basics(
     paulis: dict,
     pauli_strings_with_size: Callable,
-    PauliString: type,  # noqa: N803
+    pauli_string: type[fp.PauliString] | type[pp.PauliString],
 ) -> None:
     """Test pauli string class in python land."""
     for s in it.chain(
         ["I", "X", "Y", "Z"],
         [[fp.Pauli("I")], [fp.Pauli("X")], [fp.Pauli("Y")], [fp.Pauli("Z")]]
-        if isinstance(PauliString, fp.PauliString)
+        if isinstance(pauli_string, fp.PauliString)
         else [],
     ):
-        p = PauliString(s)
+        p = pauli_string(s)
         assert p.weight == 1 or str(p) == "I"
         assert p.dim == 2
         assert p.n_qubits == 1
@@ -94,7 +96,7 @@ def test_string_basics(
             )
 
     for s in pauli_strings_with_size(3):
-        p = PauliString(s)
+        p = pauli_string(s)
         assert p.weight == len(s) - s.count("I")
         assert p.dim == 8
         assert p.n_qubits == 3
@@ -105,44 +107,44 @@ def test_string_basics(
             atol=1e-15,
         )
 
-    assert PauliString("XYIZXYZ").dim == 2**7
-    assert PauliString("XYIZXYZ").weight == 6
-    assert PauliString("XXIYYIZZ").dim == 2**8
-    assert PauliString("XXIYYIZZ").weight == 6
-    assert PauliString("ZIXIZYXXY").dim == 2**9
-    assert PauliString("ZIXIZYXXY").weight == 7
+    assert pauli_string("XYIZXYZ").dim == 2**7
+    assert pauli_string("XYIZXYZ").weight == 6
+    assert pauli_string("XXIYYIZZ").dim == 2**8
+    assert pauli_string("XXIYYIZZ").weight == 6
+    assert pauli_string("ZIXIZYXXY").dim == 2**9
+    assert pauli_string("ZIXIZYXXY").weight == 7
 
 
 @pytest.mark.consistency
 @pytest.mark.parametrize(
-    "PauliString,", [fp.PauliString, pp.PauliString], ids=resolve_parameter_repr
+    "pauli_string,", [fp.PauliString, pp.PauliString], ids=resolve_parameter_repr
 )
 def test_dense_representation(
     paulis: dict,
     sample_pauli_strings: list,
-    PauliString: type,  # noqa: N803
+    pauli_string: type[fp.PauliString] | type[pp.PauliString],
 ) -> None:
     """Test dense representation of Pauli strings against naive approach."""
-    ps = PauliString("II")
+    ps = pauli_string("II")
     assert ps.weight == 0
     assert ps.dim == 4
     np.testing.assert_equal(ps.to_tensor(), np.eye(4))
 
-    ps = PauliString("IIII")
+    ps = pauli_string("IIII")
     assert ps.weight == 0
     assert ps.dim == 16
     np.testing.assert_equal(ps.to_tensor(), np.eye(16))
 
-    ixyz = np.array(PauliString("IXYZ").to_tensor())
+    ixyz = np.array(pauli_string("IXYZ").to_tensor())
     np.testing.assert_allclose(ixyz, naive_pauli_converter("IXYZ"), atol=1e-15)
 
-    zyxi = np.array(PauliString("ZYXI").to_tensor())
+    zyxi = np.array(pauli_string("ZYXI").to_tensor())
     np.testing.assert_allclose(zyxi, naive_pauli_converter("ZYXI"), atol=1e-15)
 
     assert np.abs(ixyz - zyxi).sum().sum() >= 1
 
     for s in sample_pauli_strings:
-        ps = PauliString(s)
+        ps = pauli_string(s)
         assert ps.weight == len(s) - s.count("I")
         assert ps.dim == 2 ** len(s)
         assert str(ps) == s
@@ -155,28 +157,28 @@ def test_dense_representation(
 
 @pytest.mark.consistency
 @pytest.mark.parametrize(
-    "PauliString,", [fp.PauliString, pp.PauliString], ids=resolve_parameter_repr
+    "pauli_string,", [fp.PauliString, pp.PauliString], ids=resolve_parameter_repr
 )
 def test_apply_1d(
     sample_pauli_strings: list,
     generate_random_complex: Callable,
-    PauliString: type,  # noqa: N803
+    pauli_string: type[fp.PauliString] | type[pp.PauliString],
 ) -> None:
     """Test pauli string multiplication with 1d vector."""
     np.testing.assert_allclose(
-        PauliString("IXYZ").apply(np.zeros(16)),
+        pauli_string("IXYZ").apply(np.zeros(16)),
         np.zeros(16),
         atol=1e-15,
     )
 
     np.testing.assert_allclose(
-        PauliString("III").apply(np.arange(8)),
+        pauli_string("III").apply(np.arange(8)),
         np.arange(8),
         atol=1e-15,
     )
 
     np.testing.assert_allclose(
-        PauliString("ZYX").apply(np.ones(8)),
+        pauli_string("ZYX").apply(np.ones(8)),
         naive_pauli_converter("ZYX").sum(1),
         atol=1e-15,
     )
@@ -185,7 +187,7 @@ def test_apply_1d(
         n_dim = 2 ** len(s)
         psi = generate_random_complex(n_dim)
         np.testing.assert_allclose(
-            PauliString(s).apply(psi),
+            pauli_string(s).apply(psi),
             naive_pauli_converter(s).dot(psi),
             atol=1e-15,
         )
@@ -193,29 +195,29 @@ def test_apply_1d(
 
 @pytest.mark.consistency
 @pytest.mark.parametrize(
-    "PauliString,", [fp.PauliString, pp.PauliString], ids=resolve_parameter_repr
+    "pauli_string,", [fp.PauliString, pp.PauliString], ids=resolve_parameter_repr
 )
 def test_apply_batch(
     sample_pauli_strings: list,
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
-    pauli_string: type[fp.PauliString]|type[pp.PauliString],  
+    pauli_string: type[fp.PauliString] | type[pp.PauliString],
 ) -> None:
     """Test pauli string multiplication with 2d tensor."""
     np.testing.assert_allclose(
-        PauliString("IXYZ").apply(np.zeros((16, 16))),
+        pauli_string("IXYZ").apply(np.zeros((16, 16))),
         np.zeros((16, 16)),
         atol=1e-15,
     )
 
     np.testing.assert_allclose(
-        PauliString("III").apply(np.arange(8 * 8).reshape(8, 8)),
+        pauli_string("III").apply(np.arange(8 * 8).reshape(8, 8)),
         np.arange(8 * 8).reshape(8, 8),
         atol=1e-15,
     )
 
     np.testing.assert_allclose(
-        PauliString("ZYX").apply(np.eye(8)),
+        pauli_string("ZYX").apply(np.eye(8)),
         naive_pauli_converter("ZYX"),
         atol=1e-15,
     )
@@ -225,7 +227,7 @@ def test_apply_batch(
         n_states = 42
         psis = generate_random_complex(n_dim, n_states)
         np.testing.assert_allclose(
-            PauliString(s).apply(psis),
+            pauli_string(s).apply(psis),
             naive_pauli_converter(s) @ psis,
             atol=1e-15,
         )
@@ -237,7 +239,7 @@ def test_apply_batch(
         psis = generate_random_complex(n_dim, n_states)
 
         np.testing.assert_allclose(
-            PauliString(s).apply(psis, coeff),
+            pauli_string(s).apply(psis, coeff),
             coeff * naive_pauli_converter(s) @ psis,
             atol=1e-15,
         )
@@ -245,32 +247,32 @@ def test_apply_batch(
 
 @pytest.mark.consistency
 @pytest.mark.parametrize(
-    "PauliString,", [(fp.PauliString), (pp.PauliString)], ids=resolve_parameter_repr
+    "pauli_string,", [(fp.PauliString), (pp.PauliString)], ids=resolve_parameter_repr
 )
 def test_expected_value(
     sample_pauli_strings: list,
     generate_random_complex: Callable,
-    PauliString: type,  # noqa: N803
+    pauli_string: type[fp.PauliString] | type[pp.PauliString],
 ) -> None:
     """Test the expected value method."""
     np.testing.assert_allclose(
-        PauliString("IXYZ").expected_value(np.zeros(16)),
+        pauli_string("IXYZ").expected_value(np.zeros(16)),
         0,
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        PauliString("IXYZ").expected_value(np.zeros((16, 16))),
+        pauli_string("IXYZ").expected_value(np.zeros((16, 16))),
         np.zeros(16),
         atol=1e-15,
     )
 
     np.testing.assert_allclose(
-        PauliString("III").expected_value(np.arange(8)),
+        pauli_string("III").expected_value(np.arange(8)),
         np.square(np.arange(8)).sum(),
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        PauliString("III").expected_value(np.arange(8 * 8).reshape(8, 8)),
+        pauli_string("III").expected_value(np.arange(8 * 8).reshape(8, 8)),
         np.square(np.arange(8 * 8)).reshape(8, 8).sum(0),
         atol=1e-15,
     )
@@ -281,7 +283,7 @@ def test_expected_value(
 
         psi = generate_random_complex(n_dim)
         np.testing.assert_allclose(
-            PauliString(s).expected_value(psi),
+            pauli_string(s).expected_value(psi),
             naive_pauli_converter(s).dot(psi).dot(psi.conj()),
             atol=1e-15,
         )
@@ -290,7 +292,7 @@ def test_expected_value(
         # compute <psi_t|P_i|psi_t>
         expected = np.einsum("ti,ij,tj->t", psis.conj(), naive_pauli_converter(s), psis)
         np.testing.assert_allclose(
-            PauliString(s).expected_value(psis.T),
+            pauli_string(s).expected_value(psis.T),
             expected,
             atol=1e-15,
         )
@@ -298,27 +300,27 @@ def test_expected_value(
 
 @pytest.mark.consistency
 @pytest.mark.parametrize(
-    "PauliString,", [(fp.PauliString), (pp.PauliString)], ids=resolve_parameter_repr
+    "pauli_string,", [(fp.PauliString), (pp.PauliString)], ids=resolve_parameter_repr
 )
-def test_exceptions(PauliString: type) -> None:  # noqa: N803
+def test_exceptions(pauli_string: type[fp.PauliString] | type[pp.PauliString]) -> None:
     """Test that exceptions are raised and propagated correctly."""
     with np.testing.assert_raises(ValueError):
-        PauliString("ABC")
+        pauli_string("ABC")
     with np.testing.assert_raises(ValueError):
-        PauliString("xyz")
+        pauli_string("xyz")
 
-    if isinstance(PauliString, fp.PauliString):
+    if isinstance(pauli_string, fp.PauliString):
         with np.testing.assert_raises(TypeError):
-            PauliString([1, 2])
+            pauli_string([1, 2])
         with np.testing.assert_raises(AttributeError):
-            PauliString("XYZ").dim = 99
+            pauli_string("XYZ").dim = 99
         with np.testing.assert_raises(AttributeError):
-            PauliString("XYZ").weight = 99
+            pauli_string("XYZ").weight = 99
 
     with np.testing.assert_raises(ValueError):
-        PauliString("II").apply(np.array([0.1, 0.2, 0.3]))
+        pauli_string("II").apply(np.array([0.1, 0.2, 0.3]))
     with np.testing.assert_raises(ValueError):
-        PauliString("XYZ").apply(np.eye(4))
+        pauli_string("XYZ").apply(np.eye(4))
 
 
 @pytest.mark.consistency
