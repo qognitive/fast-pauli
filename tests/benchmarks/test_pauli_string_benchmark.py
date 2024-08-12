@@ -153,5 +153,70 @@ def test_apply_batch_n_qubits_n_states(
     benchmark(benchmark_apply, paulis=prepared_paulis, states=prepared_states)
 
 
+def benchmark_expected_value(paulis: list, states: list) -> None:
+    """Benchmark expected_value method."""
+    for p, psi in zip(paulis, states):
+        result = p.expected_value(psi)  # noqa: F841
+
+
+@pytest.mark.parametrize(
+    "qubits,pauli_class,",
+    it.chain(
+        [(q, fp.PauliString) for q in QUBITS_TO_BENCHMARK],
+        [(q, pp.PauliString) for q in QUBITS_TO_BENCHMARK],
+    ),
+    ids=resolve_parameter_repr,
+)
+def test_expected_value_n_qubits(
+    benchmark: Callable,
+    pauli_strings_with_size: Callable,
+    generate_random_complex: Callable,
+    pauli_class: type[fp.PauliString] | type[pp.PauliString],
+    qubits: int,
+) -> None:
+    """Benchmark PauliString expected_value with provided state vector."""
+    n_dims = 1 << qubits
+    n_strings_limit = 10 if qubits > 4 else None
+
+    prepared_paulis = list(
+        map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
+    )
+    prepared_states = [
+        generate_random_complex(n_dims) for _ in range(len(prepared_paulis))
+    ]
+
+    benchmark(benchmark_expected_value, paulis=prepared_paulis, states=prepared_states)
+
+
+@pytest.mark.parametrize(
+    "qubits,states,pauli_class,",
+    it.chain(
+        [(q, n, fp.PauliString) for q in QUBITS_TO_BENCHMARK for n in [16, 128]],
+        [(q, n, pp.PauliString) for q in QUBITS_TO_BENCHMARK for n in [16, 128]],
+    ),
+    ids=resolve_parameter_repr,
+)
+def test_expected_value_batch_n_qubits_n_states(
+    benchmark: Callable,
+    pauli_strings_with_size: Callable,
+    generate_random_complex: Callable,
+    pauli_class: type[fp.PauliString] | type[pp.PauliString],
+    qubits: int,
+    states: int,
+) -> None:
+    """Benchmark PauliString expected_value with provided set of state vectors."""
+    n_dims = 1 << qubits
+    n_strings_limit = 10 if qubits > 4 else None
+
+    prepared_paulis = list(
+        map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
+    )
+    prepared_states = [
+        generate_random_complex(n_dims, states) for _ in range(len(prepared_paulis))
+    ]
+
+    benchmark(benchmark_expected_value, paulis=prepared_paulis, states=prepared_states)
+
+
 if __name__ == "__main__":
     pytest.main()
