@@ -18,14 +18,14 @@ test-cpp:
 	ctest --test-dir build
 
 test-py:
-	python -m pytest -v tests
+	python -m pytest -v tests/fast_pauli
 
 .PHONY: test
 test: test-cpp test-py
 
 .PHONY: benchmark
 benchmark:
-	pytest -v benchmarks --benchmark-group-by=func --benchmark-sort=fullname \
+	python -m pytest -v tests/benchmarks --benchmark-group-by=func --benchmark-sort=fullname \
 	--benchmark-columns='mean,median,min,max,stddev,iqr,outliers,ops,rounds,iterations'
 
 .PHONY: clean
