@@ -1,7 +1,7 @@
 """pytest configuration file for fast_pauli tests."""
 
 import itertools as it
-from typing import Callable
+from typing import Any, Callable
 
 import numpy as np
 import pytest
@@ -52,9 +52,13 @@ def generate_random_complex(rng_seed: int = 321) -> np.ndarray:
 ### TEST UTILITIES ###
 
 
-def resolve_parameter_repr(val):  # type: ignore
-    """Regular function to resolve representation for pytest parametrization."""
-    module_name: str = getattr(val, "__module__", None)  # type: ignore
+def resolve_parameter_repr(val: Any) -> Any | str:
+    """Regular function to resolve representation for pytest parametrization.
+
+    Currently, the main purpose is to automatically distinct cpp and py implementations
+    for test logging
+    """
+    module_name: str | None = getattr(val, "__module__", None)
     if module_name is None:
         return val
     elif "_fast_pauli" in module_name:

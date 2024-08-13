@@ -37,7 +37,7 @@ def test_string_sparse_composer_n_qubits(
     Parametrized test case to run the benchmark across
     all Pauli strings of given length for given PauliString class.
     """
-    n_strings_limit = 10 if qubits > 4 else None
+    n_strings_limit = 128 if qubits > 4 else None
     prepared_paulis = pauli_strings_with_size(qubits, n_strings_limit)
 
     if "pypauli" not in composer_func.__module__:  # check if it's c++ wrapper
@@ -73,7 +73,7 @@ def test_dense_conversion_n_qubits(
     Parametrized test case to run the benchmark across
     all Pauli strings of given length for given PauliString class.
     """
-    n_strings_limit = 10 if qubits > 4 else None
+    n_strings_limit = 128 if qubits > 4 else None
     prepared_paulis = list(
         map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
     )
@@ -107,7 +107,7 @@ def test_apply_n_qubits(
     all Pauli strings of given length for given PauliString class.
     """
     n_dims = 1 << qubits
-    n_strings_limit = 10 if qubits > 4 else None
+    n_strings_limit = 128 if qubits > 4 else None
 
     prepared_paulis = list(
         map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
@@ -141,7 +141,7 @@ def test_apply_batch_n_qubits_n_states(
     all Pauli strings of given length for given PauliString class.
     """
     n_dims = 1 << qubits
-    n_strings_limit = 10 if qubits > 4 else None
+    n_strings_limit = 128 if qubits > 4 else None
 
     prepared_paulis = list(
         map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
@@ -176,7 +176,7 @@ def test_expected_value_n_qubits(
 ) -> None:
     """Benchmark PauliString expected_value with provided state vector."""
     n_dims = 1 << qubits
-    n_strings_limit = 10 if qubits > 4 else None
+    n_strings_limit = 128 if qubits > 4 else None
 
     prepared_paulis = list(
         map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
@@ -206,7 +206,7 @@ def test_expected_value_batch_n_qubits_n_states(
 ) -> None:
     """Benchmark PauliString expected_value with provided set of state vectors."""
     n_dims = 1 << qubits
-    n_strings_limit = 10 if qubits > 4 else None
+    n_strings_limit = 128 if qubits > 4 else None
 
     prepared_paulis = list(
         map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
