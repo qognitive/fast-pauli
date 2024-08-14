@@ -214,32 +214,39 @@ struct PauliString {
    * \f$ \bra{\psi_t} \mathcal{\hat{P_i}} \ket{\psi_t} \f$
    * for each state \f$ \ket{\psi_t} \f$ from provided batch.
    *
+   * @note The expected values are added to corresponding coordinates
+   * in the expected_vals_out vector.
+   *
    * @tparam T The floating point base to use for all the complex numbers
-   * @param states_T THe original states to apply the PauliString to
+   * @param expected_vals_out accumulator for expected values for each state in
+   * the batch
+   * @param states THe original states to apply the PauliString to
    * (n_dim x n_states)
    * @param c Multiplication factor to apply to the PauliString
    */
   template <std::floating_point T>
-  std::vector<std::complex<T>> expected_value(
-      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states_T)
+  void expected_value(
+      std::mdspan<std::complex<T>, std::dextents<size_t, 1>> expected_vals_out,
+      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states)
       const {
     // Input check
-    if (states_T.extent(0) != dims())
+    if (states.extent(0) != dims())
       throw std::invalid_argument(
           fmt::format("[PauliString] states shape ({}) must match the dimension"
                       " of the operators ({})",
-                      states_T.extent(0), dims()));
+                      states.extent(0), dims()));
+    if (expected_vals_out.extent(0) != states.extent(1))
+      throw std::invalid_argument("[PauliString] expected_vals_out shape must "
+                                  "match the number of states");
 
     auto [k, m] = get_sparse_repr<T>(paulis);
 
-    std::vector<std::complex<T>> exp_val(states_T.extent(1), 0);
-    for (size_t i = 0; i < states_T.extent(0); ++i) {
-      for (size_t t = 0; t < states_T.extent(1); ++t) {
-        exp_val[t] += std::conj(states_T(i, t)) * m[i] * states_T(k[i], t);
+    for (size_t i = 0; i < states.extent(0); ++i) {
+      for (size_t t = 0; t < states.extent(1); ++t) {
+        expected_vals_out[t] +=
+            std::conj(states(i, t)) * m[i] * states(k[i], t);
       }
     }
-
-    return exp_val;
   }
 
   //

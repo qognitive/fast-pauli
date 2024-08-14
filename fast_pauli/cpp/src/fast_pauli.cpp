@@ -53,6 +53,8 @@ PYBIND11_MODULE(_fast_pauli, m) {
       .def("__str__",
            [](fp::Pauli const &self) { return fmt::format("{}", self); });
 
+  // TODO should we have PauliString templated on the float_type instead of each
+  // individual method?
   py::class_<fp::PauliString>(m, "PauliString")
       .def(py::init<>())
       .def(py::init([](std::vector<fp::Pauli> paulis) {
@@ -108,7 +110,12 @@ PYBIND11_MODULE(_fast_pauli, m) {
             std::mdspan<std::complex<float_type> const,
                         std::dextents<size_t, 2>>
                 span_state{state.data(), state.size(), 1};
-            return self.expected_value(span_state);
+            std::vector<std::complex<float_type>> output(1, 0);
+            std::mdspan<std::complex<float_type>, std::dextents<size_t, 1>>
+                span_output{output.data(), 1};
+
+            self.expected_value(span_output, span_state);
+            return output.at(0);
           },
           "state"_a)
       .def(
@@ -122,7 +129,13 @@ PYBIND11_MODULE(_fast_pauli, m) {
                         std::dextents<size_t, 2>>
                 span_states{flat_states.data(), states.size(),
                             states.front().size()};
-            return self.expected_value(span_states);
+            std::vector<std::complex<float_type>> output(states.front().size(),
+                                                         0);
+            std::mdspan<std::complex<float_type>, std::dextents<size_t, 1>>
+                span_output{output.data(), output.size()};
+
+            self.expected_value(span_output, span_states);
+            return output;
           },
           "states"_a)
       .def("__str__",
