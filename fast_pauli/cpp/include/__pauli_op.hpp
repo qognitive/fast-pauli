@@ -27,7 +27,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
   // according to the order of data member declarations in the class
   {}
 
-  //
+  // TODO should we prohibit identical pauli strings in strings vector ?
   PauliOp(std::vector<H> coefficients, std::vector<PauliString> strings)
       : coeffs(std::move(coefficients)), pauli_strings(std::move(strings)) {
     // TODO may want to wrap this in a #IFDEF DEBUG block to avoid the overhead
@@ -62,6 +62,8 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
   size_t n_qubits() const {
     return pauli_strings.size() ? pauli_strings[0].n_qubits() : 0;
   }
+
+  size_t n_strings() const { return pauli_strings.size(); }
 
   std::vector<std::complex<T>>
   apply(std::vector<std::complex<T>> const &state) const {
