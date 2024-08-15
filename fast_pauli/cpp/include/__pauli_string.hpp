@@ -227,8 +227,8 @@ struct PauliString {
   template <std::floating_point T>
   void expected_value(
       std::mdspan<std::complex<T>, std::dextents<size_t, 1>> expected_vals_out,
-      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states)
-      const {
+      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states,
+      std::complex<T> const c = 1.0) const {
     // Input check
     if (states.extent(0) != dims())
       throw std::invalid_argument(
@@ -242,9 +242,10 @@ struct PauliString {
     auto [k, m] = get_sparse_repr<T>(paulis);
 
     for (size_t i = 0; i < states.extent(0); ++i) {
+      const std::complex<T> c_m_i = c * m[i];
       for (size_t t = 0; t < states.extent(1); ++t) {
         expected_vals_out[t] +=
-            std::conj(states(i, t)) * m[i] * states(k[i], t);
+            std::conj(states(i, t)) * c_m_i * states(k[i], t);
       }
     }
   }
