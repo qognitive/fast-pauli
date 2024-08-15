@@ -173,6 +173,48 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     }
   }
 
+  std::vector<std::complex<T>> expected_value(
+      mdspan<std::complex<T> const, std::dextents<size_t, 2>> states) const {
+    // input check
+    if (states.extent(0) != this->dims()) {
+      throw std::invalid_argument(
+          "[PauliOp] state size must match the dimension of the operators");
+    }
+
+    size_t const n_data = states.extent(1);
+    size_t const n_threads = omp_get_max_threads();
+
+    // no need to default initialize with 0 since std::complex constructor
+    // handles that
+    std::vector<std::complex<T>> expected_vals(n_data);
+    std::vector<std::complex<T>> expected_vals_per_thread_storage(n_threads *
+                                                                  n_data);
+    std::mdspan<std::complex<T>, std::dextents<size_t, 2>>
+        exp_vals_accum_per_thread(expected_vals_per_thread_storage.data(),
+                                  n_threads, n_data);
+
+#pragma omp parallel for schedule(static)
+    for (size_t i = 0; i < pauli_strings.size(); ++i) {
+      size_t const tid = omp_get_thread_num();
+
+      PauliString const &ps = pauli_strings[i];
+      std::complex<T> c = coeffs[i];
+      std::mdspan<std::complex<T>, std::dextents<size_t, 1>>
+          exp_vals_accum_local =
+              std::submdspan(exp_vals_accum_per_thread, tid, std::full_extent);
+      ps.expected_value(exp_vals_accum_local, states, c);
+    }
+
+#pragma omp parallel for schedule(static)
+    for (size_t t = 0; t < states.extent(1); ++t) {
+      for (size_t th = 0; th < n_threads; ++th) {
+        expected_vals[t] += exp_vals_accum_per_thread(th, t);
+      }
+    }
+
+    return expected_vals;
+  }
+
   //
   // Helpers (mostly for debugging)
   //
