@@ -34,7 +34,7 @@ def pauli_strings_with_size() -> Callable:
     def generate_paulis(size: int, limit: int = 1_000) -> list[str]:
         strings: list[str] = []
         for s in it.product("IXYZ", repeat=size):
-            if limit and len(strings) > limit:
+            if limit and len(strings) >= limit:
                 break
             strings.append("".join(s))
         return strings

@@ -15,7 +15,7 @@ build-py:
 build: build-cpp build-py
 
 test-cpp:
-	ctest --test-dir build
+	ctest --test-dir build --verbose
 
 test-py:
 	python -m pytest -v tests/fast_pauli
