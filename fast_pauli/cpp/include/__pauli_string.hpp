@@ -198,10 +198,11 @@ struct PauliString {
     auto [k, m] = get_sparse_repr<T>(paulis);
 
     for (size_t i = 0; i < states_T.extent(0); ++i) {
-      std::copy_n(&states_T(k[i], 0), states_T.extent(1), &new_states_T(i, 0));
-      const std::complex<T> c_m_i = c * m[i];
+      std::complex<T> const c_m_i = c * m[i];
+      std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states_row =
+          std::submdspan(states_T, k[i], std::full_extent);
       for (size_t t = 0; t < states_T.extent(1); ++t) {
-        new_states_T(i, t) *= c_m_i;
+        new_states_T(i, t) += c_m_i * states_row[t];
       }
     }
   }
