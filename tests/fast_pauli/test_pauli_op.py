@@ -37,7 +37,9 @@ def test_naive_pauli_operator(paulis: dict) -> None:
     )
 
 
-@pytest.mark.parametrize("pauli_op,", [fp.PauliOp], ids=resolve_parameter_repr)
+@pytest.mark.parametrize(
+    "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
+)
 def test_operator_trivial(
     paulis: dict,
     pauli_op: type[fp.PauliOp] | type[pp.PauliOp],
@@ -45,8 +47,8 @@ def test_operator_trivial(
     """Test PauliOp class on trivial inputs."""
     empty = (
         [pauli_op(), pauli_op([]), pauli_op([], [])]
-        # if isinstance(pauli_op, fp.PauliOp)
-        # else [pauli_op([])]
+        if isinstance(pauli_op, fp.PauliOp)
+        else [pauli_op([], [])]
     )
     for empty_op in empty:
         assert empty_op.dim == 0
@@ -65,7 +67,9 @@ def test_operator_trivial(
         np.testing.assert_allclose(po.to_tensor(), paulis[p], atol=1e-15)
 
 
-@pytest.mark.parametrize("pauli_op,", [fp.PauliOp], ids=resolve_parameter_repr)
+@pytest.mark.parametrize(
+    "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
+)
 def test_operator_basics(
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
@@ -77,7 +81,7 @@ def test_operator_basics(
     assert po.n_qubits == 3
     assert po.n_strings == 2
     assert po.strings == ["III", "III"]
-    assert po.coeffs == [4j, 4j]
+    np.testing.assert_equal(po.coeffs, [4j, 4j])
     np.testing.assert_allclose(po.to_tensor(), 4j * 2 * np.eye(8), atol=1e-15)
 
     string_sets = [
@@ -121,7 +125,9 @@ def test_operator_basics(
         )
 
 
-@pytest.mark.parametrize("pauli_op,", [fp.PauliOp], ids=resolve_parameter_repr)
+@pytest.mark.parametrize(
+    "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
+)
 def test_dense_representation(
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
@@ -145,7 +151,9 @@ def test_dense_representation(
         )
 
 
-@pytest.mark.parametrize("pauli_op,", [fp.PauliOp], ids=resolve_parameter_repr)
+@pytest.mark.parametrize(
+    "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
+)
 def test_apply_1d(
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
@@ -189,7 +197,9 @@ def test_apply_1d(
         )
 
 
-@pytest.mark.parametrize("pauli_op,", [fp.PauliOp], ids=resolve_parameter_repr)
+@pytest.mark.parametrize(
+    "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
+)
 def test_apply_batch(
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
@@ -233,7 +243,9 @@ def test_apply_batch(
         )
 
 
-@pytest.mark.parametrize("pauli_op,", [fp.PauliOp], ids=resolve_parameter_repr)
+@pytest.mark.parametrize(
+    "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
+)
 def test_expected_value(
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
