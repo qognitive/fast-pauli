@@ -211,7 +211,7 @@ TEST_CASE("test apply batch") {
     std::mdspan<std::complex<double>, std::dextents<size_t, 2>> states_T(
         states_raw.data(), dims, n_states);
 
-    auto new_states_raw = states_raw;
+    std::vector<std::complex<double>> new_states_raw(dims * n_states);
     std::mdspan<std::complex<double>, std::dextents<size_t, 2>> new_states_T(
         new_states_raw.data(), dims, n_states);
 
