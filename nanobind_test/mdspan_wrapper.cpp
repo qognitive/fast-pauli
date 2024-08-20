@@ -5,7 +5,9 @@
 #include <experimental/mdspan>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <span>
 #include <string>
+#include <vector>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -22,29 +24,28 @@ ndarray_cast_from_py(nb::ndarray<T> &a) {
   return std::mdspan<T, std::dextents<size_t, ndim>>(a.data(), shape);
 }
 
-void scale_mdspan(std::mdspan<double, std::dextents<size_t, 3>> a,
-                  double scale) {
-  for (size_t i = 0; i < a.extent(0); ++i) {
-    for (size_t j = 0; j < a.extent(1); ++j) {
-      for (size_t k = 0; k < a.extent(2); ++k) {
-        a[i, j, k] *= scale;
-      }
-    }
-  }
-}
-
-void scale_ndarray(nb::ndarray<double> &a, double scale) {
-  scale_mdspan(ndarray_cast_from_py<double, 3>(a), scale);
-}
-
 template <typename T> struct PauliOp {
   // As n_pauli_strings x n_qubits
   std::mdspan<int, std::dextents<size_t, 2>> pauli_strings;
   std::mdspan<T, std::dextents<size_t, 1>> coeffs;
+  std::vector<T> _coeffs;
 
   PauliOp(nb::ndarray<int> &ps, nb::ndarray<T> &c) {
     pauli_strings = ndarray_cast_from_py<int, 2>(ps);
-    coeffs = ndarray_cast_from_py<T, 1>(c);
+
+    // Make space
+    size_t size = 1;
+    for (size_t i = 0; i < c.ndim(); ++i) {
+      size *= c.shape(i);
+    }
+    _coeffs.resize(size);
+
+    // Use std::span to get easy iterators to std::copy
+    std::span<T> _span(c.data(), size);
+    std::copy(_span.begin(), _span.end(), _coeffs.begin());
+
+    // Create mdspan on data that this structure owns
+    coeffs = std::mdspan<T, std::dextents<size_t, 1>>(_coeffs.data(), size);
   }
 
   bool operator==(const PauliOp &other) const {
@@ -56,7 +57,6 @@ template <typename T> struct PauliOp {
     if (coeffs.extent(0) != other.coeffs.extent(0)) {
       return false;
     }
-
     fmt::println("Dimensions match");
 
     for (size_t i = 0; i < pauli_strings.extent(0); ++i) {
@@ -66,7 +66,6 @@ template <typename T> struct PauliOp {
         }
       }
     }
-
     fmt::println("Pauli strings match");
 
     for (size_t i = 0; i < coeffs.extent(0); ++i) {
@@ -98,7 +97,6 @@ template <typename T> struct PauliOp {
 
 NB_MODULE(mdspan_wrapper, m) {
   //
-  m.def("scale_ndarray", &scale_ndarray, "a"_a.noconvert(), "scale"_a);
   nb::class_<PauliOp<double>>(m, "PauliOp")
       .def(nb::init<nb::ndarray<int> &, nb::ndarray<double> &>())
       .def("scale", &PauliOp<double>::scale, "scale"_a)
