@@ -37,13 +37,7 @@ jobs:
         env:
           OMP_NUM_THREADS: 2
           CPP_TEST_DIR: build/fast_pauli/cpp/tests
-        run: |
-          # ctest --test-dir build --verbose # TODO not using bc of PauliOp problems on CI
-          ./${CPP_TEST_DIR}/test_factory
-          ./${CPP_TEST_DIR}/test_pauli
-          ./${CPP_TEST_DIR}/test_pauli_op --test-case-exclude="*multistring*"
-          ./${CPP_TEST_DIR}/test_pauli_string
-          ./${CPP_TEST_DIR}/test_summed_pauli_op
+        run: make test-cpp
       - name: Test Python
         run: make test-py
 

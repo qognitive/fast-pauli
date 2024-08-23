@@ -198,10 +198,11 @@ struct PauliString {
     auto [k, m] = get_sparse_repr<T>(paulis);
 
     for (size_t i = 0; i < states_T.extent(0); ++i) {
-      std::copy_n(&states_T(k[i], 0), states_T.extent(1), &new_states_T(i, 0));
-      const std::complex<T> c_m_i = c * m[i];
+      std::complex<T> const c_m_i = c * m[i];
+      std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states_row =
+          std::submdspan(states_T, k[i], std::full_extent);
       for (size_t t = 0; t < states_T.extent(1); ++t) {
-        new_states_T(i, t) *= c_m_i;
+        new_states_T(i, t) += c_m_i * states_row[t];
       }
     }
   }
@@ -214,32 +215,40 @@ struct PauliString {
    * \f$ \bra{\psi_t} \mathcal{\hat{P_i}} \ket{\psi_t} \f$
    * for each state \f$ \ket{\psi_t} \f$ from provided batch.
    *
+   * @note The expected values are added to corresponding coordinates
+   * in the expected_vals_out vector.
+   *
    * @tparam T The floating point base to use for all the complex numbers
-   * @param states_T THe original states to apply the PauliString to
+   * @param expected_vals_out accumulator for expected values for each state in
+   * the batch
+   * @param states THe original states to apply the PauliString to
    * (n_dim x n_states)
    * @param c Multiplication factor to apply to the PauliString
    */
   template <std::floating_point T>
-  std::vector<std::complex<T>> expected_value(
-      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states_T)
-      const {
+  void expected_value(
+      std::mdspan<std::complex<T>, std::dextents<size_t, 1>> expected_vals_out,
+      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states,
+      std::complex<T> const c = 1.0) const {
     // Input check
-    if (states_T.extent(0) != dims())
+    if (states.extent(0) != dims())
       throw std::invalid_argument(
           fmt::format("[PauliString] states shape ({}) must match the dimension"
                       " of the operators ({})",
-                      states_T.extent(0), dims()));
+                      states.extent(0), dims()));
+    if (expected_vals_out.extent(0) != states.extent(1))
+      throw std::invalid_argument("[PauliString] expected_vals_out shape must "
+                                  "match the number of states");
 
     auto [k, m] = get_sparse_repr<T>(paulis);
 
-    std::vector<std::complex<T>> exp_val(states_T.extent(1), 0);
-    for (size_t i = 0; i < states_T.extent(0); ++i) {
-      for (size_t t = 0; t < states_T.extent(1); ++t) {
-        exp_val[t] += std::conj(states_T(i, t)) * m[i] * states_T(k[i], t);
+    for (size_t i = 0; i < states.extent(0); ++i) {
+      const std::complex<T> c_m_i = c * m[i];
+      for (size_t t = 0; t < states.extent(1); ++t) {
+        expected_vals_out[t] +=
+            std::conj(states(i, t)) * c_m_i * states(k[i], t);
       }
     }
-
-    return exp_val;
   }
 
   //
