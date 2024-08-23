@@ -41,3 +41,30 @@ def naive_pauli_converter(string: str) -> np.ndarray:
     for p in reversed(string[:-1]):
         matrix = np.kron(paulis[p], matrix)
     return matrix
+
+
+def naive_pauli_operator(coeffs: list[np.complex128], strings: list[str]) -> np.ndarray:
+    """Convert list of Pauli strings and coefficients into corresponding dense matrix.
+
+    Parameters
+    ----------
+    coeffs : list[float]
+        The list of coefficients corresponding to the Pauli strings.
+    strings : list[str]
+        The list of string representations of Pauli strings.
+
+    Returns
+    -------
+    np.ndarray
+        The matrix representation of the Pauli operator.
+
+    """
+    if len(coeffs) != len(strings):
+        raise ValueError("Length of coefficients and strings must match.")
+    return np.sum(
+        [
+            coeff * naive_pauli_converter(string)
+            for string, coeff in zip(strings, coeffs)
+        ],
+        axis=0,
+    )

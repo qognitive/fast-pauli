@@ -1,1 +1,1 @@
-"""Module to validate correctness and consistency of C++ and python implementations."""
+"""Test fast_pauli c++ objects against python implementations."""
