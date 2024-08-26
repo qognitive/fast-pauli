@@ -94,6 +94,7 @@ exclude = [
     "venv",
     ".venv",
     "fast_pauli/__version__.py",
+    "nanobind_test"
 ]
 
 line-length = 88
