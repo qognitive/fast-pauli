@@ -6,6 +6,7 @@
 #include <experimental/mdspan>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <iostream>
 #include <span>
 #include <string>
 #include <tuple>
@@ -106,6 +107,12 @@ template <typename T> struct PauliOp {
     }
     fmt::print("]\n");
   }
+
+  void return_coeffs(std::mdspan<T, std::dextents<size_t, 1>> &out) {
+    for (size_t i = 0; i < coeffs.extent(0); ++i) {
+      out[i] = coeffs[i];
+    }
+  }
 };
 
 NB_MODULE(mdspan_wrapper, m) {
@@ -115,7 +122,62 @@ NB_MODULE(mdspan_wrapper, m) {
       .def("scale", &PauliOp<double>::scale, "scale"_a)
       .def("print", &PauliOp<double>::print)
       .def("__eq__", &PauliOp<double>::operator==)
-      .def("multiply_coeff", [](PauliOp<double> &op, nb::ndarray<double> &c) {
-        op.multiply_coeff(ndarray_cast_from_py<double, 1>(c));
+      .def("multiply_coeff",
+           [](PauliOp<double> &op, nb::ndarray<double> &c) {
+             op.multiply_coeff(ndarray_cast_from_py<double, 1>(c));
+           })
+      .def("return_coeffs",
+           [](PauliOp<double> &op, nb::ndarray<double> &out) {
+             auto out_mdspan = ndarray_cast_from_py<double, 1>(out);
+             op.return_coeffs(out_mdspan);
+           })
+      .def("return_coeffs_owning", [](PauliOp<double> &op) {
+        struct Temp {
+          std::vector<double> data;
+        };
+
+        Temp *tmp = new Temp{op._coeffs};
+
+        fmt::println("copied data: [{}]", fmt::join(tmp->data, ", "));
+        std::cout << std::flush;
+
+        nb::capsule deleter(
+            tmp, [](void *data) noexcept { delete static_cast<Temp *>(data); });
+
+        return nb::ndarray<nb::numpy, double>(
+            /*data*/ tmp->data.data(),
+            /*shape */ {tmp->data.size()},
+            /*deleter*/ deleter);
       });
+
+  m.def("return_coeffs",
+        [](size_t n) {
+          std::vector<double> data(n);
+          for (size_t i = 0; i < n; ++i) {
+            data[i] = i;
+          }
+
+          struct Temp {
+            std::vector<double> data;
+          };
+
+          Temp *tmp = new Temp{data};
+
+          nb::capsule deleter(tmp, [](void *data) noexcept {
+            delete static_cast<Temp *>(data);
+          });
+
+          return nb::ndarray<nb::numpy, double>(
+              /*data*/ tmp->data.data(),
+              /*shape */ {tmp->data.size()},
+              /*deleter*/ deleter);
+
+          // nb::ndarray<nb::numpy> out{data.data(), {data.size()}, deleter};
+
+          // nb::object res = nb::cast(out, nb::rv_policy::copy);
+          // return res;
+        }
+
+        /**/
+  );
 }

@@ -65,3 +65,22 @@ def test_multiply_coeff_diff_type(my_op) -> None:
     coeffs = np.array([1.0, 2.0, 3.0], dtype=np.complex128)
     with pytest.raises(TypeError):
         my_op.multiply_coeff(coeffs)
+
+
+def test_return_coeffs_non_owning(my_op) -> None:
+    c = np.zeros(3)
+    print(c)
+    my_op.return_coeffs(c)
+
+    print(c)
+    np.testing.assert_allclose(c, np.array([1.0, 2.0, 3.0]))
+
+
+def test_return_coeffs_owning(my_op) -> None:
+    c = my_op.return_coeffs_owning()
+    print("returned array", c)
+    np.testing.assert_allclose(c, np.array([1.0, 2.0, 3.0]))
+
+
+def test_standalone() -> None:
+    np.testing.assert_allclose(mdspan_wrapper.return_coeffs(3), np.array([0, 1.0, 2.0]))

@@ -6,6 +6,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS
 
 include(cmake/CPM.cmake)
 
+project(nanobind_test LANGUAGES CXX)
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
