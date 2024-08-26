@@ -1,4 +1,5 @@
 import sys
+
 import numpy as np
 import pytest
 
@@ -25,7 +26,7 @@ def my_op() -> mdspan_wrapper.PauliOp:
     return mdspan_wrapper.PauliOp(pauli_strings, coeffs)
 
 
-def test_fake_pauli_op_scope(my_op) -> None:
+def test_fake_pauli_op_scope(my_op: mdspan_wrapper.PauliOp) -> None:
     my_op.scale(2.0)
     op2 = mdspan_wrapper.PauliOp(
         np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]], dtype=np.int32),
@@ -51,7 +52,7 @@ def test_fake_pauli_op_scope(my_op) -> None:
     assert my_op == op2
 
 
-def test_multiply_coeff(my_op) -> None:
+def test_multiply_coeff(my_op: mdspan_wrapper.PauliOp) -> None:
     coeffs = np.array([1.0, 2.0, 3.0])
     my_op.multiply_coeff(coeffs)
     op2 = mdspan_wrapper.PauliOp(
@@ -61,13 +62,13 @@ def test_multiply_coeff(my_op) -> None:
     assert my_op == op2
 
 
-def test_multiply_coeff_diff_type(my_op) -> None:
+def test_multiply_coeff_diff_type(my_op: mdspan_wrapper.PauliOp) -> None:
     coeffs = np.array([1.0, 2.0, 3.0], dtype=np.complex128)
     with pytest.raises(TypeError):
         my_op.multiply_coeff(coeffs)
 
 
-def test_return_coeffs_non_owning(my_op) -> None:
+def test_return_coeffs_non_owning(my_op: mdspan_wrapper.PauliOp) -> None:
     c = np.zeros(3)
     print(c)
     my_op.return_coeffs(c)
@@ -76,7 +77,7 @@ def test_return_coeffs_non_owning(my_op) -> None:
     np.testing.assert_allclose(c, np.array([1.0, 2.0, 3.0]))
 
 
-def test_return_coeffs_owning(my_op) -> None:
+def test_return_coeffs_owning(my_op: mdspan_wrapper.PauliOp) -> None:
     c = my_op.return_coeffs_owning()
     print("returned array", c)
     np.testing.assert_allclose(c, np.array([1.0, 2.0, 3.0]))

@@ -62,7 +62,7 @@ strict_optional = true
 ignore_missing_imports = true
 explicit_package_bases = true
 
-exclude = ["nanobind_test"]
+exclude = []
 
 [tool.ruff]
 exclude = [
@@ -94,6 +94,7 @@ exclude = [
     "venv",
     ".venv",
     "fast_pauli/__version__.py",
+    "nanobind_test"
 ]
 
 line-length = 88
