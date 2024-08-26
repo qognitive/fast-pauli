@@ -34,6 +34,7 @@ cpmaddpackage("gh:doctest/doctest@2.4.11")
 cpmaddpackage("gh:pybind/pybind11@2.11.1")
 cpmaddpackage("gh:fmtlib/fmt#10.2.1")
 cpmaddpackage("gh:kokkos/mdspan#b885a2c60ad42f9e1aaa0d317a38105b950cbed0")
+cpmaddpackage("gh:wjakob/nanobind#v2.0.0")
 
 #
 # User Options
@@ -55,21 +56,18 @@ project(fast_pauli LANGUAGES CXX)
 # Set up OpenMP
 find_package(OpenMP REQUIRED)
 
+# Setup Python
+find_package(Python 3.10 # This is a minimum version
+             COMPONENTS Interpreter Development REQUIRED)
+
 # Our primary target
 add_library(fast_pauli INTERFACE)
 target_include_directories(
   fast_pauli INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/fast_pauli/cpp/include/)
 target_link_libraries(fast_pauli INTERFACE fmt::fmt mdspan OpenMP::OpenMP_CXX)
 target_compile_options(
-  fast_pauli
-  INTERFACE -g3
-            -O3
-            -march=native
-            -Wall
-            -Wextra
-            -Werror
-            -Wpedantic
-            # -stdlib=libc++
+  fast_pauli INTERFACE -g3 -O3 -march=native -Wall -Wextra -Werror
+                       # -Wpedantic -stdlib=libc++
 )
 
 # Testing
@@ -82,3 +80,6 @@ add_subdirectory(fast_pauli/cpp/examples)
 
 # Python bindings
 add_subdirectory(fast_pauli/cpp/src)
+
+# Python bindings using nanobind
+add_subdirectory(fast_pauli/cpp/src_nanobind)
