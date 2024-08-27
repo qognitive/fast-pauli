@@ -1,9 +1,14 @@
 #include <experimental/mdspan>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/string.h>
+
+#include "fast_pauli.hpp"
+#include "nanobind/nb_defs.h"
 
 namespace nb = nanobind;
 using namespace nb::literals;
+namespace fp = fast_pauli;
 
 /*
 MDSPAN Helper Functions
@@ -20,7 +25,7 @@ mdspan_like(std::mdspan<T, std::experimental::dims<ndim>> arr, T *new_data) {
     shape[i] = arr.extent(i);
   }
   return std::mdspan<T, std::experimental::dims<ndim>>(new_data, shape);
-}
+} // namespace std::mdspan
 
 /*
 Helper functions
@@ -117,10 +122,33 @@ mdspan_to_owning_ndarray(std::mdspan<T, std::dextents<size_t, ndim>> a) {
   // TODO can we do this without speciyfin that it's a numpy array?
   return nb::ndarray<nb::numpy, T>(
       /*data*/ tmp->data.data(),
-      /*shape */ {tmp->data.size()},
+      /*shape */ shape,
       /*deleter*/ deleter);
 }
 
 /*
 Python Bindings for PauliOp
 */
+
+NB_MODULE(fppy, m) {
+  // TODO init default threading behaviour for the module
+  // TODO give up GIL when calling into long-running C++ code
+  using float_type = double;
+
+  nb::class_<fp::Pauli>(m, "Pauli")
+      .def(nb::init<>())
+      .def(nb::init<int const>(), "code"_a)
+      .def(nb::init<char const>(), "symbol"_a)
+      .def("to_tensor", &fp::Pauli::to_tensor<float_type>)
+      .def("multiply", [](fp::Pauli const &self,
+                          fp::Pauli const &rhs) { return self * rhs; })
+      .def("__str__",
+           [](fp::Pauli const &self) { return fmt::format("{}", self); });
+
+  nb::class_<fp::PauliString>(m, "PauliString")
+      .def(nb::init<>())
+      .def(nb::init<std::string const &>(), "string"_a)
+      .def("__str__",
+           [](fp::PauliString const &self) { return fmt::format("{}", self); });
+  ;
+}
