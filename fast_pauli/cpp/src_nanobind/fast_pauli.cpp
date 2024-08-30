@@ -58,6 +58,12 @@ ambiguity about ownership.
 template <typename T, size_t ndim>
 std::mdspan<T, std::dextents<size_t, ndim>>
 ndarray_to_mdspan(nb::ndarray<T> a) {
+
+  if (a.ndim() != ndim) {
+    throw std::invalid_argument(fmt::format(
+        "ndarray_to_mdspan: expected {} dimensions, got {}", ndim, a.ndim()));
+  }
+
   // Collect shape information
   std::array<size_t, ndim> shape;
   for (size_t i = 0; i < ndim; ++i) {
@@ -67,9 +73,17 @@ ndarray_to_mdspan(nb::ndarray<T> a) {
   return std::mdspan<T, std::dextents<size_t, ndim>>(a.data(), shape);
 }
 
-template <typename T, size_t ndim, typename py_lib>
+// TODO this second function is really sloppy, we should be able to do much
+// better with some template metaprogramming
+template <typename T, size_t ndim, typename ndarray_framework>
 std::mdspan<T, std::dextents<size_t, ndim>>
-ndarray_to_mdspan(nb::ndarray<py_lib, T> a) {
+ndarray_to_mdspan(nb::ndarray<ndarray_framework, T> a) {
+
+  if (a.ndim() != ndim) {
+    throw std::invalid_argument(fmt::format(
+        "ndarray_to_mdspan: expected {} dimensions, got {}", ndim, a.ndim()));
+  }
+
   // Collect shape information
   std::array<size_t, ndim> shape;
   for (size_t i = 0; i < ndim; ++i) {
@@ -160,6 +174,7 @@ NB_MODULE(fppy, m) {
   // TODO init default threading behaviour for the module
   // TODO give up GIL when calling into long-running C++ code
   using float_type = double;
+  using cfloat_t = std::complex<float_type>;
 
   nb::class_<fp::Pauli>(m, "Pauli")
       .def(nb::init<>())
@@ -177,28 +192,35 @@ NB_MODULE(fppy, m) {
       .def("__str__",
            [](fp::PauliString const &self) { return fmt::format("{}", self); })
       .def("apply",
+           [](fp::PauliString const &self, nb::ndarray<cfloat_t> states,
+              cfloat_t c = cfloat_t{1.0}) {
+             // TODO need to add checks that the ndarray isn't doing anything
+             // fancy with strides or layout
 
-           [](fp::PauliString const &self,
-              nb::ndarray<std::complex<float_type>> states,
-              std::complex<float_type> c = std::complex<float_type>{1.0}) {
-             auto states_mdspan =
-                 ndarray_to_mdspan<std::complex<float_type>, 2>(states);
-             nb::ndarray<nb::numpy, std::complex<float_type>> new_states =
-                 owning_ndarray_like_mdspan<std::complex<float_type>, 2>(
-                     states_mdspan);
-             auto new_states_mdspan =
-                 ndarray_to_mdspan<std::complex<float_type>, 2>(new_states);
+             if (states.ndim() == 1) {
+               // TODO we can do better with this, right now it takes a 1D array
+               // and returns a 2D one which isn't very intuitive
+               // clang-format off
+               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
+               auto states_mdspan_2d =std::mdspan(states_mdspan.data_handle(),states_mdspan.extent(0),1);
+               auto new_states = owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan_2d);
+               auto new_states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(new_states);
+               self.apply_batch<float_type>(new_states_mdspan, states_mdspan_2d, c);
+               // clang-format on
+               return new_states;
 
-             self.apply_batch<float_type>(new_states_mdspan, states_mdspan, c);
-
-             //  nb::ndarray<nb::numpy, std::complex<float_type>> result =
-             //      nb::ndarray<nb::numpy, std::complex<float_type>>(
-             //          /*data*/ new_states.data(),
-             //          //  /*ndim*/ static_cast<size_t>(new_states.ndim()),
-             //          /*shape */ {new_states.shape(0), new_states.shape(1)},
-             //          /*deleter*/ *new_states.handle());
-             //  return result;
-             return new_states;
+             } else if (states.ndim() == 2) {
+               // clang-format off
+               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+               auto new_states = owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+               auto new_states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(new_states);
+               self.apply_batch<float_type>(new_states_mdspan, states_mdspan, c);
+               // clang-format on
+               return new_states;
+             } else {
+               throw std::invalid_argument(fmt::format(
+                   "apply: expected 1 or 2 dimensions, got {}", states.ndim()));
+             }
            })
       //
       ;
