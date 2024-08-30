@@ -1,6 +1,7 @@
 #include <experimental/mdspan>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/complex.h>
 #include <nanobind/stl/string.h>
 
 #include "fast_pauli.hpp"
@@ -56,7 +57,7 @@ ambiguity about ownership.
  */
 template <typename T, size_t ndim>
 std::mdspan<T, std::dextents<size_t, ndim>>
-ndarray_to_mdspan(nb::ndarray<T> &a) {
+ndarray_to_mdspan(nb::ndarray<T> a) {
   // Collect shape information
   std::array<size_t, ndim> shape;
   for (size_t i = 0; i < ndim; ++i) {
@@ -65,6 +66,30 @@ ndarray_to_mdspan(nb::ndarray<T> &a) {
 
   return std::mdspan<T, std::dextents<size_t, ndim>>(a.data(), shape);
 }
+
+template <typename T, size_t ndim, typename py_lib>
+std::mdspan<T, std::dextents<size_t, ndim>>
+ndarray_to_mdspan(nb::ndarray<py_lib, T> a) {
+  // Collect shape information
+  std::array<size_t, ndim> shape;
+  for (size_t i = 0; i < ndim; ++i) {
+    shape[i] = a.shape(i);
+  }
+
+  return std::mdspan<T, std::dextents<size_t, ndim>>(a.data(), shape);
+}
+
+// template <typename T, size_t ndim>
+// std::mdspan<T, std::dextents<size_t, ndim>>
+// ndarray_to_mdspan(nb::ndarray<T> a) {
+//   // Collect shape information
+//   std::array<size_t, ndim> shape;
+//   for (size_t i = 0; i < ndim; ++i) {
+//     shape[i] = a.shape(i);
+//   }
+
+//   return std::mdspan<T, std::dextents<size_t, ndim>>(a.data(), shape);
+// }
 
 /**
  * @brief This function copyies the data in the nb::ndarray to "raw" data in a
@@ -80,7 +105,7 @@ ndarray_to_mdspan(nb::ndarray<T> &a) {
  */
 template <typename T, size_t ndim>
 std::pair<std::vector<T>, std::array<size_t, ndim>>
-ndarray_to_raw(nb::ndarray<T> &a) {
+ndarray_to_raw(nb::ndarray<T> a) {
   // Shape info
   size_t size = 1;
   std::array<size_t, ndim> shape;
@@ -97,8 +122,8 @@ ndarray_to_raw(nb::ndarray<T> &a) {
 }
 
 template <typename T, size_t ndim>
-nb::ndarray<>
-mdspan_to_owning_ndarray(std::mdspan<T, std::dextents<size_t, ndim>> a) {
+nb::ndarray<nb::numpy, T>
+owning_ndarray_like_mdspan(std::mdspan<T, std::dextents<size_t, ndim>> a) {
   // Collect shape information
   std::array<size_t, ndim> shape;
   size_t size = 1;
@@ -122,7 +147,8 @@ mdspan_to_owning_ndarray(std::mdspan<T, std::dextents<size_t, ndim>> a) {
   // TODO can we do this without speciyfin that it's a numpy array?
   return nb::ndarray<nb::numpy, T>(
       /*data*/ tmp->data.data(),
-      /*shape */ shape,
+      /*ndim*/ shape.size(),
+      /*shape */ shape.data(),
       /*deleter*/ deleter);
 }
 
@@ -149,6 +175,32 @@ NB_MODULE(fppy, m) {
       .def(nb::init<>())
       .def(nb::init<std::string const &>(), "string"_a)
       .def("__str__",
-           [](fp::PauliString const &self) { return fmt::format("{}", self); });
+           [](fp::PauliString const &self) { return fmt::format("{}", self); })
+      .def("apply",
+
+           [](fp::PauliString const &self,
+              nb::ndarray<std::complex<float_type>> states,
+              std::complex<float_type> c = std::complex<float_type>{1.0}) {
+             auto states_mdspan =
+                 ndarray_to_mdspan<std::complex<float_type>, 2>(states);
+             nb::ndarray<nb::numpy, std::complex<float_type>> new_states =
+                 owning_ndarray_like_mdspan<std::complex<float_type>, 2>(
+                     states_mdspan);
+             auto new_states_mdspan =
+                 ndarray_to_mdspan<std::complex<float_type>, 2>(new_states);
+
+             self.apply_batch<float_type>(new_states_mdspan, states_mdspan, c);
+
+             //  nb::ndarray<nb::numpy, std::complex<float_type>> result =
+             //      nb::ndarray<nb::numpy, std::complex<float_type>>(
+             //          /*data*/ new_states.data(),
+             //          //  /*ndim*/ static_cast<size_t>(new_states.ndim()),
+             //          /*shape */ {new_states.shape(0), new_states.shape(1)},
+             //          /*deleter*/ *new_states.handle());
+             //  return result;
+             return new_states;
+           })
+      //
+      ;
   ;
 }
