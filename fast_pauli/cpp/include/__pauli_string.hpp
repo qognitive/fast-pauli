@@ -207,6 +207,7 @@ struct PauliString {
     }
   }
 
+  // TODO let's change the name of this function to expectation_value
   /**
    * @brief Calculate expected values for a given batch of states.
    * This function takes in transposed states with (n_dims x n_states) shape
@@ -227,8 +228,9 @@ struct PauliString {
    */
   template <std::floating_point T>
   void expected_value(
+      // TODO shouldn't the expected_vals_out be real?
       std::mdspan<std::complex<T>, std::dextents<size_t, 1>> expected_vals_out,
-      std::mdspan<std::complex<T> const, std::dextents<size_t, 2>> states,
+      std::mdspan<std::complex<T>, std::dextents<size_t, 2>> states,
       std::complex<T> const c = 1.0) const {
     // Input check
     if (states.extent(0) != dims())

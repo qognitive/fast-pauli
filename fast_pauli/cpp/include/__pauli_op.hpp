@@ -172,7 +172,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
   }
 
   std::vector<std::complex<T>> expected_value(
-      mdspan<std::complex<T> const, std::dextents<size_t, 2>> states) const {
+      mdspan<std::complex<T>, std::dextents<size_t, 2>> states) const {
     // input check
     if (states.extent(0) != this->dims()) {
       throw std::invalid_argument(

@@ -4,6 +4,7 @@
 #include <nanobind/stl/complex.h>
 #include <nanobind/stl/string.h>
 
+#include "__pauli.hpp"
 #include "fast_pauli.hpp"
 #include "nanobind/nb_defs.h"
 
@@ -166,6 +167,32 @@ owning_ndarray_like_mdspan(std::mdspan<T, std::dextents<size_t, ndim>> a) {
       /*deleter*/ deleter);
 }
 
+template <typename T, size_t ndim>
+nb::ndarray<nb::numpy, T>
+owning_ndarray_from_shape(std::array<size_t, ndim> shape) {
+  // Collect shape information
+  size_t size = std::reduce(shape.begin(), shape.end(), 1, std::multiplies<>());
+
+  // Raw data
+  std::vector<T> data(size);
+
+  // weirdness required by nanobind to properly pass ownership through
+  // nb::handle, see https://github.com/wjakob/nanobind/discussions/573
+  struct Temp {
+    std::vector<T> data;
+  };
+  Temp *tmp = new Temp{data};
+  nb::capsule deleter(
+      tmp, [](void *data) noexcept { delete static_cast<Temp *>(data); });
+
+  // TODO can we do this without speciyfin that it's a numpy array?
+  return nb::ndarray<nb::numpy, T>(
+      /*data*/ tmp->data.data(),
+      /*ndim*/ shape.size(),
+      /*shape */ shape.data(),
+      /*deleter*/ deleter);
+}
+
 /*
 Python Bindings for PauliOp
 */
@@ -187,41 +214,67 @@ NB_MODULE(fppy, m) {
            [](fp::Pauli const &self) { return fmt::format("{}", self); });
 
   nb::class_<fp::PauliString>(m, "PauliString")
+      // Constructors
       .def(nb::init<>())
       .def(nb::init<std::string const &>(), "string"_a)
       .def("__str__",
            [](fp::PauliString const &self) { return fmt::format("{}", self); })
-      .def("apply",
-           [](fp::PauliString const &self, nb::ndarray<cfloat_t> states,
-              cfloat_t c = cfloat_t{1.0}) {
-             // TODO need to add checks that the ndarray isn't doing anything
-             // fancy with strides or layout
 
-             if (states.ndim() == 1) {
-               // TODO we can do better with this, right now it takes a 1D array
-               // and returns a 2D one which isn't very intuitive
-               // clang-format off
+      // Properties
+      .def_prop_ro("n_qubits", &fp::PauliString::n_qubits)
+      .def_prop_ro("dim", &fp::PauliString::dims)
+      .def_prop_ro("weight",
+                   [](fp::PauliString const &self) { return self.weight; })
+      // Methods
+      .def(
+          "apply",
+          [](fp::PauliString const &self, nb::ndarray<cfloat_t> states,
+             cfloat_t c) {
+            // TODO need to add checks that the ndarray isn't doing anything
+            // fancy with strides or layout
+
+            if (states.ndim() == 1) {
+              // TODO lots of duplicate code here
+              // TODO we can do better with this, right now it takes a 1D array
+              // and returns a 2D one which isn't very intuitive
+              // clang-format off
                auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
                auto states_mdspan_2d =std::mdspan(states_mdspan.data_handle(),states_mdspan.extent(0),1);
                auto new_states = owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan_2d);
                auto new_states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(new_states);
                self.apply_batch<float_type>(new_states_mdspan, states_mdspan_2d, c);
-               // clang-format on
-               return new_states;
+              // clang-format on
+              return new_states;
 
-             } else if (states.ndim() == 2) {
-               // clang-format off
+            } else if (states.ndim() == 2) {
+              // clang-format off
                auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
                auto new_states = owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
                auto new_states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(new_states);
                self.apply_batch<float_type>(new_states_mdspan, states_mdspan, c);
-               // clang-format on
-               return new_states;
-             } else {
-               throw std::invalid_argument(fmt::format(
-                   "apply: expected 1 or 2 dimensions, got {}", states.ndim()));
-             }
-           })
+              // clang-format on
+              return new_states;
+            } else {
+              throw std::invalid_argument(fmt::format(
+                  "apply: expected 1 or 2 dimensions, got {}", states.ndim()));
+            }
+          },
+          "states"_a, "coeff"_a = cfloat_t{1.0})
+      .def(
+          "expectation_value",
+          [](fp::PauliString const &self, nb::ndarray<cfloat_t> states,
+             cfloat_t c) {
+            auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+            auto expected_vals_out = owning_ndarray_from_shape<cfloat_t, 1>(
+                {states_mdspan.extent(1)});
+            auto expected_vals_out_mdspan =
+                ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
+
+            self.expected_value(expected_vals_out_mdspan, states_mdspan, c);
+
+            return expected_vals_out;
+          },
+          "states"_a, "coeff"_a = cfloat_t{1.0})
       //
       ;
   ;

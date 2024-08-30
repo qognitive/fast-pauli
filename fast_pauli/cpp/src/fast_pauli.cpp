@@ -107,8 +107,7 @@ PYBIND11_MODULE(_fast_pauli, m) {
           "expected_value",
           [](fp::PauliString const &self,
              std::vector<std::complex<float_type>> state) {
-            std::mdspan<std::complex<float_type> const,
-                        std::dextents<size_t, 2>>
+            std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
                 span_state{state.data(), state.size(), 1};
             std::vector<std::complex<float_type>> output(1, 0);
             std::mdspan<std::complex<float_type>, std::dextents<size_t, 1>>
@@ -125,8 +124,7 @@ PYBIND11_MODULE(_fast_pauli, m) {
             if (states.empty())
               return std::vector<std::complex<float_type>>{};
             auto flat_states = fp::flatten_vector(states);
-            std::mdspan<std::complex<float_type> const,
-                        std::dextents<size_t, 2>>
+            std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
                 span_states{flat_states.data(), states.size(),
                             states.front().size()};
             std::vector<std::complex<float_type>> output(states.front().size(),
@@ -213,8 +211,7 @@ PYBIND11_MODULE(_fast_pauli, m) {
           "expected_value",
           [](pauli_op_type const &self,
              std::vector<std::complex<float_type>> state) {
-            std::mdspan<std::complex<float_type> const,
-                        std::dextents<size_t, 2>>
+            std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
                 span_state{state.data(), state.size(), 1};
             auto output = self.expected_value(span_state);
             return output.at(0);
@@ -227,8 +224,7 @@ PYBIND11_MODULE(_fast_pauli, m) {
             if (states.empty())
               return std::vector<std::complex<float_type>>{};
             auto flat_states = fp::flatten_vector(states);
-            std::mdspan<std::complex<float_type> const,
-                        std::dextents<size_t, 2>>
+            std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
                 span_states{flat_states.data(), states.size(),
                             states.front().size()};
             return self.expected_value(span_states);
