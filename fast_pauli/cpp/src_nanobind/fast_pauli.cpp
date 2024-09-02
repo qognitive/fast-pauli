@@ -1,10 +1,14 @@
+#include <iostream>
+
 #include <experimental/mdspan>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/complex.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include "__pauli.hpp"
+#include "__summed_pauli_op.hpp"
 #include "fast_pauli.hpp"
 #include "nanobind/nb_defs.h"
 
@@ -156,8 +160,9 @@ owning_ndarray_like_mdspan(std::mdspan<T, std::dextents<size_t, ndim>> a) {
     std::vector<T> data;
   };
   Temp *tmp = new Temp{data};
-  nb::capsule deleter(
-      tmp, [](void *data) noexcept { delete static_cast<Temp *>(data); });
+
+  nb::capsule deleter(tmp,
+                      [](void *p) noexcept { delete static_cast<Temp *>(p); });
 
   // TODO can we do this without speciyfin that it's a numpy array?
   return nb::ndarray<nb::numpy, T>(
@@ -181,7 +186,9 @@ owning_ndarray_from_shape(std::array<size_t, ndim> shape) {
   struct Temp {
     std::vector<T> data;
   };
-  Temp *tmp = new Temp{data};
+  Temp *tmp = new Temp();
+  tmp->data = std::move(data);
+
   nb::capsule deleter(
       tmp, [](void *data) noexcept { delete static_cast<Temp *>(data); });
 
@@ -233,6 +240,9 @@ NB_MODULE(fppy, m) {
             // TODO need to add checks that the ndarray isn't doing anything
             // fancy with strides or layout
 
+            // TODO handle the non-transposed case since that's likely the most
+            // common
+
             if (states.ndim() == 1) {
               // TODO lots of duplicate code here
               // TODO we can do better with this, right now it takes a 1D array
@@ -261,12 +271,15 @@ NB_MODULE(fppy, m) {
           },
           "states"_a, "coeff"_a = cfloat_t{1.0})
       .def(
+          // TODO we should handle when users pass a single state (i.e. a 1D
+          // array here)
           "expectation_value",
           [](fp::PauliString const &self, nb::ndarray<cfloat_t> states,
              cfloat_t c) {
             auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
-            auto expected_vals_out = owning_ndarray_from_shape<cfloat_t, 1>(
-                {states_mdspan.extent(1)});
+            std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
+            auto expected_vals_out =
+                owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
             auto expected_vals_out_mdspan =
                 ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
 
@@ -275,7 +288,53 @@ NB_MODULE(fppy, m) {
             return expected_vals_out;
           },
           "states"_a, "coeff"_a = cfloat_t{1.0})
+
       //
       ;
-  ;
+
+  nb::class_<fp::SummedPauliOp<float_type>>(m, "SummedPauliOp")
+      // Constructors
+      // See
+      // https://nanobind.readthedocs.io/en/latest/api_core.html#_CPPv4IDpEN8nanobind4initE
+      .def("__init__",
+           [](fp::SummedPauliOp<float_type> *new_obj,
+              std::vector<std::string> &pauli_strings,
+              nb::ndarray<cfloat_t> coeffs) {
+             //
+             auto coeffs_mdspan = ndarray_to_mdspan<cfloat_t, 2>(coeffs);
+
+             new (new_obj)
+                 fp::SummedPauliOp<float_type>(pauli_strings, coeffs_mdspan);
+           })
+      .def_prop_ro("n_dimensions", &fp::SummedPauliOp<float_type>::n_dimensions)
+      .def_prop_ro("n_operators", &fp::SummedPauliOp<float_type>::n_operators)
+      .def_prop_ro("n_pauli_strings",
+                   &fp::SummedPauliOp<float_type>::n_pauli_strings)
+
+      .def("apply",
+           [](fp::SummedPauliOp<float_type> const &self,
+              nb::ndarray<cfloat_t> states, nb::ndarray<float_type> data) {
+             auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+             auto data_mdspan = ndarray_to_mdspan<float_type, 2>(data);
+
+             auto new_states =
+                 owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+             auto new_states_mdspan =
+                 ndarray_to_mdspan<cfloat_t, 2>(new_states);
+
+             fmt::println("shape of states: ({},{})", states_mdspan.extent(0),
+                          states_mdspan.extent(1));
+             fmt::println("shape of data: ({},{})", data_mdspan.extent(0),
+                          data_mdspan.extent(1));
+             fmt::println("self.dim: {}", self.n_dimensions());
+             std::cout << std::flush;
+
+             //  self.apply_parallel<float_type>(new_states_mdspan,
+             //  states_mdspan,
+             //                                  data_mdspan);
+             self.apply(new_states_mdspan, states_mdspan, data_mdspan);
+             return new_states;
+           })
+      //
+      ;
 }

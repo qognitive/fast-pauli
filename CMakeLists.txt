@@ -66,8 +66,8 @@ target_include_directories(
   fast_pauli INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/fast_pauli/cpp/include/)
 target_link_libraries(fast_pauli INTERFACE fmt::fmt mdspan OpenMP::OpenMP_CXX)
 target_compile_options(
-  fast_pauli INTERFACE -g3 -O3 -march=native -Wall -Wextra -Werror
-                       # -Wpedantic -stdlib=libc++
+  fast_pauli INTERFACE -g3 -Wall -Wextra -Werror # -O3 -march=native
+  # -Wpedantic -stdlib=libc++
 )
 
 # Testing

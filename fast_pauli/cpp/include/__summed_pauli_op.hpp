@@ -74,6 +74,38 @@ template <std::floating_point T> struct SummedPauliOp {
         this->coeffs_raw.data(), coeffs.extent(0), coeffs.extent(1));
   }
 
+  SummedPauliOp(std::vector<std::string> const &pauli_strings,
+                Tensor<2> const coeffs) {
+
+    // Init the pauli strings
+    this->pauli_strings.reserve(pauli_strings.size());
+    for (auto const &ps : pauli_strings) {
+      this->pauli_strings.emplace_back(ps);
+    }
+
+    // Check that the dims are all the same
+    size_t const n_qubits = this->pauli_strings[0].n_qubits();
+    bool const qubits_match =
+        std::all_of(pauli_strings.begin(), pauli_strings.end(),
+                    [n_qubits](PauliString const &ps) {
+                      return ps.n_qubits() == n_qubits;
+                    });
+    if (!qubits_match) {
+      throw std::invalid_argument("All PauliStrings must have the same size");
+    }
+
+    _dim = this->pauli_strings[0].dims();
+    _n_operators = coeffs.extent(1);
+
+    // Copy over the coeffs so our std::mdspan points at the memory owned by
+    // this object
+    coeffs_raw = std::vector<std::complex<T>>(coeffs.size());
+    std::memcpy(this->coeffs_raw.data(), coeffs.data_handle(),
+                coeffs.size() * sizeof(std::complex<T>));
+    this->coeffs = std::mdspan<std::complex<T>, std::dextents<size_t, 2>>(
+        this->coeffs_raw.data(), coeffs.extent(0), coeffs.extent(1));
+  }
+
   //
   // Accessors/helpers
   //
@@ -85,7 +117,7 @@ template <std::floating_point T> struct SummedPauliOp {
   // Primary (TODO "primary" is vague here) functions
   //
   void apply(Tensor<2> new_states, Tensor<2> states,
-             std::mdspan<double, std::dextents<size_t, 2>> data) {
+             std::mdspan<double, std::dextents<size_t, 2>> data) const {
     // TODO MAKE IT CLEAR THAT THE NEW_STATES NEED TO BE ZEROED
 
     // input checking
@@ -100,6 +132,11 @@ template <std::floating_point T> struct SummedPauliOp {
           "data(k,t) must have the same number of operators as the "
           "SummedPauliOp "
           "and the same number of states as the input states");
+    }
+
+    if (states.extent(0) != n_dimensions()) {
+      throw std::invalid_argument(
+          "state size must match the dimension of the operators");
     }
 
     size_t const n_ps = n_pauli_strings();
@@ -134,8 +171,9 @@ template <std::floating_point T> struct SummedPauliOp {
   }
 
   template <std::floating_point data_dtype>
-  void apply_parallel(Tensor<2> new_states, Tensor<2> states,
-                      std::mdspan<data_dtype, std::dextents<size_t, 2>> data) {
+  void
+  apply_parallel(Tensor<2> new_states, Tensor<2> states,
+                 std::mdspan<data_dtype, std::dextents<size_t, 2>> data) const {
     // TODO MAKE IT CLEAR THAT THE NEW_STATES NEED TO BE ZEROED
 
     // input checking
@@ -150,6 +188,11 @@ template <std::floating_point T> struct SummedPauliOp {
           "data(k,t) must have the same number of operators as the "
           "SummedPauliOp "
           "and the same number of states as the input states");
+    }
+
+    if (states.extent(0) != n_dimensions()) {
+      throw std::invalid_argument(
+          "state size must match the dimension of the operators");
     }
 
     size_t const n_ps = n_pauli_strings();

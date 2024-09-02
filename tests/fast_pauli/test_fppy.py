@@ -31,3 +31,21 @@ def test_pauli_string_expectation_value() -> None:
 
     ev = ps.expectation_value(states)
     np.testing.assert_allclose(ev, 1.0)
+
+
+def test_summed_pauli_op() -> None:
+    """Very rough tests for SummedPauliOp."""
+    pauli_strings = ["III", "ZZZ"] * 100
+    n_qubits = len(pauli_strings[0])
+    dim = 2**n_qubits
+    n_pauli_strings = len(pauli_strings)
+    n_operators = 100
+    n_data = 100
+
+    coeffs = np.random.rand(n_pauli_strings, n_operators).astype(np.complex128)
+    op = fppy.SummedPauliOp(pauli_strings, coeffs)
+
+    data = np.random.rand(n_operators, n_data)
+    states = np.random.rand(dim, n_data).astype(np.complex128)
+    new_states = op.apply(states, data)
+    print(new_states)

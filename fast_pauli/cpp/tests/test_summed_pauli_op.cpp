@@ -92,6 +92,14 @@ TEST_CASE("ctors") {
   }
 
   {
+    std::vector<std::complex<double>> coeff_raw;
+    auto coeff =
+        fast_pauli::rand<std::complex<double>, 2>(coeff_raw, {100, 100});
+    std::vector<std::string> pauli_strings(100, "XYZ");
+    SummedPauliOp<double> op{pauli_strings, coeff};
+  }
+
+  {
     // Bad init
     // TODO probably a bad way to do this
     try {

@@ -1,6 +1,10 @@
+# See
+# https://nanobind.readthedocs.io/en/latest/api_cmake.html#command:nanobind_add_module
+# for more information on the nanobind_add_module command
+
 # Since the code for our bindings contain several helper functions we allow the
 # bindings to respect the optimization flags used by the project as a whole
-nanobind_add_module(fppy NOMINSIZE fast_pauli.cpp)
+nanobind_add_module(fppy NOMINSIZE NOSTRIP fast_pauli.cpp)
 target_link_libraries(fppy PRIVATE fast_pauli)
 
 install(TARGETS fppy LIBRARY DESTINATION "${PROJECT_BINARY_DIR}/fppy")
