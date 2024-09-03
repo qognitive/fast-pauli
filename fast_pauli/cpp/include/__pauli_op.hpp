@@ -224,7 +224,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
       PauliString const &ps = pauli_strings[i];
       std::complex<T> c = coeffs[i];
 
-      auto [cols, vals] = PauliString::get_sparse_repr<T>(ps.paulis);
+      auto [cols, vals] = get_sparse_repr<T>(ps.paulis);
       for (size_t j = 0; j < dims(); ++j) {
         res[j][cols[j]] += c * vals[j];
       }

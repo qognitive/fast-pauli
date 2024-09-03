@@ -239,6 +239,6 @@ PYBIND11_MODULE(_fast_pauli, m) {
   helpers_m.def("calculate_pauli_strings_max_weight",
                 &fp::calculate_pauli_strings_max_weight, "n_qubits"_a,
                 "weight"_a);
-  helpers_m.def("pauli_string_sparse_repr",
-                &fp::PauliString::get_sparse_repr<float_type>, "paulis"_a);
+  helpers_m.def("pauli_string_sparse_repr", &fp::get_sparse_repr<float_type>,
+                "paulis"_a);
 }

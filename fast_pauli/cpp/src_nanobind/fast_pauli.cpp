@@ -150,19 +150,26 @@ owning_ndarray_like_mdspan(std::mdspan<T, std::dextents<size_t, ndim>> a) {
     shape[i] = a.extent(i);
     size *= a.extent(i);
   }
+  fmt::println("shape [{}] and size {}", fmt::join(shape, ", "), size);
 
-  // Raw data
-  std::vector<T> data(size);
+  // std::vector<T> data(size);
 
   // weirdness required by nanobind to properly pass ownership through
   // nb::handle, see https://github.com/wjakob/nanobind/discussions/573
   struct Temp {
     std::vector<T> data;
   };
-  Temp *tmp = new Temp{data};
 
-  nb::capsule deleter(tmp,
-                      [](void *p) noexcept { delete static_cast<Temp *>(p); });
+  // Raw data
+  // Temp *tmp = new Temp{std::vector<T>(size)};
+  Temp *tmp = new Temp{std::vector<T>(size)};
+
+  nb::capsule deleter(tmp, [](void *p) noexcept {
+    fmt::println("deleting data in nb::capsule with shape");
+    std::cout << std::flush;
+    delete static_cast<Temp *>(p);
+    // delete (Temp *)p;
+  });
 
   // TODO can we do this without speciyfin that it's a numpy array?
   return nb::ndarray<nb::numpy, T>(
@@ -179,18 +186,19 @@ owning_ndarray_from_shape(std::array<size_t, ndim> shape) {
   size_t size = std::reduce(shape.begin(), shape.end(), 1, std::multiplies<>());
 
   // Raw data
-  std::vector<T> data(size);
 
   // weirdness required by nanobind to properly pass ownership through
   // nb::handle, see https://github.com/wjakob/nanobind/discussions/573
   struct Temp {
     std::vector<T> data;
   };
-  Temp *tmp = new Temp();
-  tmp->data = std::move(data);
+  Temp *tmp = new Temp{std::vector<T>(size)};
 
-  nb::capsule deleter(
-      tmp, [](void *data) noexcept { delete static_cast<Temp *>(data); });
+  nb::capsule deleter(tmp, [](void *data) noexcept {
+    fmt::println("deleting data in nb::capsule with shape");
+    std::cout << std::flush;
+    delete static_cast<Temp *>(data);
+  });
 
   // TODO can we do this without speciyfin that it's a numpy array?
   return nb::ndarray<nb::numpy, T>(
@@ -296,16 +304,33 @@ NB_MODULE(fppy, m) {
       // Constructors
       // See
       // https://nanobind.readthedocs.io/en/latest/api_core.html#_CPPv4IDpEN8nanobind4initE
+      .def(nb::init<>())
       .def("__init__",
            [](fp::SummedPauliOp<float_type> *new_obj,
               std::vector<std::string> &pauli_strings,
               nb::ndarray<cfloat_t> coeffs) {
              //
              auto coeffs_mdspan = ndarray_to_mdspan<cfloat_t, 2>(coeffs);
+             //  std::vector<fp::PauliString> ps(pauli_strings.size());
+             //  for (size_t i = 0; i < pauli_strings.size(); ++i) {
+             //    ps[i] = fp::PauliString(pauli_strings[i]);
+             //  }
 
              new (new_obj)
                  fp::SummedPauliOp<float_type>(pauli_strings, coeffs_mdspan);
+             //  new (new_obj) fp::SummedPauliOp<float_type>(ps, coeffs_mdspan);
+
+             std::vector<double> fake_vector(10000);
+             for (size_t i = 0; i < 10; ++i) {
+               fmt::println("fake vector: {}", fake_vector[i]);
+             }
            })
+      // .def("setup",
+      //      [](fp::SummedPauliOp<float_type> const &self,
+      //         std::vector<std::string> const &pauli_strings,
+      //         nb::ndarray<cfloat_t> coeffs) {
+
+      //      })
       .def_prop_ro("n_dimensions", &fp::SummedPauliOp<float_type>::n_dimensions)
       .def_prop_ro("n_operators", &fp::SummedPauliOp<float_type>::n_operators)
       .def_prop_ro("n_pauli_strings",
@@ -317,21 +342,39 @@ NB_MODULE(fppy, m) {
              auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
              auto data_mdspan = ndarray_to_mdspan<float_type, 2>(data);
 
-             auto new_states =
-                 owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
-             auto new_states_mdspan =
-                 ndarray_to_mdspan<cfloat_t, 2>(new_states);
+             // clang-format off
+             auto new_states        = owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+             auto new_states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(new_states);
+             // clang-format on
 
-             fmt::println("shape of states: ({},{})", states_mdspan.extent(0),
-                          states_mdspan.extent(1));
-             fmt::println("shape of data: ({},{})", data_mdspan.extent(0),
-                          data_mdspan.extent(1));
-             fmt::println("self.dim: {}", self.n_dimensions());
-             std::cout << std::flush;
+             //  fmt::println("new_states ptr        {}",
+             //               fmt::ptr(new_states.data()));
+             //  fmt::println("new_states_mdspan ptr {}",
+             //               fmt::ptr(new_states_mdspan.data_handle()));
+
+             // DEBUG
+             //  fmt::println("shape of states: ({},{})  size {}",
+             //               states_mdspan.extent(0), states_mdspan.extent(1),
+             //               states_mdspan.size());
+             //  std::vector<cfloat_t> new_states(states_mdspan.size(), 0);
+             //  std::mdspan<cfloat_t, std::dextents<size_t, 2>>
+             //  new_states_mdspan(
+             //      new_states.data(), states_mdspan.extent(0),
+             //      states_mdspan.extent(1));
+             // END DEBUG
+
+             //  fmt::println("shape of states: ({},{})",
+             //  states_mdspan.extent(0),
+             //               states_mdspan.extent(1));
+             //  fmt::println("shape of data:   ({},{})", data_mdspan.extent(0),
+             //               data_mdspan.extent(1));
+             //  fmt::println("self.dim: {}", self.n_dimensions());
+             //  std::cout << std::flush;
 
              //  self.apply_parallel<float_type>(new_states_mdspan,
              //  states_mdspan,
              //                                  data_mdspan);
+
              self.apply(new_states_mdspan, states_mdspan, data_mdspan);
              return new_states;
            })

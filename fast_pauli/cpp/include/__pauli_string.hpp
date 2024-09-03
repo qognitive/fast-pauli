@@ -14,6 +14,91 @@
 namespace fast_pauli {
 
 /**
+ * @brief Get the sparse representation of the pauli string matrix.
+ *
+ * PauliStrings are always sparse and have only single non-zero element per
+ * row. It's N non-zero elements for NxN matrix where N is 2^n_qubits.
+ * Therefore k and m will always have N elements.
+ *
+ * See Algorithm 1 in https://arxiv.org/pdf/2301.00560.pdf for details about
+ * the algorithm.
+ *
+ * @tparam T The floating point type (i.e. std::complex<T> for the values of
+ * the PauliString matrix)
+ * @param k The column index of the matrix
+ * @param m The values of the matrix
+ */
+template <std::floating_point T>
+std::tuple<std::vector<size_t>, std::vector<std::complex<T>>>
+get_sparse_repr(std::vector<Pauli> const &paulis) {
+  // We reverse the view here because the tensor product is taken from right
+  // to left
+  auto ps = paulis | std::views::reverse;
+  size_t const n = paulis.size();
+  size_t const nY =
+      std::count_if(ps.begin(), ps.end(),
+                    [](fast_pauli::Pauli const &p) { return p.code == 2; });
+  size_t const dim = n ? 1 << n : 0;
+
+  if (dim == 0)
+    return {};
+
+  std::vector<size_t> k(dim);
+  std::vector<std::complex<T>> m(dim);
+
+  // Helper function that let's us know if a pauli matrix has diagonal (or
+  // conversely off-diagonal) elements
+  auto diag = [](Pauli const &p) {
+    if (p.code == 0 || p.code == 3) {
+      return 0UL;
+    } else {
+      return 1UL;
+    }
+  };
+  // Helper function that resolves first value of pauli string
+  auto initial_value = [&nY]() -> std::complex<T> {
+    switch (nY % 4) {
+    case 0:
+      return 1.0;
+    case 1:
+      return {0.0, -1.0};
+    case 2:
+      return -1.0;
+    case 3:
+      return {0.0, 1.0};
+    }
+    return {};
+  };
+
+  // Populate the initial values of our output
+  k[0] = 0;
+  for (size_t i = 0; i < ps.size(); ++i) {
+    k[0] += (1UL << i) * diag(ps[i]);
+  }
+  m[0] = initial_value();
+
+  // Populate the rest of the values in a recursive-like manner
+  for (size_t l = 0; l < n; ++l) {
+    Pauli const &po = ps[l];
+
+    T eps = 1.0;
+    if (po.code == 2 || po.code == 3) {
+      eps = -1;
+    }
+
+    T sign = diag(po) ? -1.0 : 1.0;
+
+    auto const lower_bound = 1UL << l;
+    for (size_t li = lower_bound; li < (lower_bound << 1); li++) {
+      k[li] = k[li - lower_bound] + lower_bound * sign;
+      m[li] = m[li - lower_bound] * eps;
+    }
+  }
+
+  return std::make_tuple(std::move(k), std::move(m));
+}
+
+/**
  * @brief A class representation of a Pauli string (i.e. a tensor product of 2x2
  * pauli matrices) \f$ $\mathcal{\hat{P}} = \bigotimes_i \sigma_i \f$
  * where \f$ \sigma_i \in \{ I,X,Y,Z \} \f$
@@ -275,91 +360,6 @@ struct PauliString {
     }
 
     return result;
-  }
-
-  /**
-   * @brief Get the sparse representation of the pauli string matrix.
-   *
-   * PauliStrings are always sparse and have only single non-zero element per
-   * row. It's N non-zero elements for NxN matrix where N is 2^n_qubits.
-   * Therefore k and m will always have N elements.
-   *
-   * See Algorithm 1 in https://arxiv.org/pdf/2301.00560.pdf for details about
-   * the algorithm.
-   *
-   * @tparam T The floating point type (i.e. std::complex<T> for the values of
-   * the PauliString matrix)
-   * @param k The column index of the matrix
-   * @param m The values of the matrix
-   */
-  template <std::floating_point T>
-  static std::tuple<std::vector<size_t>, std::vector<std::complex<T>>>
-  get_sparse_repr(std::vector<Pauli> const &paulis) {
-    // We reverse the view here because the tensor product is taken from right
-    // to left
-    auto ps = paulis | std::views::reverse;
-    size_t const n = paulis.size();
-    size_t const nY =
-        std::count_if(ps.begin(), ps.end(),
-                      [](fast_pauli::Pauli const &p) { return p.code == 2; });
-    size_t const dim = n ? 1 << n : 0;
-
-    if (dim == 0)
-      return {};
-
-    std::vector<size_t> k(dim);
-    std::vector<std::complex<T>> m(dim);
-
-    // Helper function that let's us know if a pauli matrix has diagonal (or
-    // conversely off-diagonal) elements
-    auto diag = [](Pauli const &p) {
-      if (p.code == 0 || p.code == 3) {
-        return 0UL;
-      } else {
-        return 1UL;
-      }
-    };
-    // Helper function that resolves first value of pauli string
-    auto initial_value = [&nY]() -> std::complex<T> {
-      switch (nY % 4) {
-      case 0:
-        return 1.0;
-      case 1:
-        return {0.0, -1.0};
-      case 2:
-        return -1.0;
-      case 3:
-        return {0.0, 1.0};
-      }
-      return {};
-    };
-
-    // Populate the initial values of our output
-    k[0] = 0;
-    for (size_t i = 0; i < ps.size(); ++i) {
-      k[0] += (1UL << i) * diag(ps[i]);
-    }
-    m[0] = initial_value();
-
-    // Populate the rest of the values in a recursive-like manner
-    for (size_t l = 0; l < n; ++l) {
-      Pauli const &po = ps[l];
-
-      T eps = 1.0;
-      if (po.code == 2 || po.code == 3) {
-        eps = -1;
-      }
-
-      T sign = diag(po) ? -1.0 : 1.0;
-
-      auto const lower_bound = 1UL << l;
-      for (size_t li = lower_bound; li < (lower_bound << 1); li++) {
-        k[li] = k[li - lower_bound] + lower_bound * sign;
-        m[li] = m[li - lower_bound] * eps;
-      }
-    }
-
-    return std::make_tuple(std::move(k), std::move(m));
   }
 };
 

@@ -78,15 +78,16 @@ template <std::floating_point T> struct SummedPauliOp {
                 Tensor<2> const coeffs) {
 
     // Init the pauli strings
-    this->pauli_strings.reserve(pauli_strings.size());
+    // this->pauli_strings.reserve(pauli_strings.size());
     for (auto const &ps : pauli_strings) {
-      this->pauli_strings.emplace_back(ps);
+      // this->pauli_strings.emplace_back(ps);
+      this->pauli_strings.push_back(PauliString(ps));
     }
 
     // Check that the dims are all the same
     size_t const n_qubits = this->pauli_strings[0].n_qubits();
     bool const qubits_match =
-        std::all_of(pauli_strings.begin(), pauli_strings.end(),
+        std::all_of(this->pauli_strings.begin(), this->pauli_strings.end(),
                     [n_qubits](PauliString const &ps) {
                       return ps.n_qubits() == n_qubits;
                     });
@@ -147,7 +148,7 @@ template <std::floating_point T> struct SummedPauliOp {
     std::vector<std::complex<T>> states_j_raw(n_data * n_dim);
     Tensor<2> states_j(states_j_raw.data(), n_dim, n_data);
 
-    std::vector<std::complex<T>> weighted_coeffs_raw(n_data * n_dim);
+    std::vector<std::complex<T>> weighted_coeffs_raw(n_ps * n_data);
     Tensor<2> weighted_coeffs(weighted_coeffs_raw.data(), n_ps, n_data);
 
     for (size_t j = 0; j < n_ps; ++j) {
@@ -160,6 +161,7 @@ template <std::floating_point T> struct SummedPauliOp {
 
     for (size_t j = 0; j < n_ps; ++j) {
       // new psi_prime
+      fmt::println("apply iter j={}", j);
       std::fill(states_j_raw.begin(), states_j_raw.end(), std::complex<T>{0.0});
       pauli_strings[j].apply_batch(states_j, states, std::complex<T>(1.));
       for (size_t l = 0; l < n_dim; ++l) {
@@ -168,6 +170,16 @@ template <std::floating_point T> struct SummedPauliOp {
         }
       }
     }
+
+    fmt::println("new_states after SummedPauliOp::apply = \n[");
+    for (size_t l = 0; l < n_dim; ++l) {
+      fmt::print("[");
+      for (size_t t = 0; t < n_data; ++t) {
+        fmt::print("{}, ", new_states(l, t));
+      }
+      fmt::println("]");
+    }
+    fmt::println("]");
   }
 
   template <std::floating_point data_dtype>
@@ -205,7 +217,7 @@ template <std::floating_point T> struct SummedPauliOp {
     Tensor<3> states_th(states_th_raw.data(), n_threads, n_dim, n_data);
 
     //
-    std::vector<std::complex<T>> weighted_coeffs_raw(n_data * n_dim);
+    std::vector<std::complex<T>> weighted_coeffs_raw(n_ps, n_data);
     Tensor<2> weighted_coeffs(weighted_coeffs_raw.data(), n_ps, n_data);
 
 #pragma omp parallel
