@@ -79,9 +79,10 @@ struct Pauli {
   /**
    * @brief Returns the product of two pauli matrices and their phase as a pair.
    *
-   * @param lhs
-   * @param rhs
-   * @return  std::pair<std::complex<double>, Pauli>
+   * @param lhs left hand side pauli object
+   * @param rhs right hand side pauli object
+   * @return  std::pair<std::complex<double>, Pauli> phase and resulting pauli
+   * matrix
    */
   friend std::pair<std::complex<double>, Pauli> operator*(Pauli const &lhs,
                                                           Pauli const &rhs) {
@@ -89,73 +90,62 @@ struct Pauli {
     case 0:
       switch (rhs.code) {
       case 0:
-        return {1, Pauli{0}}; //
-        break;
+        return {1, Pauli{0}}; // I * I = I
       case 1:
-        return {1, Pauli{1}}; //
-        break;
+        return {1, Pauli{1}}; // I * X = X
       case 2:
-        return {1, Pauli{2}}; //
-        break;
+        return {1, Pauli{2}}; // I * Y = Y
       case 3:
-        return {1, Pauli{3}}; //
-        break;
+        return {1, Pauli{3}}; // I * Z = Z
       default:
-        return {0, Pauli{0}}; // Should never reach here
+        // Should never reach here
+        throw std::runtime_error("Unexpected Pauli code");
       }
     case 1:
       switch (rhs.code) {
       case 0:
-        return {1, Pauli{1}}; //
-        break;
+        return {1, Pauli{1}}; // X * I = X
       case 1:
-        return {1, Pauli{0}}; //
-        break;
+        return {1, Pauli{0}}; // X * X = I
       case 2:
-        return {1i, Pauli{3}}; //
-        break;
+        return {1i, Pauli{3}}; // X * Y = iZ
       case 3:
-        return {-1i, Pauli{2}}; //
-        break;
+        return {-1i, Pauli{2}}; // X * Z = -iY
       default:
-        return {0, Pauli{0}}; // Should never reach here
+        // Should never reach here
+        throw std::runtime_error("Unexpected Pauli code");
       }
     case 2:
       switch (rhs.code) {
       case 0:
-        return {1, Pauli{2}}; //
-        break;
+        return {1, Pauli{2}}; // Y * I = Y
       case 1:
-        return {-1i, Pauli{3}}; //
-        break;
+        return {-1i, Pauli{3}}; // Y * X = -iZ
       case 2:
-        return {1, Pauli{0}}; //
-        break;
+        return {1, Pauli{0}}; // Y * Y = I
       case 3:
-        return {1i, Pauli{1}}; //
-        break;
+        return {1i, Pauli{1}}; // Y * Z = iX
       default:
-        return {0, Pauli{0}}; // Should never reach here
+        // Should never reach here
+        throw std::runtime_error("Unexpected Pauli code");
       }
     case 3:
       switch (rhs.code) {
       case 0:
-        return {1, Pauli{3}}; //
-        break;
+        return {1, Pauli{3}}; // Z * I = Z
       case 1:
-        return {1i, Pauli{2}}; //
-        break;
+        return {1i, Pauli{2}}; // Z * X = iY
       case 2:
-        return {-1i, Pauli{1}}; //
-        break;
+        return {-1i, Pauli{1}}; // Z * Y = -iX
       case 3:
-        return {1, Pauli{0}}; //
-        break;
+        return {1, Pauli{0}}; // Z * Z = I
       default:
-        return {0, Pauli{0}}; // Should never reach here
+        // Should never reach here
+        throw std::runtime_error("Unexpected Pauli code");
       }
     default:
-      return {0, Pauli{0}}; // Should never reach here
+      // Should never reach here
+      throw std::runtime_error("Unexpected Pauli code");
     }
   }
 

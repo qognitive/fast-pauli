@@ -119,7 +119,19 @@ struct PauliString {
   PauliString() noexcept = default;
 
   /**
-   * @brief Constructs a PauliString from a span of pauli operators and
+   * @brief Constructs a PauliString from a vector of pauli matrices and
+   * calculates the weight.
+   *
+   */
+  PauliString(std::vector<Pauli> paulis)
+      : weight(0), paulis(std::move(paulis)) {
+    for (auto const &pauli : this->paulis) {
+      weight += pauli.code > 0;
+    }
+  }
+
+  /**
+   * @brief Constructs a PauliString from a span of pauli matrices and
    * calculates the weight.
    *
    */
