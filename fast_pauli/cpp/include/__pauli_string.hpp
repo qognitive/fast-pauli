@@ -190,6 +190,34 @@ struct PauliString {
   //
   friend auto operator<=>(PauliString const &, PauliString const &) = default;
 
+  /**
+   * @brief Returns the result of matrix multiplication of two PauliStrings and
+   * their phase as a pair.
+   *
+   * @param lhs left hand side PauliString
+   * @param rhs right hand side PauliString
+   * @return  std::pair<std::complex<double>, PauliString> phase and resulting
+   * PauliString
+   */
+  friend std::pair<std::complex<double>, PauliString>
+  operator*(PauliString const &lhs, PauliString const &rhs) {
+    if (lhs.dims() != rhs.dims()) {
+      throw std::invalid_argument("PauliStrings must have the same size");
+    }
+
+    std::complex<double> new_phase = 1;
+    std::vector<Pauli> new_paulis;
+    new_paulis.reserve(lhs.n_qubits());
+
+    for (size_t i = 0; i < lhs.n_qubits(); ++i) {
+      auto [phase, new_pauli] = lhs.paulis[i] * rhs.paulis[i];
+      new_phase *= phase;
+      new_paulis.push_back(new_pauli);
+    }
+
+    return {new_phase, PauliString(std::move(new_paulis))};
+  }
+
   //
   /**
    * @brief Return the number of qubits in the PauliString.
