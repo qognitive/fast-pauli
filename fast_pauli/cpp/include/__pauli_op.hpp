@@ -6,6 +6,7 @@
 #include "__pauli_string.hpp"
 #include <algorithm>
 #include <experimental/mdspan> // From Kokkos
+#include <unordered_map>
 
 using namespace std::experimental;
 
@@ -109,6 +110,38 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
           pauli_str_left * pauli_op_right.pauli_strings[i];
       coefficients[i] *= phase;
       strings.push_back(std::move(pauli_str));
+    }
+
+    return PauliOp<T, H>(std::move(coefficients), std::move(strings));
+  }
+
+  friend PauliOp<T, H> operator*(PauliOp<T, H> const &lhs,
+                                 PauliOp<T, H> const &rhs) {
+    if (lhs.dims() != rhs.dims())
+      throw std::invalid_argument("Mismatched dimensions for provided PauliOp");
+
+    size_t init_capacity = std::max(lhs.n_strings(), rhs.n_strings());
+    std::vector<H> coefficients;
+    std::vector<PauliString> strings;
+    coefficients.reserve(init_capacity);
+    strings.reserve(init_capacity);
+
+    std::unordered_map<PauliString, size_t> dedupe_strings;
+
+    for (size_t i = 0; i < lhs.n_strings(); ++i) {
+      for (size_t j = 0; j < rhs.n_strings(); ++j) {
+        auto [phase, pauli_str] = lhs.pauli_strings[i] * rhs.pauli_strings[j];
+        auto coeff_ij = phase * lhs.coeffs[i] * rhs.coeffs[j];
+
+        if (dedupe_strings.contains(pauli_str)) {
+          size_t idx = dedupe_strings[pauli_str];
+          coefficients[idx] += coeff_ij;
+        } else {
+          dedupe_strings[pauli_str] = coefficients.size();
+          coefficients.push_back(coeff_ij);
+          strings.push_back(std::move(pauli_str));
+        }
+      }
     }
 
     return PauliOp<T, H>(std::move(coefficients), std::move(strings));
