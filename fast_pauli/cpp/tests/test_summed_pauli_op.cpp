@@ -1,12 +1,13 @@
-#include "__pauli.hpp"
-#include "__pauli_string.hpp"
-#include <cstddef>
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <cstddef>
+#include <execution>
 
 #include <doctest/doctest.h>
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 
+#include "__pauli.hpp"
+#include "__pauli_string.hpp"
 #include "fast_pauli.hpp"
 
 using namespace std::literals;
@@ -18,11 +19,13 @@ using namespace fast_pauli;
  *
  * @param pauli_strings
  * @param coeff
+ * @param n_states
+ * @param serial
  */
 void __check_apply(
     std::vector<PauliString> &pauli_strings,
     std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff,
-    size_t const n_states = 10) {
+    size_t const n_states = 10, bool serial = true) {
 
   SummedPauliOp<double> summed_op{pauli_strings, coeff};
 
@@ -43,7 +46,11 @@ void __check_apply(
   std::mdspan data = fast_pauli::rand<double, 2>(data_raw, {n_ops, n_states});
 
   // Apply the summed operator
-  summed_op.apply(new_states, states, data);
+  if (serial) {
+    summed_op.apply(new_states, states, data);
+  } else {
+    summed_op.apply_parallel(new_states, states, data);
+  }
 
   // Check the check
   std::vector<std::complex<double>> expected_raw;
@@ -139,7 +146,8 @@ TEST_CASE("apply 1 operator 1 PauliString") {
   std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff(
       coeff_raw.data(), 1, 1);
 
-  __check_apply(pauli_strings, coeff);
+  __check_apply(pauli_strings, coeff, 1, true);
+  __check_apply(pauli_strings, coeff, 1, false);
 }
 
 TEST_CASE("apply 2 operators 1 PauliString") {
@@ -150,7 +158,8 @@ TEST_CASE("apply 2 operators 1 PauliString") {
   std::vector<std::complex<double>> coeff_raw = {1i, 1};
   std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff(
       coeff_raw.data(), 1, 2);
-  __check_apply(pauli_strings, coeff);
+  __check_apply(pauli_strings, coeff, 10, true);
+  __check_apply(pauli_strings, coeff, 10, false);
 }
 
 TEST_CASE("apply 2 operators 2 PauliString") {
@@ -160,7 +169,8 @@ TEST_CASE("apply 2 operators 2 PauliString") {
   std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff(
       coeff_raw.data(), 2, 2);
   std::vector<PauliString> pauli_strings = {"XYZ", "YYZ"};
-  __check_apply(pauli_strings, coeff);
+  __check_apply(pauli_strings, coeff, 100, true);
+  __check_apply(pauli_strings, coeff, 100, false);
 }
 
 TEST_CASE("apply many operators many PauliString") {
@@ -173,7 +183,8 @@ TEST_CASE("apply many operators many PauliString") {
   std::mdspan coeff = fast_pauli::rand<std::complex<double>, 2>(
       coeff_raw, {pauli_strings.size(), 100});
 
-  __check_apply(pauli_strings, coeff);
+  __check_apply(pauli_strings, coeff, 100, true);
+  __check_apply(pauli_strings, coeff, 100, false);
 }
 
 TEST_CASE("apply many operators many PauliString") {
@@ -186,5 +197,6 @@ TEST_CASE("apply many operators many PauliString") {
   std::mdspan coeff = fast_pauli::rand<std::complex<double>, 2>(
       coeff_raw, {pauli_strings.size(), 100});
 
-  __check_apply(pauli_strings, coeff);
+  __check_apply(pauli_strings, coeff, 1000, true);
+  __check_apply(pauli_strings, coeff, 1000, false);
 }

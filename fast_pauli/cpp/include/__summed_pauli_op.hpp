@@ -2,6 +2,7 @@
 #define __SUMMED_PAULI_OP_HPP
 
 #include "__pauli_string.hpp"
+#include <fmt/core.h>
 #include <omp.h>
 #include <stdexcept>
 
@@ -161,7 +162,6 @@ template <std::floating_point T> struct SummedPauliOp {
 
     for (size_t j = 0; j < n_ps; ++j) {
       // new psi_prime
-      fmt::println("apply iter j={}", j);
       std::fill(states_j_raw.begin(), states_j_raw.end(), std::complex<T>{0.0});
       pauli_strings[j].apply_batch(states_j, states, std::complex<T>(1.));
       for (size_t l = 0; l < n_dim; ++l) {
@@ -170,16 +170,6 @@ template <std::floating_point T> struct SummedPauliOp {
         }
       }
     }
-
-    fmt::println("new_states after SummedPauliOp::apply = \n[");
-    for (size_t l = 0; l < n_dim; ++l) {
-      fmt::print("[");
-      for (size_t t = 0; t < n_data; ++t) {
-        fmt::print("{}, ", new_states(l, t));
-      }
-      fmt::println("]");
-    }
-    fmt::println("]");
   }
 
   template <std::floating_point data_dtype>
@@ -213,17 +203,17 @@ template <std::floating_point T> struct SummedPauliOp {
     size_t const n_dim = n_dimensions();
 
     size_t const n_threads = omp_get_max_threads();
-    std::vector<std::complex<T>> states_th_raw(n_threads * n_dim * n_data);
-    Tensor<3> states_th(states_th_raw.data(), n_threads, n_dim, n_data);
+    std::vector<std::complex<T>> new_states_th_raw(n_threads * n_dim * n_data);
+    Tensor<3> new_states_th(new_states_th_raw.data(), n_threads, n_dim, n_data);
 
     //
-    std::vector<std::complex<T>> weighted_coeffs_raw(n_ps, n_data);
+    std::vector<std::complex<T>> weighted_coeffs_raw(n_ps * n_data);
     Tensor<2> weighted_coeffs(weighted_coeffs_raw.data(), n_ps, n_data);
 
 #pragma omp parallel
     {
 
-      // Contract the coeffs with the data since we can reuse this below
+// Contract the coeffs with the data since we can reuse this below
 #pragma omp for collapse(2)
       for (size_t j = 0; j < n_ps; ++j) {
         for (size_t t = 0; t < n_data; ++t) {
@@ -234,33 +224,37 @@ template <std::floating_point T> struct SummedPauliOp {
       }
 
       // Thread local temporaries and aliases
-      std::vector<std::complex<T>> states_j_raw(n_data * n_dim);
-      Tensor<2> states_j(states_j_raw.data(), n_dim, n_data);
+      std::vector<std::complex<T>> new_states_j_raw(n_data * n_dim);
+      Tensor<2> new_states_j(new_states_j_raw.data(), n_dim, n_data);
 
       // std::vector<std::complex<T>> states_j_T_raw(n_data * n_dim);
       // Tensor<2> states_j_T(states_j_T_raw.data(), n_data, n_dim);
 
-      std::mdspan states_th_local = std::submdspan(
-          states_th, omp_get_thread_num(), std::full_extent, std::full_extent);
+      std::mdspan new_states_th_local =
+          std::submdspan(new_states_th, omp_get_thread_num(), std::full_extent,
+                         std::full_extent);
 
 #pragma omp for schedule(dynamic)
       for (size_t j = 0; j < n_ps; ++j) {
         // new psi_prime
-        pauli_strings[j].apply_batch(states_j, states, std::complex<T>(1.));
+        std::fill(new_states_j_raw.begin(), new_states_j_raw.end(),
+                  std::complex<T>{0.0});
+        pauli_strings[j].apply_batch(new_states_j, states, std::complex<T>(1.));
 
         for (size_t l = 0; l < n_dim; ++l) {
           for (size_t t = 0; t < n_data; ++t) {
-            states_th_local(l, t) += states_j(l, t) * weighted_coeffs(j, t);
+            new_states_th_local(l, t) +=
+                new_states_j(l, t) * weighted_coeffs(j, t);
           }
         }
       }
 
-      // Reduce
+// Reduce
 #pragma omp for collapse(2)
       for (size_t l = 0; l < n_dim; ++l) {
         for (size_t t = 0; t < n_data; ++t) {
           for (size_t i = 0; i < n_threads; ++i) {
-            new_states(l, t) += states_th(i, l, t);
+            new_states(l, t) += new_states_th(i, l, t);
           }
         }
       }

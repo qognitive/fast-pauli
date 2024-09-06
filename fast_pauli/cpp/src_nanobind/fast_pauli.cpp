@@ -371,11 +371,10 @@ NB_MODULE(fppy, m) {
              //  fmt::println("self.dim: {}", self.n_dimensions());
              //  std::cout << std::flush;
 
-             //  self.apply_parallel<float_type>(new_states_mdspan,
-             //  states_mdspan,
-             //                                  data_mdspan);
+             self.apply_parallel<float_type>(new_states_mdspan, states_mdspan,
+                                             data_mdspan);
 
-             self.apply(new_states_mdspan, states_mdspan, data_mdspan);
+             //  self.apply(new_states_mdspan, states_mdspan, data_mdspan);
              return new_states;
            })
       //
