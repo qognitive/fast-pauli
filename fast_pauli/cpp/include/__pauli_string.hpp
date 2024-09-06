@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <experimental/mdspan>
+#include <functional>
 #include <ranges>
 #include <string>
 
@@ -187,7 +188,7 @@ struct PauliString {
     return *this;
   };
 
-  //
+  // TODO should we separately define <,> operators based just on pualis vector
   friend auto operator<=>(PauliString const &, PauliString const &) = default;
 
   /**
@@ -454,8 +455,18 @@ template <> struct fmt::formatter<fast_pauli::PauliString> {
 
   template <typename FormatContext>
   auto format(fast_pauli::PauliString const &ps, FormatContext &ctx) const {
-    std::vector<fast_pauli::Pauli> paulis = ps.paulis;
-    return fmt::format_to(ctx.out(), "{}", fmt::join(paulis, ""));
+    return fmt::format_to(ctx.out(), "{}", fmt::join(ps.paulis, ""));
+  }
+};
+
+//
+// std::hash specialization
+//
+template <> struct std::hash<fast_pauli::PauliString> {
+  std::size_t operator()(fast_pauli::PauliString const &key) const {
+    // this is pretty slow way to hash our PauliString. we might want to come
+    // up with something more effiecient based on internal vector of uints
+    return std::hash<std::string>()(fmt::format("{}", key));
   }
 };
 
