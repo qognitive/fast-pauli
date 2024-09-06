@@ -72,6 +72,69 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
 
   size_t n_pauli_strings() const { return pauli_strings.size(); }
 
+  friend PauliOp<T, H> operator*(PauliOp<T, H> const &pauli_op_left,
+                                 PauliString const &pauli_str_right) {
+    // TODO figure out if it's possible to end up with duplicate strings and
+    // need to dedupe
+    if (pauli_op_left.dims() != pauli_str_right.dims())
+      throw std::invalid_argument(
+          "PauliStrings must have same size as PauliOp");
+
+    std::vector<H> coefficients(pauli_op_left.coeffs);
+    std::vector<PauliString> strings;
+    strings.reserve(pauli_op_left.n_strings());
+
+    for (size_t i = 0; i < pauli_op_left.n_strings(); ++i) {
+      auto [phase, pauli_str] =
+          pauli_op_left.pauli_strings[i] * pauli_str_right;
+      coefficients[i] *= phase;
+      strings.push_back(std::move(pauli_str));
+    }
+
+    return PauliOp<T, H>(std::move(coefficients), std::move(strings));
+  }
+
+  friend PauliOp<T, H> operator*(PauliString const &pauli_str_left,
+                                 PauliOp<T, H> const &pauli_op_right) {
+    if (pauli_str_left.dims() != pauli_op_right.dims())
+      throw std::invalid_argument(
+          "PauliStrings must have same size as PauliOp");
+
+    std::vector<H> coefficients(pauli_op_right.coeffs);
+    std::vector<PauliString> strings;
+    strings.reserve(pauli_op_right.n_strings());
+
+    for (size_t i = 0; i < pauli_op_right.n_strings(); ++i) {
+      auto [phase, pauli_str] =
+          pauli_str_left * pauli_op_right.pauli_strings[i];
+      coefficients[i] *= phase;
+      strings.push_back(std::move(pauli_str));
+    }
+
+    return PauliOp<T, H>(std::move(coefficients), std::move(strings));
+  }
+
+  void extend(std::complex<T> coeff, PauliString pauli_str,
+              bool dedupe = false) {
+    if (pauli_str.dims() != dims()) {
+      throw std::invalid_argument(
+          "PauliStrings must have same size as PauliOp");
+    }
+
+    if (dedupe) {
+      for (size_t i = 0; i < pauli_strings.size(); ++i) {
+        if (pauli_strings[i] == pauli_str) {
+          coeffs[i] += coeff;
+          // finish immediately because we don't want to add same string twice
+          return;
+        }
+      }
+    }
+
+    coeffs.push_back(coeff);
+    pauli_strings.push_back(std::move(pauli_str));
+  }
+
   std::vector<std::complex<T>>
   apply(std::vector<std::complex<T>> const &state) const {
     // input check
@@ -80,7 +143,6 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
           "state size must match the dimension of the operators");
     }
 
-    //
     std::vector<std::complex<T>> res(state.size(), 0);
 
     for (size_t i = 0; i < pauli_strings.size(); ++i) {
