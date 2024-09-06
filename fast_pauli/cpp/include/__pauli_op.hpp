@@ -135,6 +135,25 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     pauli_strings.push_back(std::move(pauli_str));
   }
 
+  // @note: right now this is very sloppy implementation
+  // just to allow to add two PauliOps together
+  void extend(PauliOp<T, H> const &other_op) {
+    // TODO add dedupe capabilities once we have pauli_strings stored in
+    // lexicographic order
+    // With current implementation it would take O(N*M) to dedupe
+    if (other_op.dims() != dims())
+      throw std::invalid_argument("Mismatched dimensions for provided PauliOp");
+    size_t naive_size = n_strings() + other_op.n_strings();
+
+    pauli_strings.reserve(naive_size);
+    std::copy(other_op.pauli_strings.begin(), other_op.pauli_strings.end(),
+              std::back_inserter(pauli_strings));
+
+    coeffs.reserve(naive_size);
+    std::copy(other_op.coeffs.begin(), other_op.coeffs.end(),
+              std::back_inserter(coeffs));
+  }
+
   std::vector<std::complex<T>>
   apply(std::vector<std::complex<T>> const &state) const {
     // input check
