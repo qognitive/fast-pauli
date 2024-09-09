@@ -246,30 +246,32 @@ def test_apply_batch(
 @pytest.mark.parametrize(
     "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
 )
-def test_expected_value(
+def test_expectation_value(
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
     pauli_op: type[fp.PauliOp] | type[pp.PauliOp],
 ) -> None:
     """Test Pauli Operator expected value."""
     np.testing.assert_allclose(
-        pauli_op([1, 2], ["IXYZ", "ZYXI"]).expected_value(np.zeros(16)),
+        pauli_op([1, 2], ["IXYZ", "ZYXI"]).expectation_value(np.zeros(16)),
         0,
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        pauli_op([1, 2], ["IXYZ", "ZYXI"]).expected_value(np.zeros((16, 16))),
+        pauli_op([1, 2], ["IXYZ", "ZYXI"]).expectation_value(np.zeros((16, 16))),
         np.zeros(16),
         atol=1e-15,
     )
 
     np.testing.assert_allclose(
-        pauli_op([1, 1], ["III", "III"]).expected_value(np.arange(8)),
+        pauli_op([1, 1], ["III", "III"]).expectation_value(np.arange(8)),
         2 * np.square(np.arange(8)).sum(),
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        pauli_op([1, 1], ["III", "III"]).expected_value(np.arange(8 * 8).reshape(8, 8)),
+        pauli_op([1, 1], ["III", "III"]).expectation_value(
+            np.arange(8 * 8).reshape(8, 8)
+        ),
         2 * np.square(np.arange(8 * 8)).reshape(8, 8).sum(0),
         atol=1e-15,
     )
@@ -288,7 +290,7 @@ def test_expected_value(
 
         psi = generate_random_complex(po.dim)
         np.testing.assert_allclose(
-            po.expected_value(psi),
+            po.expectation_value(psi),
             naive_pauli_operator(coeffs, strings).dot(psi).dot(psi.conj()),
             atol=1e-15,
         )
@@ -300,7 +302,7 @@ def test_expected_value(
             "ti,ij,tj->t", psis.conj(), naive_pauli_operator(coeffs, strings), psis
         )
         np.testing.assert_allclose(
-            po.expected_value(psis.T),
+            po.expectation_value(psis.T),
             expected,
             atol=1e-15,
         )

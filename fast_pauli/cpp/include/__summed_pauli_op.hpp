@@ -8,28 +8,6 @@
 
 namespace fast_pauli {
 
-template <typename T>
-void __check_inputs(
-    std::vector<PauliString> const &pauli_strings,
-    std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const coeffs) {
-
-  // Check the PauliStrings to make sure they're all the same size
-  size_t const n_qubits = pauli_strings.front().n_qubits();
-  bool const qubits_match = std::all_of(
-      pauli_strings.begin(), pauli_strings.end(),
-      [n_qubits](PauliString const &ps) { return ps.n_qubits() == n_qubits; });
-  if (!qubits_match) {
-    throw std::invalid_argument("All PauliStrings must have the same size");
-  }
-
-  // Check the shape of the coeffs
-  if (coeffs.extent(0) != pauli_strings.size()) {
-    throw std::invalid_argument(
-        "The number of PauliStrings must match the number of rows in the "
-        "coeffs matrix");
-  }
-}
-
 template <std::floating_point T> struct SummedPauliOp {
 
   // Short hand for complex, dynamic extent tensor with N dimension
@@ -44,6 +22,29 @@ template <std::floating_point T> struct SummedPauliOp {
   // TODO dangerous
   size_t _dim;
   size_t _n_operators;
+
+  void
+  __check_ctor_inputs(std::vector<fast_pauli::PauliString> const &pauli_strings,
+                      Tensor<2> const coeffs) {
+
+    // Check the PauliStrings to make sure they're all the same size
+    size_t const n_qubits = pauli_strings.front().n_qubits();
+    bool const qubits_match =
+        std::all_of(pauli_strings.begin(), pauli_strings.end(),
+                    [n_qubits](fast_pauli::PauliString const &ps) {
+                      return ps.n_qubits() == n_qubits;
+                    });
+    if (!qubits_match) {
+      throw std::invalid_argument("All PauliStrings must have the same size");
+    }
+
+    // Check the shape of the coeffs
+    if (coeffs.extent(0) != pauli_strings.size()) {
+      throw std::invalid_argument(
+          "The number of PauliStrings must match the number of rows in the "
+          "coeffs matrix");
+    }
+  }
 
   /**
    * @brief Default constructor
@@ -68,7 +69,7 @@ template <std::floating_point T> struct SummedPauliOp {
     _n_operators = coeffs_raw.size() / n_pauli_strings;
     coeffs = Tensor<2>(this->coeffs_raw.data(), n_pauli_strings, _n_operators);
 
-    __check_inputs(pauli_strings, coeffs);
+    this->__check_ctor_inputs(pauli_strings, coeffs);
   }
 
   /**
@@ -82,7 +83,7 @@ template <std::floating_point T> struct SummedPauliOp {
                 Tensor<2> const coeffs)
       : pauli_strings(pauli_strings) {
     //
-    __check_inputs(pauli_strings, coeffs);
+    this->__check_ctor_inputs(pauli_strings, coeffs);
 
     //
     _dim = pauli_strings[0].dims();
@@ -114,7 +115,7 @@ template <std::floating_point T> struct SummedPauliOp {
       this->pauli_strings.push_back(PauliString(ps));
     }
 
-    __check_inputs(this->pauli_strings, coeffs);
+    this->__check_ctor_inputs(this->pauli_strings, coeffs);
 
     //
     _dim = this->pauli_strings.front().dims();

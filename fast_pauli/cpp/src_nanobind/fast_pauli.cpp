@@ -1,4 +1,6 @@
 #include <iostream>
+#include <numeric>
+#include <ranges>
 
 #include <experimental/mdspan>
 #include <nanobind/nanobind.h>
@@ -71,8 +73,21 @@ ndarray_to_mdspan(nb::ndarray<T> a) {
 
   // Collect shape information
   std::array<size_t, ndim> shape;
+  std::array<size_t, ndim> strides;
+
   for (size_t i = 0; i < ndim; ++i) {
     shape[i] = a.shape(i);
+    strides[i] = a.stride(i);
+  }
+
+  // Check if the strides are C-style (row-major)
+  std::array<size_t, ndim> expected_strides;
+
+  // Calculate the expected strides using a prefix product (reversed)
+  std::exclusive_scan(shape.rbegin(), shape.rend(), expected_strides.rbegin(),
+                      1, std::multiplies<>{});
+  if (!std::ranges::equal(strides, expected_strides)) {
+    throw std::invalid_argument("nb::ndarray MUST have C-style strides.");
   }
 
   return std::mdspan<T, std::dextents<size_t, ndim>>(a.data(), shape);
@@ -91,24 +106,25 @@ ndarray_to_mdspan(nb::ndarray<ndarray_framework, T> a) {
 
   // Collect shape information
   std::array<size_t, ndim> shape;
+  std::array<size_t, ndim> strides;
+
   for (size_t i = 0; i < ndim; ++i) {
     shape[i] = a.shape(i);
+    strides[i] = a.stride(i);
+  }
+
+  // Check if the strides are C-style (row-major)
+  std::array<size_t, ndim> expected_strides;
+
+  // Calculate the expected strides using a prefix product (reversed)
+  std::exclusive_scan(shape.rbegin(), shape.rend(), expected_strides.rbegin(),
+                      1, std::multiplies<>{});
+  if (!std::ranges::equal(strides, expected_strides)) {
+    throw std::invalid_argument("nb::ndarray MUST have C-style strides.");
   }
 
   return std::mdspan<T, std::dextents<size_t, ndim>>(a.data(), shape);
 }
-
-// template <typename T, size_t ndim>
-// std::mdspan<T, std::dextents<size_t, ndim>>
-// ndarray_to_mdspan(nb::ndarray<T> a) {
-//   // Collect shape information
-//   std::array<size_t, ndim> shape;
-//   for (size_t i = 0; i < ndim; ++i) {
-//     shape[i] = a.shape(i);
-//   }
-
-//   return std::mdspan<T, std::dextents<size_t, ndim>>(a.data(), shape);
-// }
 
 /**
  * @brief This function copyies the data in the nb::ndarray to "raw" data in a
@@ -212,7 +228,7 @@ Python Bindings for PauliOp
 */
 
 NB_MODULE(fppy, m) {
-  // TODO init default threading behaviour for the module
+  // TODO init default threading behavior for the module
   // TODO give up GIL when calling into long-running C++ code
   using float_type = double;
   using cfloat_t = std::complex<float_type>;
@@ -244,9 +260,6 @@ NB_MODULE(fppy, m) {
           "apply",
           [](fp::PauliString const &self, nb::ndarray<cfloat_t> states,
              cfloat_t c) {
-            // TODO need to add checks that the ndarray isn't doing anything
-            // fancy with strides or layout
-
             // TODO handle the non-transposed case since that's likely the most
             // common
 
