@@ -135,9 +135,8 @@ ndarray_to_raw(nb::ndarray<T> a) {
 
   // Copy the raw data
   std::vector<T> _data(size);
-  // TODO I should switch this over to std::copy instead of std::memcpy
   std::memcpy(_data.data(), a.data(), size * sizeof(T));
-  return std::make_pair(_data, shape);
+  return std::make_pair(std::move(_data), shape);
 }
 
 template <typename T, size_t ndim>

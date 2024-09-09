@@ -71,7 +71,7 @@ class PauliOp:
             result += ps.apply(states, c)
         return result
 
-    def expected_value(self, states: np.ndarray) -> np.complex128 | np.ndarray:
+    def expectation_value(self, states: np.ndarray) -> np.complex128 | np.ndarray:
         """Compute the expected value of the operator for the given state.
 
         Args:
@@ -87,5 +87,5 @@ class PauliOp:
             1 if len(states.shape) == 1 else states.shape[-1], dtype=np.complex128
         )
         for c, ps in zip(self.coeffs, self.pauli_strings):
-            result += c * ps.expected_value(states)
+            result += c * ps.expectation_value(states)
         return result

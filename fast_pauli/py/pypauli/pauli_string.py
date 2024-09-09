@@ -73,7 +73,7 @@ class PauliString:
         else:
             return values * states[columns]
 
-    def expected_value(self, state: np.ndarray) -> np.complex128 | np.ndarray:
+    def expectation_value(self, state: np.ndarray) -> np.complex128 | np.ndarray:
         """Compute the expected value of Pauli string for a given state.
 
         Args:
