@@ -12,14 +12,25 @@ using namespace std::experimental;
 
 namespace fast_pauli {
 
+/**
+ * @brief A class representation for a Pauli Operator (i.e. a weighted sum of
+ * Pauli Strings) \f$ \big( \sum_i h_i \mathcal{\hat{P}}_i \big) \f$ where \f$
+ * \mathcal{\hat{P}}_i \f$ are composed using \f$ \sigma_i \in \{ I,X,Y,Z \} \f$
+ * and \f$ h_i \f$ are the coefficients.
+ *
+ */
 template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
   std::vector<H> coeffs;
-
+  std::vector<PauliString> pauli_strings;
   // TODO NEED TO THINK ABOUT THE ORDER HERE
   // DO WE ASSUME PEOPLE WANT IT COMPLETE? (if weight 3, do we include all
   // possible combinations up to and including weight 3 strings?)
-  std::vector<PauliString> pauli_strings;
 
+  /**
+   * @brief Default constructor, initialize empty vectors for paulis and
+   * coefficients.
+   *
+   */
   PauliOp() = default;
 
   PauliOp(std::vector<std::string> const &strings) {
@@ -29,15 +40,24 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     coeffs.resize(pauli_strings.size(), 1.0);
   }
 
+  /**
+   * @brief Constructs a PauliOp from a vector of PauliStrings and
+   * defaults corresponding coeffs to ones.
+   *
+   */
   PauliOp(std::vector<PauliString> strings)
       : coeffs(strings.size(), 1.0), pauli_strings(std::move(strings))
   // note that strings are moved after coeffs initialization
   // according to the order of data member declarations in the class
   {}
 
-  // TODO should we prohibit identical pauli strings in strings vector ?
+  /**
+   * @brief Constructs a PauliOp from a vector of PauliStrings and coefficients.
+   *
+   */
   PauliOp(std::vector<H> coefficients, std::vector<PauliString> strings)
       : coeffs(std::move(coefficients)), pauli_strings(std::move(strings)) {
+    // TODO should we prohibit identical pauli strings in strings vector ?
     // TODO may want to wrap this in a #IFDEF DEBUG block to avoid the overhead
     // input check
     if (coeffs.size() != pauli_strings.size()) {
@@ -59,6 +79,12 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     }
   }
 
+  /**
+   * @brief Return the dimension (2^n_qubits) of the PauliStrings
+   * used to compose PauliOp.
+   *
+   * @return  size_t
+   */
   size_t dim() const {
     if (pauli_strings.size() > 0) {
       return pauli_strings[0].dim();
@@ -67,12 +93,30 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     }
   }
 
+  /**
+   * @brief Return the number of qubits in PauliOp.
+   *
+   * @return  size_t
+   */
   size_t n_qubits() const {
     return pauli_strings.size() ? pauli_strings[0].n_qubits() : 0;
   }
 
+  /**
+   * @brief Return the number of PauliStrings in PauliOp.
+   *
+   * @return  size_t
+   */
   size_t n_pauli_strings() const { return pauli_strings.size(); }
 
+  /**
+   * @brief Matrix multiplication of PauliOp with a PauliString on the right.
+   *
+   * @param pauli_op_left left hand side PauliOp
+   * @param pauli_str_right right hand side PauliString
+   * @return PauliOp<T, H> new PauliOp instance containing the result of the
+   * multiplication
+   */
   friend PauliOp<T, H> operator*(PauliOp<T, H> const &pauli_op_left,
                                  PauliString const &pauli_str_right) {
     // TODO figure out if it's possible to end up with duplicate strings and
@@ -95,6 +139,14 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     return PauliOp<T, H>(std::move(coefficients), std::move(strings));
   }
 
+  /**
+   * @brief Matrix multiplication of PauliOp with a PauliString on the left.
+   *
+   * @param pauli_str_left left hand side PauliString
+   * @param pauli_op_right right hand side PauliOp
+   * @return PauliOp<T, H> new PauliOp instance containing the result of the
+   * multiplication
+   */
   friend PauliOp<T, H> operator*(PauliString const &pauli_str_left,
                                  PauliOp<T, H> const &pauli_op_right) {
     if (pauli_str_left.dims() != pauli_op_right.dims())
@@ -115,6 +167,14 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     return PauliOp<T, H>(std::move(coefficients), std::move(strings));
   }
 
+  /**
+   * @brief Matrix multiplication of two Pauli operators.
+   *
+   * @param lhs left hand side PauliOp
+   * @param rhs right hand side PauliOp
+   * @return PauliOp<T, H> new PauliOp instance containing the result of the
+   * multiplication
+   */
   friend PauliOp<T, H> operator*(PauliOp<T, H> const &lhs,
                                  PauliOp<T, H> const &rhs) {
     if (lhs.dims() != rhs.dims())
@@ -147,6 +207,14 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     return PauliOp<T, H>(std::move(coefficients), std::move(strings));
   }
 
+  /**
+   * @brief Add a PauliString term with appropriate coefficient
+   * to the summation inside PauliOp.
+   *
+   * @param coeff coefficient to apply to the PauliString
+   * @param pauli_str PauliString to add to the summation
+   * @param dedupe whether to deduplicate provided PauliString
+   */
   void extend(std::complex<T> coeff, PauliString pauli_str,
               bool dedupe = false) {
     if (pauli_str.dims() != dims()) {
@@ -168,8 +236,14 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     pauli_strings.push_back(std::move(pauli_str));
   }
 
-  // @note: right now this is very sloppy implementation
-  // just to allow to add two PauliOps together
+  /**
+   * @brief Add another PauliOp to the current one
+   * by extending the internal summation with new terms.
+   *
+   * @note: for now it's very sloppy implementation just to have this
+   * functionality
+   * @param other_op PauliOp to add to the current one
+   */
   void extend(PauliOp<T, H> const &other_op) {
     // TODO add dedupe capabilities once we have pauli_strings stored in
     // lexicographic order
@@ -208,8 +282,18 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     return res;
   }
 
-  // @note: the states are expected to be in row-major order for this specific
-  // method
+  /**
+   * @brief Apply the PauliOp to a batch of states. This function takes a
+   * different shape of the states than the other apply functions. Here all the
+   * states (new and old) have shape of (n_states x n_dim).
+   *
+   * @note: the states are expected to be in row-major order for this method
+   *
+   * @param new_states The output states after applying the PauliOp
+   * (n_states x n_dim)
+   * @param states The original states to apply the PauliOp to
+   * (n_states x n_dim)
+   */
   void apply_naive(
       mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
       mdspan<std::complex<T>, std::dextents<size_t, 2>> const states) const {
@@ -224,7 +308,6 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
           "new_states must have the same dimensions as states");
     }
 
-    //
     size_t const n_states = states.extent(0);
 #pragma omp parallel for schedule(static)
     for (size_t t = 0; t < n_states; ++t) {
@@ -243,6 +326,20 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     return;
   }
 
+  /**
+   * @brief Apply the PauliOp to a batch of states. Here all the
+   * states (new and old) are transposed so their shape is (n_dims x n_states).
+   * All the new_stats are overwritten, no need to initialize.
+   *
+   * This performs following matrix-matrix multiplication
+   * \f$ \big( \sum_i h_i \mathcal{\hat{P}}_i \big) \hat{\Psi} \f$
+   * where matrix \f$ \hat{\Psi} \f$ has \f$ \ket{\psi_t} \f$ as columns
+   *
+   * @param new_states The output states after applying the PauliOp
+   * (n_dim x n_states)
+   * @param states THe original states to apply the PauliOp to
+   * (n_dim x n_states)
+   */
   void
   apply(mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
         mdspan<std::complex<T>, std::dextents<size_t, 2>> const states) const {
@@ -295,9 +392,14 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
   /**
    * @brief Calculate the expectation value of the PauliOp on a batch of states.
    *
-   * @param expectation_vals_out
+   * It computes following inner product
+   * \f$ \bra{\psi_t} ( \sum_i h_{ik} \mathcal{\hat{P}}_i ) \ket{\psi_t} \f$
+   * for each state \f$ \ket{\psi_t} \f$ from provided batch.
+   *
+   * @param expectation_vals_out expectation values for each state in
+   * the batch
    * @param states The states we want to use in our expectation value
-   * calculation
+   * calculation (n_dim x n_states)
    */
   void expectation_value(
       std::mdspan<std::complex<T>, std::dextents<size_t, 1>>
@@ -343,6 +445,11 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
   //
   // Helpers (mostly for debugging)
   //
+  /**
+   * @brief Get dense representation of PauliOp as a 2D-std::vector
+   *
+   * @return std::vector<std::vector<std::complex<T>>>
+   */
   std::vector<std::vector<std::complex<T>>> get_dense_repr() const {
     std::vector<std::vector<std::complex<T>>> res(
         dim(), std::vector<std::complex<T>>(dim(), 0));
