@@ -171,7 +171,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     }
   }
 
-  std::vector<std::complex<T>> expected_value(
+  std::vector<std::complex<T>> expectation_value(
       mdspan<std::complex<T>, std::dextents<size_t, 2>> states) const {
     // input check
     if (states.extent(0) != this->dims()) {
@@ -200,7 +200,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
       std::mdspan<std::complex<T>, std::dextents<size_t, 1>>
           exp_vals_accum_local =
               std::submdspan(exp_vals_accum_per_thread, tid, std::full_extent);
-      ps.expected_value(exp_vals_accum_local, states, c);
+      ps.expectation_value(exp_vals_accum_local, states, c);
     }
 
 #pragma omp parallel for schedule(static)

@@ -104,7 +104,7 @@ PYBIND11_MODULE(_fast_pauli, m) {
           },
           "states"_a, "coeff"_a = std::complex<float_type>{1.0})
       .def(
-          "expected_value",
+          "expectation_value",
           [](fp::PauliString const &self,
              std::vector<std::complex<float_type>> state) {
             std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
@@ -113,12 +113,12 @@ PYBIND11_MODULE(_fast_pauli, m) {
             std::mdspan<std::complex<float_type>, std::dextents<size_t, 1>>
                 span_output{output.data(), 1};
 
-            self.expected_value(span_output, span_state);
+            self.expectation_value(span_output, span_state);
             return output.at(0);
           },
           "state"_a)
       .def(
-          "expected_value",
+          "expectation_value",
           [](fp::PauliString const &self,
              std::vector<std::vector<std::complex<float_type>>> states) {
             if (states.empty())
@@ -132,7 +132,7 @@ PYBIND11_MODULE(_fast_pauli, m) {
             std::mdspan<std::complex<float_type>, std::dextents<size_t, 1>>
                 span_output{output.data(), output.size()};
 
-            self.expected_value(span_output, span_states);
+            self.expectation_value(span_output, span_states);
             return output;
           },
           "states"_a)
@@ -208,17 +208,17 @@ PYBIND11_MODULE(_fast_pauli, m) {
           },
           "states"_a)
       .def(
-          "expected_value",
+          "expectation_value",
           [](pauli_op_type const &self,
              std::vector<std::complex<float_type>> state) {
             std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
                 span_state{state.data(), state.size(), 1};
-            auto output = self.expected_value(span_state);
+            auto output = self.expectation_value(span_state);
             return output.at(0);
           },
           "state"_a)
       .def(
-          "expected_value",
+          "expectation_value",
           [](pauli_op_type const &self,
              std::vector<std::vector<std::complex<float_type>>> states) {
             if (states.empty())
@@ -227,7 +227,7 @@ PYBIND11_MODULE(_fast_pauli, m) {
             std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
                 span_states{flat_states.data(), states.size(),
                             states.front().size()};
-            return self.expected_value(span_states);
+            return self.expectation_value(span_states);
           },
           "states"_a);
 

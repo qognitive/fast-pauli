@@ -8,6 +8,28 @@
 
 namespace fast_pauli {
 
+template <typename T>
+void __check_inputs(
+    std::vector<PauliString> const &pauli_strings,
+    std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const coeffs) {
+
+  // Check the PauliStrings to make sure they're all the same size
+  size_t const n_qubits = pauli_strings.front().n_qubits();
+  bool const qubits_match = std::all_of(
+      pauli_strings.begin(), pauli_strings.end(),
+      [n_qubits](PauliString const &ps) { return ps.n_qubits() == n_qubits; });
+  if (!qubits_match) {
+    throw std::invalid_argument("All PauliStrings must have the same size");
+  }
+
+  // Check the shape of the coeffs
+  if (coeffs.extent(0) != pauli_strings.size()) {
+    throw std::invalid_argument(
+        "The number of PauliStrings must match the number of rows in the "
+        "coeffs matrix");
+  }
+}
+
 template <std::floating_point T> struct SummedPauliOp {
 
   // Short hand for complex, dynamic extent tensor with N dimension
@@ -23,9 +45,19 @@ template <std::floating_point T> struct SummedPauliOp {
   size_t _dim;
   size_t _n_operators;
 
+  /**
+   * @brief Default constructor
+   *
+   */
   SummedPauliOp() noexcept = default;
 
-  //
+  /**
+   * @brief Construct a new Summed Pauli Op object from a vector of PauliStrings
+   * and a blob of coefficients.
+   *
+   * @param pauli_strings
+   * @param coeffs_raw
+   */
   SummedPauliOp(std::vector<PauliString> const &pauli_strings,
                 std::vector<std::complex<T>> const &coeffs_raw)
       : pauli_strings(pauli_strings), coeffs_raw(coeffs_raw) {
@@ -36,33 +68,23 @@ template <std::floating_point T> struct SummedPauliOp {
     _n_operators = coeffs_raw.size() / n_pauli_strings;
     coeffs = Tensor<2>(this->coeffs_raw.data(), n_pauli_strings, _n_operators);
 
-    // Check that the dims are all the same
-    size_t const n_qubits = pauli_strings[0].n_qubits();
-    bool const qubits_match =
-        std::all_of(pauli_strings.begin(), pauli_strings.end(),
-                    [n_qubits](PauliString const &ps) {
-                      return ps.n_qubits() == n_qubits;
-                    });
-    if (!qubits_match) {
-      throw std::invalid_argument("All PauliStrings must have the same size");
-    }
+    __check_inputs(pauli_strings, coeffs);
   }
 
+  /**
+   * @brief Construct a new Summed Pauli Op object from a vector of PauliStrings
+   * and an std::mdspan of coefficients.
+   *
+   * @param pauli_strings
+   * @param coeffs
+   */
   SummedPauliOp(std::vector<PauliString> const &pauli_strings,
                 Tensor<2> const coeffs)
       : pauli_strings(pauli_strings) {
+    //
+    __check_inputs(pauli_strings, coeffs);
 
-    // Check that the dims are all the same
-    size_t const n_qubits = pauli_strings[0].n_qubits();
-    bool const qubits_match =
-        std::all_of(pauli_strings.begin(), pauli_strings.end(),
-                    [n_qubits](PauliString const &ps) {
-                      return ps.n_qubits() == n_qubits;
-                    });
-    if (!qubits_match) {
-      throw std::invalid_argument("All PauliStrings must have the same size");
-    }
-
+    //
     _dim = pauli_strings[0].dims();
     _n_operators = coeffs.extent(1);
 
@@ -75,6 +97,13 @@ template <std::floating_point T> struct SummedPauliOp {
         this->coeffs_raw.data(), coeffs.extent(0), coeffs.extent(1));
   }
 
+  /**
+   * @brief Construct a new Summed Pauli Op object from a vector of strings and
+   * a std::mdspan of coefficients.
+   *
+   * @param pauli_strings
+   * @param coeffs
+   */
   SummedPauliOp(std::vector<std::string> const &pauli_strings,
                 Tensor<2> const coeffs) {
 
@@ -85,18 +114,10 @@ template <std::floating_point T> struct SummedPauliOp {
       this->pauli_strings.push_back(PauliString(ps));
     }
 
-    // Check that the dims are all the same
-    size_t const n_qubits = this->pauli_strings[0].n_qubits();
-    bool const qubits_match =
-        std::all_of(this->pauli_strings.begin(), this->pauli_strings.end(),
-                    [n_qubits](PauliString const &ps) {
-                      return ps.n_qubits() == n_qubits;
-                    });
-    if (!qubits_match) {
-      throw std::invalid_argument("All PauliStrings must have the same size");
-    }
+    __check_inputs(this->pauli_strings, coeffs);
 
-    _dim = this->pauli_strings[0].dims();
+    //
+    _dim = this->pauli_strings.front().dims();
     _n_operators = coeffs.extent(1);
 
     // Copy over the coeffs so our std::mdspan points at the memory owned by
@@ -111,13 +132,34 @@ template <std::floating_point T> struct SummedPauliOp {
   //
   // Accessors/helpers
   //
+  /**
+   * @brief Return the number of dimensions of the SummedPauliOp
+   *
+   * @return size_t
+   */
   size_t n_dimensions() const noexcept { return _dim; }
+
+  /**
+   * @brief Return the number of operators in the SummedPauliOp
+   *
+   * @return s
+   */
   size_t n_operators() const noexcept { return _n_operators; }
+
+  /**
+   * @brief Return the number of PauliStrings in the SummedPauliOp
+   *
+   * @return size_t
+   */
   size_t n_pauli_strings() const noexcept { return pauli_strings.size(); }
 
-  //
-  // Primary (TODO "primary" is vague here) functions
-  //
+  /**
+   * @brief Apply the SummedPauliOp to a set of states.
+   *
+   * @param new_states
+   * @param states
+   * @param data
+   */
   void apply(Tensor<2> new_states, Tensor<2> states,
              std::mdspan<double, std::dextents<size_t, 2>> data) const {
     // TODO MAKE IT CLEAR THAT THE NEW_STATES NEED TO BE ZEROED
@@ -172,6 +214,14 @@ template <std::floating_point T> struct SummedPauliOp {
     }
   }
 
+  /**
+   * @brief Apply the SummedPauliOp to a set of states in parallel.
+   *
+   * @tparam data_dtype
+   * @param new_states
+   * @param states
+   * @param data
+   */
   template <std::floating_point data_dtype>
   void
   apply_parallel(Tensor<2> new_states, Tensor<2> states,

@@ -291,7 +291,7 @@ NB_MODULE(fppy, m) {
             auto expected_vals_out_mdspan =
                 ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
 
-            self.expected_value(expected_vals_out_mdspan, states_mdspan, c);
+            self.expectation_value(expected_vals_out_mdspan, states_mdspan, c);
 
             return expected_vals_out;
           },
