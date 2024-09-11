@@ -103,39 +103,40 @@ PYBIND11_MODULE(_fast_pauli, m) {
             return results;
           },
           "states"_a, "coeff"_a = std::complex<float_type>{1.0})
-      .def(
-          "expectation_value",
-          [](fp::PauliString const &self,
-             std::vector<std::complex<float_type>> state) {
-            std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
-                span_state{state.data(), state.size(), 1};
-            std::vector<std::complex<float_type>> output(1, 0);
-            std::mdspan<std::complex<float_type>, std::dextents<size_t, 1>>
-                span_output{output.data(), 1};
+      // .def(
+      //     "expectation_value",
+      //     [](fp::PauliString const &self,
+      //        std::vector<std::complex<float_type>> state) {
+      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
+      //           span_state{state.data(), state.size(), 1};
+      //       std::vector<std::complex<float_type>> output(1, 0);
+      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 1>>
+      //           span_output{output.data(), 1};
 
-            self.expectation_value(span_output, span_state);
-            return output.at(0);
-          },
-          "state"_a)
-      .def(
-          "expectation_value",
-          [](fp::PauliString const &self,
-             std::vector<std::vector<std::complex<float_type>>> states) {
-            if (states.empty())
-              return std::vector<std::complex<float_type>>{};
-            auto flat_states = fp::flatten_vector(states);
-            std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
-                span_states{flat_states.data(), states.size(),
-                            states.front().size()};
-            std::vector<std::complex<float_type>> output(states.front().size(),
-                                                         0);
-            std::mdspan<std::complex<float_type>, std::dextents<size_t, 1>>
-                span_output{output.data(), output.size()};
+      //       self.expectation_value(span_output, span_state);
+      //       return output.at(0);
+      //     },
+      //     "state"_a)
+      // .def(
+      //     "expectation_value",
+      //     [](fp::PauliString const &self,
+      //        std::vector<std::vector<std::complex<float_type>>> states) {
+      //       if (states.empty())
+      //         return std::vector<std::complex<float_type>>{};
+      //       auto flat_states = fp::flatten_vector(states);
+      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
+      //           span_states{flat_states.data(), states.size(),
+      //                       states.front().size()};
+      //       std::vector<std::complex<float_type>>
+      //       output(states.front().size(),
+      //                                                    0);
+      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 1>>
+      //           span_output{output.data(), output.size()};
 
-            self.expectation_value(span_output, span_states);
-            return output;
-          },
-          "states"_a)
+      //       self.expectation_value(span_output, span_states);
+      //       return output;
+      //     },
+      // "states"_a)
       .def("__str__",
            [](fp::PauliString const &self) { return fmt::format("{}", self); });
 
@@ -207,29 +208,30 @@ PYBIND11_MODULE(_fast_pauli, m) {
             return results;
           },
           "states"_a)
-      .def(
-          "expectation_value",
-          [](pauli_op_type const &self,
-             std::vector<std::complex<float_type>> state) {
-            std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
-                span_state{state.data(), state.size(), 1};
-            auto output = self.expectation_value(span_state);
-            return output.at(0);
-          },
-          "state"_a)
-      .def(
-          "expectation_value",
-          [](pauli_op_type const &self,
-             std::vector<std::vector<std::complex<float_type>>> states) {
-            if (states.empty())
-              return std::vector<std::complex<float_type>>{};
-            auto flat_states = fp::flatten_vector(states);
-            std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
-                span_states{flat_states.data(), states.size(),
-                            states.front().size()};
-            return self.expectation_value(span_states);
-          },
-          "states"_a);
+      // .def(
+      //     "expectation_value",
+      //     [](pauli_op_type const &self,
+      //        std::vector<std::complex<float_type>> state) {
+      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
+      //           span_state{state.data(), state.size(), 1};
+      //       auto output = self.expectation_value(span_state);
+      //       return output.at(0);
+      //     },
+      //     "state"_a)
+      // .def(
+      //     "expectation_value",
+      //     [](pauli_op_type const &self,
+      //        std::vector<std::vector<std::complex<float_type>>> states) {
+      //       if (states.empty())
+      //         return std::vector<std::complex<float_type>>{};
+      //       auto flat_states = fp::flatten_vector(states);
+      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
+      //           span_states{flat_states.data(), states.size(),
+      //                       states.front().size()};
+      //       return self.expectation_value(span_states);
+      //     },
+      //     "states"_a)
+      ;
 
   auto helpers_m = m.def_submodule("helpers");
   helpers_m.def("get_nontrivial_paulis", &fp::get_nontrivial_paulis,

@@ -49,7 +49,6 @@ NB_MODULE(fppy, m) {
            [](fp::PauliString const &self) { return fmt::format("{}", self); })
 
       // Properties
-      // TODO make names consistent
       .def_prop_ro("n_qubits", &fp::PauliString::n_qubits)
       .def_prop_ro("dim", &fp::PauliString::dim)
       .def_prop_ro("weight",
@@ -131,10 +130,8 @@ NB_MODULE(fppy, m) {
            })
 
       // Getters
-      // TODO update the dims function name to n_dimenions
       .def_prop_ro("dimensions", &fp::PauliOp<float_type>::dim)
       .def_prop_ro("n_qubits", &fp::PauliOp<float_type>::n_qubits)
-      // TODO update n_strings function name
       .def_prop_ro("n_pauli_strings", &fp::PauliOp<float_type>::n_pauli_strings)
 
       // Methods
@@ -151,21 +148,20 @@ NB_MODULE(fppy, m) {
 
              return new_states;
            })
-      // TODO update the expectation_value function to take mdspan
-      // .def("expectation_value",
-      //      [](fp::PauliOp<float_type> const &self,
-      //         nb::ndarray<cfloat_t> states) {
-      //        auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
-      //        std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
-      //        auto expected_vals_out =
-      //            owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
-      //        auto expected_vals_out_mdspan =
-      //            ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
+      .def("expectation_value",
+           [](fp::PauliOp<float_type> const &self,
+              nb::ndarray<cfloat_t> states) {
+             auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+             std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
+             auto expected_vals_out =
+                 owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+             auto expected_vals_out_mdspan =
+                 ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
 
-      //        self.expectation_value(expected_vals_out_mdspan, states_mdspan);
+             self.expectation_value(expected_vals_out_mdspan, states_mdspan);
 
-      //        return expected_vals_out;
-      //      })
+             return expected_vals_out;
+           })
       //
       ;
 

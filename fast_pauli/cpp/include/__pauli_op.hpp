@@ -172,7 +172,9 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
   }
 
   // TODO modify in place
-  std::vector<std::complex<T>> expectation_value(
+  void expectation_value(
+      std::mdspan<std::complex<T>, std::dextents<size_t, 1>>
+          expectation_vals_out,
       mdspan<std::complex<T>, std::dextents<size_t, 2>> states) const {
     // input check
     if (states.extent(0) != this->dim()) {
@@ -185,7 +187,6 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
 
     // no need to default initialize with 0 since std::complex constructor
     // handles that
-    std::vector<std::complex<T>> expected_vals(n_data);
     std::vector<std::complex<T>> expected_vals_per_thread_storage(n_threads *
                                                                   n_data);
     std::mdspan<std::complex<T>, std::dextents<size_t, 2>>
@@ -207,11 +208,9 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
 #pragma omp parallel for schedule(static)
     for (size_t t = 0; t < states.extent(1); ++t) {
       for (size_t th = 0; th < n_threads; ++th) {
-        expected_vals[t] += exp_vals_accum_per_thread(th, t);
+        expectation_vals_out[t] += exp_vals_accum_per_thread(th, t);
       }
     }
-
-    return expected_vals;
   }
 
   //
