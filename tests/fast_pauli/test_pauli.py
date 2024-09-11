@@ -49,7 +49,7 @@ def test_multiply(paulis: dict, pauli: type[fp.Pauli]) -> None:
 @pytest.mark.parametrize("pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
 def test_exceptions(pauli: type[fp.Pauli]) -> None:
     """Test that exceptions from c++ are raised and propagated correctly."""
-    with np.testing.assert_raises(ValueError):
+    with np.testing.assert_raises(TypeError):
         pauli("II")
     with np.testing.assert_raises(ValueError):
         pauli("A")

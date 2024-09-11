@@ -87,5 +87,4 @@ add_subdirectory(fast_pauli/cpp/examples)
 # Python bindings
 add_subdirectory(fast_pauli/cpp/src)
 
-# Python bindings using nanobind
-add_subdirectory(fast_pauli/cpp/src_nanobind)
+# # Python bindings using nanobind add_subdirectory(fast_pauli/cpp/src_nanobind)

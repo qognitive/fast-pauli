@@ -21,6 +21,13 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
 
   PauliOp() = default;
 
+  PauliOp(std::vector<std::string> const &strings) {
+    for (auto const &s : strings) {
+      pauli_strings.push_back(PauliString(s));
+    }
+    coeffs.resize(pauli_strings.size(), 1.0);
+  }
+
   PauliOp(std::vector<PauliString> strings)
       : coeffs(strings.size(), 1.0), pauli_strings(std::move(strings))
   // note that strings are moved after coeffs initialization

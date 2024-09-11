@@ -1,246 +1,217 @@
 #include "fast_pauli.hpp"
-#include "__pauli_string.hpp"
-
-#include <experimental/mdspan>
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include "__nb_helpers.hpp"
+#include "nanobind/nanobind.h"
+#include <nanobind/stl/pair.h>
 
 namespace fp = fast_pauli;
-namespace py = pybind11;
-using namespace pybind11::literals;
 
-namespace fast_pauli {
+/*
+Python Bindings for PauliOp
+*/
 
-/**
- * @brief Flatten row major matrix represented as a 2D-std::vector into single
- * std::vector
- *
- * @tparam T The floating point base to use for all the complex numbers
- * @return  std::vector<std::complex<T>> flattened vector with rows concatenated
- */
-template <std::floating_point T>
-inline std::vector<std::complex<T>>
-flatten_vector(std::vector<std::vector<std::complex<T>>> const &inputs) {
-  auto const n_rows = inputs.size();
-  auto const n_cols = inputs.front().size();
-  std::vector<std::complex<T>> flat;
-  flat.reserve(n_rows * n_cols);
-
-  for (auto const &vec : inputs)
-    if (vec.size() != n_cols)
-      throw std::invalid_argument("Bad shape of input array");
-    else
-      std::ranges::copy(vec.begin(), vec.end(), std::back_inserter(flat));
-
-  return flat;
-}
-
-} // namespace fast_pauli
-
-PYBIND11_MODULE(_fast_pauli, m) {
-  // TODO init default threading behaviour for the module
+NB_MODULE(_fast_pauli, m) {
+  // TODO init default threading behavior for the module
   // TODO give up GIL when calling into long-running C++ code
   using float_type = double;
+  using cfloat_t = std::complex<float_type>;
 
-  py::class_<fp::Pauli>(m, "Pauli")
-      .def(py::init<>())
-      .def(py::init<int const>(), "code"_a)
-      .def(py::init<char const>(), "symbol"_a)
+  nb::class_<fp::Pauli>(m, "Pauli")
+      // Constructors
+      .def(nb::init<>())
+      .def(nb::init<int const>(), "code"_a)
+      .def(nb::init<char const>(), "symbol"_a)
+
+      // Methods
+      .def(
+          "__mult__",
+          [](fp::Pauli const &self, fp::Pauli const &rhs) {
+            return self * rhs;
+          },
+          nb::is_operator())
+      // TODO have this return numpy
       .def("to_tensor", &fp::Pauli::to_tensor<float_type>)
       .def("multiply", [](fp::Pauli const &self,
                           fp::Pauli const &rhs) { return self * rhs; })
       .def("__str__",
            [](fp::Pauli const &self) { return fmt::format("{}", self); });
 
-  // TODO should we have PauliString templated on the float_type as well,
-  // instead of each individual method?
-  py::class_<fp::PauliString>(m, "PauliString")
-      .def(py::init<>())
-      .def(py::init([](std::vector<fp::Pauli> paulis) {
-             return fp::PauliString(paulis);
-           }),
-           "paulis"_a)
-      .def(py::init<std::string const &>(), "string"_a)
-      .def_property_readonly("n_qubits", &fp::PauliString::n_qubits)
-      .def_property_readonly("dim", &fp::PauliString::dim)
-      .def_readonly("weight", &fp::PauliString::weight)
-      .def("to_tensor", &fp::PauliString::get_dense_repr<float_type>)
-      .def(
-          "apply",
-          [](fp::PauliString const &self,
-             std::vector<std::complex<float_type>> state) {
-            return self.apply(state);
-          },
-          "state"_a)
-      .def(
-          "apply",
-          // TODO: this should be handled by proper adapters for mdspan
-          [](fp::PauliString const &self,
-             std::vector<std::vector<std::complex<float_type>>> states,
-             std::complex<float_type> coeff) {
-            if (states.empty())
-              return std::vector<std::vector<std::complex<float_type>>>{};
-            // for now we expect row major inputs which have states as columns
-            auto flat_inputs = fp::flatten_vector(states);
-            auto const n_states = states.front().size();
-            std::vector<std::complex<float_type>> flat_outputs(
-                flat_inputs.size(), 0);
-            self.apply_batch(
-                std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>{
-                    flat_outputs.data(), states.size(), n_states},
-                std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>{
-                    flat_inputs.data(), states.size(), n_states},
-                coeff);
+  //
+  //
+  //
 
-            std::vector<std::vector<std::complex<float_type>>> results(
-                states.size());
-            for (size_t i = 0; i < states.size(); i++) {
-              auto it = flat_outputs.begin() + i * n_states;
-              std::ranges::copy(it, it + n_states,
-                                std::back_inserter(results[i]));
-            }
-            return results;
-          },
-          "states"_a, "coeff"_a = std::complex<float_type>{1.0})
-      // .def(
-      //     "expectation_value",
-      //     [](fp::PauliString const &self,
-      //        std::vector<std::complex<float_type>> state) {
-      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
-      //           span_state{state.data(), state.size(), 1};
-      //       std::vector<std::complex<float_type>> output(1, 0);
-      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 1>>
-      //           span_output{output.data(), 1};
+  nb::class_<fp::PauliString>(m, "PauliString")
+      // Constructors
+      .def(nb::init<>())
+      .def(nb::init<std::string const &>(), "string"_a)
+      .def(nb::init<std::vector<fp::Pauli> &>(), "paulis"_a)
 
-      //       self.expectation_value(span_output, span_state);
-      //       return output.at(0);
-      //     },
-      //     "state"_a)
-      // .def(
-      //     "expectation_value",
-      //     [](fp::PauliString const &self,
-      //        std::vector<std::vector<std::complex<float_type>>> states) {
-      //       if (states.empty())
-      //         return std::vector<std::complex<float_type>>{};
-      //       auto flat_states = fp::flatten_vector(states);
-      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
-      //           span_states{flat_states.data(), states.size(),
-      //                       states.front().size()};
-      //       std::vector<std::complex<float_type>>
-      //       output(states.front().size(),
-      //                                                    0);
-      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 1>>
-      //           span_output{output.data(), output.size()};
-
-      //       self.expectation_value(span_output, span_states);
-      //       return output;
-      //     },
-      // "states"_a)
+      //
       .def("__str__",
-           [](fp::PauliString const &self) { return fmt::format("{}", self); });
+           [](fp::PauliString const &self) { return fmt::format("{}", self); })
 
-  using pauli_op_type = fp::PauliOp<float_type>;
-  py::class_<pauli_op_type>(m, "PauliOp")
-      .def(py::init<>())
-      .def(py::init<std::vector<std::complex<float_type>>,
-                    std::vector<fp::PauliString>>(),
-           "coefficients"_a, "strings"_a)
-      .def(py::init<std::vector<fp::PauliString>>(), "strings"_a)
-      .def(py::init([](std::vector<std::complex<float_type>> coefficients,
-                       std::vector<std::string> paulis) {
-             std::vector<fp::PauliString> pauli_strings;
-             std::transform(paulis.begin(), paulis.end(),
-                            std::back_inserter(pauli_strings),
-                            [](std::string const &pauli) {
-                              return fp::PauliString(pauli);
-                            });
-             return pauli_op_type(std::move(coefficients),
-                                  std::move(pauli_strings));
-           }),
-           "coefficients"_a, "strings"_a)
-      .def_property_readonly("n_strings", &pauli_op_type::n_pauli_strings)
-      .def_property_readonly("n_qubits", &pauli_op_type::n_qubits)
-      .def_property_readonly("dim", &pauli_op_type::dim)
-      .def_property_readonly(
-          "coeffs", [](pauli_op_type const &self) { return self.coeffs; })
-      .def_property_readonly(
-          "strings",
-          [](pauli_op_type const &self) -> std::vector<std::string> {
-            auto convert = [](auto const &ps) { return fmt::format("{}", ps); };
-            auto strings_view =
-                self.pauli_strings | std::views::transform(convert);
-            return {strings_view.begin(), strings_view.end()};
-          })
-      .def("to_tensor", &pauli_op_type::get_dense_repr)
-      // two bindings below is just barefaced copy-paste from PauliString
+      // Properties
+      .def_prop_ro("n_qubits", &fp::PauliString::n_qubits)
+      .def_prop_ro("dim", &fp::PauliString::dim)
+      .def_prop_ro("weight",
+                   [](fp::PauliString const &self) { return self.weight; })
+      // Methods
       .def(
           "apply",
-          [](pauli_op_type const &self,
-             std::vector<std::complex<float_type>> state) {
-            return self.apply(state);
-          },
-          "state"_a)
-      .def(
-          "apply",
-          [](pauli_op_type const &self,
-             std::vector<std::vector<std::complex<float_type>>> states) {
-            if (states.empty())
-              return std::vector<std::vector<std::complex<float_type>>>{};
-            // for now we expect row major inputs which have states as columns
-            auto flat_inputs = fp::flatten_vector(states);
-            auto const n_states = states.front().size();
-            std::vector<std::complex<float_type>> flat_outputs(
-                flat_inputs.size(), 0);
-            self.apply(
-                std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>{
-                    flat_outputs.data(), states.size(), n_states},
-                std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>{
-                    flat_inputs.data(), states.size(), n_states});
+          [](fp::PauliString const &self, nb::ndarray<cfloat_t> states,
+             cfloat_t c) {
+            // TODO handle the non-transposed case since that's likely the most
+            // common
 
-            std::vector<std::vector<std::complex<float_type>>> results(
-                states.size());
-            for (size_t i = 0; i < states.size(); i++) {
-              auto it = flat_outputs.begin() + i * n_states;
-              std::ranges::copy(it, it + n_states,
-                                std::back_inserter(results[i]));
+            if (states.ndim() == 1) {
+              // TODO lots of duplicate code here
+              // TODO we can do better with this, right now it takes a 1D array
+              // and returns a 2D one which isn't very intuitive
+              // clang-format off
+               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
+               auto states_mdspan_2d =std::mdspan(states_mdspan.data_handle(),states_mdspan.extent(0),1);
+               auto new_states = owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan_2d);
+               auto new_states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(new_states);
+               // TODO refactor PauliString::apply to match the apply_batch interface (i.e. no output and everything is an mdspan)
+               self.apply_batch(new_states_mdspan, states_mdspan_2d, c);
+              // clang-format on
+              return new_states;
+
+            } else if (states.ndim() == 2) {
+              // clang-format off
+               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+               auto new_states = owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+               auto new_states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(new_states);
+               self.apply_batch(new_states_mdspan, states_mdspan, c);
+              // clang-format on
+              return new_states;
+            } else {
+              throw std::invalid_argument(fmt::format(
+                  "apply: expected 1 or 2 dimensions, got {}", states.ndim()));
             }
-            return results;
           },
-          "states"_a)
-      // .def(
-      //     "expectation_value",
-      //     [](pauli_op_type const &self,
-      //        std::vector<std::complex<float_type>> state) {
-      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
-      //           span_state{state.data(), state.size(), 1};
-      //       auto output = self.expectation_value(span_state);
-      //       return output.at(0);
-      //     },
-      //     "state"_a)
-      // .def(
-      //     "expectation_value",
-      //     [](pauli_op_type const &self,
-      //        std::vector<std::vector<std::complex<float_type>>> states) {
-      //       if (states.empty())
-      //         return std::vector<std::complex<float_type>>{};
-      //       auto flat_states = fp::flatten_vector(states);
-      //       std::mdspan<std::complex<float_type>, std::dextents<size_t, 2>>
-      //           span_states{flat_states.data(), states.size(),
-      //                       states.front().size()};
-      //       return self.expectation_value(span_states);
-      //     },
-      //     "states"_a)
+          "states"_a, "coeff"_a = cfloat_t{1.0})
+      .def(
+          // TODO we should handle when users pass a single state (i.e. a 1D
+          // array here)
+          "expectation_value",
+          [](fp::PauliString const &self, nb::ndarray<cfloat_t> states,
+             cfloat_t c) {
+            auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+            std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
+            auto expected_vals_out =
+                owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+            auto expected_vals_out_mdspan =
+                ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
+
+            self.expectation_value(expected_vals_out_mdspan, states_mdspan, c);
+
+            return expected_vals_out;
+          },
+          "states"_a, "coeff"_a = cfloat_t{1.0})
+      // TODO return numpy array
+      .def("to_tensor",
+           [](fp::PauliString const &self) {
+             return self.get_dense_repr<float_type>();
+           })
+
+      //
       ;
 
-  auto helpers_m = m.def_submodule("helpers");
-  helpers_m.def("get_nontrivial_paulis", &fp::get_nontrivial_paulis,
-                "weight"_a);
-  helpers_m.def("calcutate_pauli_strings", &fp::calcutate_pauli_strings,
-                "n_qubits"_a, "weight"_a);
-  helpers_m.def("calculate_pauli_strings_max_weight",
-                &fp::calculate_pauli_strings_max_weight, "n_qubits"_a,
-                "weight"_a);
-  helpers_m.def("pauli_string_sparse_repr", &fp::get_sparse_repr<float_type>,
-                "paulis"_a);
+  //
+  nb::class_<fp::PauliOp<float_type>>(m, "PauliOp")
+      // Constructors
+      .def(nb::init<>())
+      .def(nb::init<std::vector<std::string> const &>(), "pauli_strings"_a)
+      .def(nb::init<std::vector<fp::PauliString>>())
+      .def("__init__",
+           [](fp::PauliOp<float_type> *new_obj,
+              std::vector<fp::PauliString> const &pauli_strings,
+              nb::ndarray<cfloat_t> coeffs) {
+             auto [coeffs_vec, _] = ndarray_to_raw<cfloat_t, 1>(coeffs);
+             new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);
+           })
+
+      .def("__init__",
+           [](fp::PauliOp<float_type> *new_obj,
+              std::vector<fp::PauliString> const &pauli_strings,
+              std::vector<cfloat_t> coeffs_vec) {
+             new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);
+           })
+
+      // Getters
+      .def_prop_ro("dim", &fp::PauliOp<float_type>::dim)
+      .def_prop_ro("n_qubits", &fp::PauliOp<float_type>::n_qubits)
+      .def_prop_ro("n_pauli_strings", &fp::PauliOp<float_type>::n_pauli_strings)
+
+      // Methods
+      .def("apply",
+           [](fp::PauliOp<float_type> const &self,
+              nb::ndarray<cfloat_t> states) {
+             auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+             auto new_states =
+                 owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+             auto new_states_mdspan =
+                 ndarray_to_mdspan<cfloat_t, 2>(new_states);
+
+             self.apply(new_states_mdspan, states_mdspan);
+
+             return new_states;
+           })
+      .def("expectation_value",
+           [](fp::PauliOp<float_type> const &self,
+              nb::ndarray<cfloat_t> states) {
+             auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+             std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
+             auto expected_vals_out =
+                 owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+             auto expected_vals_out_mdspan =
+                 ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
+
+             self.expectation_value(expected_vals_out_mdspan, states_mdspan);
+
+             return expected_vals_out;
+           })
+      //
+      ;
+
+  //
+  nb::class_<fp::SummedPauliOp<float_type>>(m, "SummedPauliOp")
+      // Constructors
+      // See
+      // https://nanobind.readthedocs.io/en/latest/api_core.html#_CPPv4IDpEN8nanobind4initE
+      .def(nb::init<>())
+      .def("__init__",
+           [](fp::SummedPauliOp<float_type> *new_obj,
+              std::vector<std::string> &pauli_strings,
+              nb::ndarray<cfloat_t> coeffs) {
+             //
+             auto coeffs_mdspan = ndarray_to_mdspan<cfloat_t, 2>(coeffs);
+
+             new (new_obj)
+                 fp::SummedPauliOp<float_type>(pauli_strings, coeffs_mdspan);
+           })
+
+      .def_prop_ro("dim", &fp::SummedPauliOp<float_type>::dim)
+      .def_prop_ro("n_operators", &fp::SummedPauliOp<float_type>::n_operators)
+      .def_prop_ro("n_pauli_strings",
+                   &fp::SummedPauliOp<float_type>::n_pauli_strings)
+
+      .def("apply",
+           [](fp::SummedPauliOp<float_type> const &self,
+              nb::ndarray<cfloat_t> states, nb::ndarray<float_type> data) {
+             auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+             auto data_mdspan = ndarray_to_mdspan<float_type, 2>(data);
+
+             // clang-format off
+             auto new_states        = owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+             auto new_states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(new_states);
+             // clang-format on
+
+             self.apply_parallel<float_type>(new_states_mdspan, states_mdspan,
+                                             data_mdspan);
+
+             return new_states;
+           })
+      //
+      ;
 }
