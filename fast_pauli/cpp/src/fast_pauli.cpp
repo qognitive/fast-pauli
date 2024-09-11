@@ -130,11 +130,22 @@ NB_MODULE(_fast_pauli, m) {
              auto [coeffs_vec, _] = ndarray_to_raw<cfloat_t, 1>(coeffs);
              new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);
            })
-
       .def("__init__",
            [](fp::PauliOp<float_type> *new_obj,
-              std::vector<fp::PauliString> const &pauli_strings,
-              std::vector<cfloat_t> coeffs_vec) {
+              std::vector<cfloat_t> coeffs_vec,
+              std::vector<fp::PauliString> const &pauli_strings) {
+             new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);
+           })
+      .def("__init__",
+           [](fp::PauliOp<float_type> *new_obj,
+              std::vector<cfloat_t> coeffs_vec,
+              std::vector<std::string> const &strings) {
+             std::vector<fp::PauliString> pauli_strings;
+             std::transform(strings.begin(), strings.end(),
+                            std::back_inserter(pauli_strings),
+                            [](std::string const &pauli) {
+                              return fp::PauliString(pauli);
+                            });
              new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);
            })
 
@@ -170,6 +181,10 @@ NB_MODULE(_fast_pauli, m) {
              self.expectation_value(expected_vals_out_mdspan, states_mdspan);
 
              return expected_vals_out;
+           })
+      .def("to_tensor",
+           [](fp::PauliOp<float_type> const &self) {
+             return self.get_dense_repr();
            })
       //
       ;

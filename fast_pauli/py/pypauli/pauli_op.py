@@ -24,7 +24,7 @@ class PauliOp:
 
         self.coeffs = np.array(coefficients, dtype=np.complex128)
         self.pauli_strings = [PauliString(ps) for ps in strings if isinstance(ps, str)]
-        self.n_strings = len(strings)
+        self.n_pauli_strings = len(strings)
 
         if self.pauli_strings:
             self.n_qubits = self.pauli_strings[0].n_qubits
