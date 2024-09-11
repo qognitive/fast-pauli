@@ -123,7 +123,7 @@ struct PauliString {
    * calculates the weight.
    *
    */
-  PauliString(std::span<fast_pauli::Pauli> const &paulis)
+  PauliString(std::span<fast_pauli::Pauli> paulis)
       : weight(0), paulis(paulis.begin(), paulis.end()) {
     for (auto const &pauli : paulis) {
       weight += pauli.code > 0;
@@ -192,7 +192,7 @@ struct PauliString {
    *
    * @return  size_t
    */
-  size_t dims() const noexcept {
+  size_t dim() const noexcept {
     return paulis.size() ? 1UL << paulis.size() : 0;
   }
 
@@ -201,7 +201,7 @@ struct PauliString {
    *
    * @tparam T The floating point base to use for all the complex numbers
    * @param v The input vector to apply the PauliString to. Must be the same
-   * size as PauliString.dims().
+   * size as PauliString.dim().
    * @return  std::vector<std::complex<T>> The output state after
    * applying the PauliString.
    */
@@ -219,7 +219,7 @@ struct PauliString {
    *
    * @tparam T The floating point base to use for all the complex numbers
    * @param v The input vector to apply the PauliString to. Must be the same
-   * size as PauliString.dims().
+   * size as PauliString.dim().
    * @return  std::vector<std::complex<T>> The output state after
    * applying the PauliString.
    */
@@ -227,7 +227,7 @@ struct PauliString {
   std::vector<std::complex<T>>
   apply(std::mdspan<std::complex<T> const, std::dextents<size_t, 1>> v) const {
     // Input check
-    if (v.size() != dims()) {
+    if (v.size() != dim()) {
       throw std::invalid_argument(
           "Input vector size must match the number of qubits");
     }
@@ -266,11 +266,11 @@ struct PauliString {
                        states_T, // extent(0) = dims, extent(1) = n_states
                    std::complex<T> const c) const {
     // Input check
-    if (states_T.extent(0) != dims()) {
+    if (states_T.extent(0) != dim()) {
       auto error_msg =
           fmt::format("[PauliString] states shape ({}) must match the "
                       "dimension of the operators ({})",
-                      states_T.extent(0), dims());
+                      states_T.extent(0), dim());
       throw std::invalid_argument(error_msg);
     }
 
@@ -292,7 +292,6 @@ struct PauliString {
     }
   }
 
-  // TODO let's change the name of this function to expectation_value
   /**
    * @brief Calculate expectation values for a given batch of states.
    * This function takes in transposed states with (n_dims x n_states) shape
@@ -313,17 +312,16 @@ struct PauliString {
    */
   template <std::floating_point T>
   void expectation_value(
-      // TODO shouldn't the expectation_vals_out be real?
       std::mdspan<std::complex<T>, std::dextents<size_t, 1>>
           expectation_vals_out,
       std::mdspan<std::complex<T>, std::dextents<size_t, 2>> states,
       std::complex<T> const c = 1.0) const {
     // Input check
-    if (states.extent(0) != dims())
+    if (states.extent(0) != dim())
       throw std::invalid_argument(
           fmt::format("[PauliString] states shape ({}) must match the dimension"
                       " of the operators ({})",
-                      states.extent(0), dims()));
+                      states.extent(0), dim()));
     if (expectation_vals_out.extent(0) != states.extent(1))
       throw std::invalid_argument(
           "[PauliString] expectation_vals_out shape must "
@@ -355,7 +353,7 @@ struct PauliString {
     auto [k, m] = get_sparse_repr<T>(paulis);
 
     std::vector<std::vector<std::complex<T>>> result(
-        dims(), std::vector<std::complex<T>>(dims(), 0));
+        dim(), std::vector<std::complex<T>>(dim(), 0));
 
     for (size_t i = 0; i < k.size(); ++i) {
       result[i][k[i]] = m[i];

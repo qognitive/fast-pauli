@@ -11,7 +11,7 @@ int main() {
   std::vector<std::complex<double>> coeffs(pauli_strings.size(), 1);
   PauliOp<double> pauli_op(coeffs, pauli_strings);
 
-  size_t const dims = pauli_strings[0].dims();
+  size_t const dims = pauli_strings[0].dim();
 
   // Set up random state
   std::random_device rd;

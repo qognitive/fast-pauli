@@ -106,25 +106,25 @@ TEST_CASE("getters") {
   {
     PauliString ps{"I"};
     CHECK(ps.n_qubits() == 1);
-    CHECK(ps.dims() == 2);
+    CHECK(ps.dim() == 2);
   }
 
   {
     PauliString ps{"IXYZI"};
     CHECK(ps.n_qubits() == 5);
-    CHECK(ps.dims() == 32);
+    CHECK(ps.dim() == 32);
   }
 
   {
     PauliString ps{"IXYZ"};
     CHECK(ps.n_qubits() == 4);
-    CHECK(ps.dims() == 16);
+    CHECK(ps.dim() == 16);
   }
 
   {
     PauliString ps;
     CHECK(ps.n_qubits() == 0);
-    CHECK(ps.dims() == 0);
+    CHECK(ps.dim() == 0);
   }
 }
 
@@ -203,7 +203,7 @@ TEST_CASE("test apply batch") {
   // Testing each of these pauli strings individually
   // NOTE: apply_batch takes the transpose of the states and new_states
   for (PauliString ps : {"IXYZ", "YYIX", "XXYIYZ", "IZIXYYZ"}) {
-    size_t const dims = ps.dims();
+    size_t const dims = ps.dim();
 
     std::vector<std::complex<double>> states_raw(dims * n_states);
     std::generate(states_raw.begin(), states_raw.end(),

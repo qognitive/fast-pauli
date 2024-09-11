@@ -30,7 +30,7 @@ void __check_apply(
   SummedPauliOp<double> summed_op{pauli_strings, coeff};
 
   // Setup states
-  size_t const dim = summed_op.n_dimensions();
+  size_t const dim = summed_op.dim();
   size_t const n_ops = summed_op.n_operators();
 
   std::vector<std::complex<double>> states_raw;
@@ -122,7 +122,7 @@ TEST_CASE("accessors") {
   // Basic case
   {
     SummedPauliOp<double> summed_op{{"XYZ", "ZZY", "YYI"}, {1i, 1i, 1i}};
-    CHECK(summed_op.n_dimensions() == 8);
+    CHECK(summed_op.dim() == 8);
     CHECK(summed_op.n_operators() == 1);
     CHECK(summed_op.n_pauli_strings() == 3);
   }
@@ -131,7 +131,7 @@ TEST_CASE("accessors") {
   {
     SummedPauliOp<double> summed_op{{"XYZ", "ZZY", "YYI"},
                                     {1i, 1i, 1i, 1, 1, 1, 0, 0, 0}};
-    CHECK(summed_op.n_dimensions() == 8);
+    CHECK(summed_op.dim() == 8);
     CHECK(summed_op.n_operators() == 3);
     CHECK(summed_op.n_pauli_strings() == 3);
   }

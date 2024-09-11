@@ -65,7 +65,7 @@ template <std::floating_point T> struct SummedPauliOp {
 
     // TODO add more checks
     size_t const n_pauli_strings = pauli_strings.size();
-    _dim = pauli_strings[0].dims();
+    _dim = pauli_strings[0].dim();
     _n_operators = coeffs_raw.size() / n_pauli_strings;
     coeffs = Tensor<2>(this->coeffs_raw.data(), n_pauli_strings, _n_operators);
 
@@ -86,7 +86,7 @@ template <std::floating_point T> struct SummedPauliOp {
     this->__check_ctor_inputs(pauli_strings, coeffs);
 
     //
-    _dim = pauli_strings[0].dims();
+    _dim = pauli_strings[0].dim();
     _n_operators = coeffs.extent(1);
 
     // Copy over the coeffs so our std::mdspan points at the memory owned by
@@ -118,7 +118,7 @@ template <std::floating_point T> struct SummedPauliOp {
     this->__check_ctor_inputs(this->pauli_strings, coeffs);
 
     //
-    _dim = this->pauli_strings.front().dims();
+    _dim = this->pauli_strings.front().dim();
     _n_operators = coeffs.extent(1);
 
     // Copy over the coeffs so our std::mdspan points at the memory owned by
@@ -138,7 +138,7 @@ template <std::floating_point T> struct SummedPauliOp {
    *
    * @return size_t
    */
-  size_t n_dimensions() const noexcept { return _dim; }
+  size_t dim() const noexcept { return _dim; }
 
   /**
    * @brief Return the number of operators in the SummedPauliOp
@@ -179,7 +179,7 @@ template <std::floating_point T> struct SummedPauliOp {
           "and the same number of states as the input states");
     }
 
-    if (states.extent(0) != n_dimensions()) {
+    if (states.extent(0) != dim()) {
       throw std::invalid_argument(
           "state size must match the dimension of the operators");
     }
@@ -187,7 +187,7 @@ template <std::floating_point T> struct SummedPauliOp {
     size_t const n_ps = n_pauli_strings();
     size_t const n_ops = n_operators();
     size_t const n_data = new_states.extent(1);
-    size_t const n_dim = n_dimensions();
+    size_t const n_dim = dim();
 
     std::vector<std::complex<T>> states_j_raw(n_data * n_dim);
     Tensor<2> states_j(states_j_raw.data(), n_dim, n_data);
@@ -243,7 +243,7 @@ template <std::floating_point T> struct SummedPauliOp {
           "and the same number of states as the input states");
     }
 
-    if (states.extent(0) != n_dimensions()) {
+    if (states.extent(0) != dim()) {
       throw std::invalid_argument(
           "state size must match the dimension of the operators");
     }
@@ -251,7 +251,7 @@ template <std::floating_point T> struct SummedPauliOp {
     size_t const n_ps = n_pauli_strings();
     size_t const n_ops = n_operators();
     size_t const n_data = new_states.extent(1);
-    size_t const n_dim = n_dimensions();
+    size_t const n_dim = dim();
 
     size_t const n_threads = omp_get_max_threads();
     std::vector<std::complex<T>> new_states_th_raw(n_threads * n_dim * n_data);

@@ -51,9 +51,9 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     }
   }
 
-  size_t dims() const {
+  size_t dim() const {
     if (pauli_strings.size() > 0) {
-      return pauli_strings[0].dims();
+      return pauli_strings[0].dim();
     } else {
       return 0;
     }
@@ -63,12 +63,12 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     return pauli_strings.size() ? pauli_strings[0].n_qubits() : 0;
   }
 
-  size_t n_strings() const { return pauli_strings.size(); }
+  size_t n_pauli_strings() const { return pauli_strings.size(); }
 
   std::vector<std::complex<T>>
   apply(std::vector<std::complex<T>> const &state) const {
     // input check
-    if (state.size() != dims()) {
+    if (state.size() != dim()) {
       throw std::invalid_argument(
           "state size must match the dimension of the operators");
     }
@@ -93,7 +93,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
       mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
       mdspan<std::complex<T>, std::dextents<size_t, 2>> const states) const {
     // input check
-    if (states.extent(1) != dims()) {
+    if (states.extent(1) != dim()) {
       throw std::invalid_argument(
           "state size must match the dimension of the operators");
     }
@@ -126,7 +126,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
   apply(mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
         mdspan<std::complex<T>, std::dextents<size_t, 2>> const states) const {
     // input check
-    if (states.extent(0) != this->dims()) {
+    if (states.extent(0) != this->dim()) {
       throw std::invalid_argument(
           "[PauliOp] state size must match the dimension of the operators");
     }
@@ -171,10 +171,11 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     }
   }
 
+  // TODO modify in place
   std::vector<std::complex<T>> expectation_value(
       mdspan<std::complex<T>, std::dextents<size_t, 2>> states) const {
     // input check
-    if (states.extent(0) != this->dims()) {
+    if (states.extent(0) != this->dim()) {
       throw std::invalid_argument(
           "[PauliOp] state size must match the dimension of the operators");
     }
@@ -218,14 +219,14 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
   //
   std::vector<std::vector<std::complex<T>>> get_dense_repr() const {
     std::vector<std::vector<std::complex<T>>> res(
-        dims(), std::vector<std::complex<T>>(dims(), 0));
+        dim(), std::vector<std::complex<T>>(dim(), 0));
 
     for (size_t i = 0; i < pauli_strings.size(); ++i) {
       PauliString const &ps = pauli_strings[i];
       std::complex<T> c = coeffs[i];
 
       auto [cols, vals] = get_sparse_repr<T>(ps.paulis);
-      for (size_t j = 0; j < dims(); ++j) {
+      for (size_t j = 0; j < dim(); ++j) {
         res[j][cols[j]] += c * vals[j];
       }
     }

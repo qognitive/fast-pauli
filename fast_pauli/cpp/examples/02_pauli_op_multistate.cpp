@@ -14,7 +14,7 @@ int main() {
   std::vector<std::complex<mytype>> coeffs(pauli_strings.size(), 1);
   PauliOp<mytype> pauli_op(coeffs, pauli_strings);
 
-  size_t const dims = pauli_strings[0].dims();
+  size_t const dims = pauli_strings[0].dim();
 
   // Set up random states
   size_t const n_states = 10000;

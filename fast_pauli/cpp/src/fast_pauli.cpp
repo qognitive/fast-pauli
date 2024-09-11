@@ -63,7 +63,7 @@ PYBIND11_MODULE(_fast_pauli, m) {
            "paulis"_a)
       .def(py::init<std::string const &>(), "string"_a)
       .def_property_readonly("n_qubits", &fp::PauliString::n_qubits)
-      .def_property_readonly("dim", &fp::PauliString::dims)
+      .def_property_readonly("dim", &fp::PauliString::dim)
       .def_readonly("weight", &fp::PauliString::weight)
       .def("to_tensor", &fp::PauliString::get_dense_repr<float_type>)
       .def(
@@ -158,9 +158,9 @@ PYBIND11_MODULE(_fast_pauli, m) {
                                   std::move(pauli_strings));
            }),
            "coefficients"_a, "strings"_a)
-      .def_property_readonly("n_strings", &pauli_op_type::n_strings)
+      .def_property_readonly("n_strings", &pauli_op_type::n_pauli_strings)
       .def_property_readonly("n_qubits", &pauli_op_type::n_qubits)
-      .def_property_readonly("dim", &pauli_op_type::dims)
+      .def_property_readonly("dim", &pauli_op_type::dim)
       .def_property_readonly(
           "coeffs", [](pauli_op_type const &self) { return self.coeffs; })
       .def_property_readonly(
