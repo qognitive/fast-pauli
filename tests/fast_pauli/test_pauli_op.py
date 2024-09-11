@@ -7,7 +7,7 @@ import pytest
 
 import fast_pauli._fast_pauli as fp
 import fast_pauli.pypauli as pp
-from fast_pauli.pypauli.helpers import naive_pauli_operator
+from fast_pauli.pypauli.helpers import naive_pauli_converter, naive_pauli_operator
 from tests.conftest import resolve_parameter_repr
 
 
@@ -125,6 +125,7 @@ def test_operator_basics(
         )
 
 
+@pytest.mark.consistency
 @pytest.mark.parametrize(
     "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
 )
@@ -151,6 +152,7 @@ def test_dense_representation(
         )
 
 
+@pytest.mark.consistency
 @pytest.mark.parametrize(
     "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
 )
@@ -197,6 +199,7 @@ def test_apply_1d(
         )
 
 
+@pytest.mark.consistency
 @pytest.mark.parametrize(
     "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
 )
@@ -243,6 +246,7 @@ def test_apply_batch(
         )
 
 
+@pytest.mark.consistency
 @pytest.mark.parametrize(
     "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
 )
@@ -306,6 +310,83 @@ def test_expectation_value(
             expected,
             atol=1e-15,
         )
+
+
+@pytest.mark.consistency
+@pytest.mark.parametrize(  # TODO pp.PauliOp
+    "pauli_op,pauli_string,", [(fp.PauliOp, fp.PauliString)], ids=resolve_parameter_repr
+)
+def test_multiplication_with_string(
+    pauli_strings_with_size: Callable,
+    generate_random_complex: Callable,
+    pauli_op: type[fp.PauliOp] | type[pp.PauliOp],
+    pauli_string: type[fp.PauliString] | type[pp.PauliString],
+) -> None:
+    """Test Pauli Operator multiplication with another Pauli Operator."""
+    ixyz_op = pauli_op([1, 1, 1, 1], ["I", "X", "Y", "Z"])
+    ixyz_expected = naive_pauli_operator([1, 1, 1, 1], ["I", "X", "Y", "Z"])
+
+    np.testing.assert_allclose(
+        (ixyz_op * pauli_string("I")).to_tensor(),
+        ixyz_expected,
+        atol=1e-15,
+    )
+    np.testing.assert_allclose(
+        (ixyz_op * pauli_string("I") * pauli_string("I")).to_tensor(),
+        ixyz_expected,
+        atol=1e-15,
+    )
+    np.testing.assert_allclose(
+        (pauli_string("I") * ixyz_op * pauli_string("I")).to_tensor(),
+        ixyz_expected,
+        atol=1e-15,
+    )
+
+    for strings in [
+        pauli_strings_with_size(2),
+        pauli_strings_with_size(3),
+        pauli_strings_with_size(4),
+        pauli_strings_with_size(7, limit=128),
+        pauli_strings_with_size(8, limit=200)[:100],
+        pauli_strings_with_size(8, limit=200)[100:],
+    ]:
+        choose_string = int(generate_random_complex(1)[0].real * 100) % len(strings)
+        coeffs = generate_random_complex(len(strings))
+        p_str, coeffs = strings.pop(choose_string), np.delete(coeffs, choose_string)
+        p_op = pauli_op(coeffs, strings)
+
+        np.testing.assert_allclose(
+            (p_op * pauli_string(p_str)).to_tensor(),
+            naive_pauli_operator(coeffs, strings) @ naive_pauli_converter(p_str),
+            atol=1e-15,
+        )
+        np.testing.assert_allclose(
+            (pauli_string(p_str) * p_op).to_tensor(),
+            naive_pauli_converter(p_str) @ naive_pauli_operator(coeffs, strings),
+            atol=1e-15,
+        )
+
+    for strings, n_mult in [
+        (pauli_strings_with_size(3), 25),
+        (pauli_strings_with_size(4), 20),
+        (pauli_strings_with_size(7, limit=64), 10),
+        (pauli_strings_with_size(10, limit=32), 5),
+    ]:
+        coeffs = generate_random_complex(len(strings))
+        p_op = pauli_op(coeffs, strings)
+        expected_op = naive_pauli_operator(coeffs, strings)
+
+        for _ in range(n_mult):
+            choose_string = int(generate_random_complex(1)[0].real * 100) % len(strings)
+            p_str = strings[choose_string]
+            p_op = p_op * pauli_string(p_str)
+            expected_op @= naive_pauli_converter(p_str)
+
+            np.testing.assert_allclose(
+                p_op.to_tensor(),
+                expected_op,
+                atol=1e-15,
+            )
 
 
 # TODO test exceptions for PauliOp
