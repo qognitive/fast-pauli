@@ -69,7 +69,6 @@ NB_MODULE(_fast_pauli, m) {
               // and returns a 2D one which isn't very intuitive
               // clang-format off
                auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
-               auto states_mdspan_2d =std::mdspan(states_mdspan.data_handle(),states_mdspan.extent(0),1);
                auto new_states = owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
                auto new_states_mdspan = std::mdspan(new_states.data(), new_states.size());
                // TODO refactor PauliString::apply to match the apply_batch interface (i.e. no output and everything is an mdspan)
