@@ -243,6 +243,35 @@ struct PauliString {
   }
 
   /**
+   * @brief Apply a pauli string (using the sparse representation) to a vector.
+   *
+   * @tparam T The floating point base to use for all the complex numbers
+   * @param new_states Output state
+   * @param states The input vector to apply the PauliString to. Must be the
+   * same size as PauliString.dim().
+   */
+  template <std::floating_point T>
+  void
+  apply(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> new_states,
+        std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states) const {
+    // Input check
+    if (states.size() != dim()) {
+      throw std::invalid_argument(
+          "Input vector size must match the number of qubits");
+    }
+    if (states.size() != new_states.size()) {
+      throw std::invalid_argument(
+          "new_states must have the same dimensions as states");
+    }
+
+    auto [k, m] = get_sparse_repr<T>(paulis);
+
+    for (size_t i = 0; i < k.size(); ++i) {
+      new_states[i] += m[i] * states[k[i]];
+    }
+  }
+
+  /**
    * @brief Apply the PauliString to a batch of states. This function takes a
    * different shape of the states than the other apply functions. here all the
    * states (new and old) are transposed so their shape is (n_dims x n_states).

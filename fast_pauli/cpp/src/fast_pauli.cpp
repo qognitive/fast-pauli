@@ -71,9 +71,9 @@ NB_MODULE(_fast_pauli, m) {
                auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
                auto states_mdspan_2d =std::mdspan(states_mdspan.data_handle(),states_mdspan.extent(0),1);
                auto new_states = owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
-               auto new_states_mdspan = std::mdspan(new_states.data(), new_states.size(), 1);
+               auto new_states_mdspan = std::mdspan(new_states.data(), new_states.size());
                // TODO refactor PauliString::apply to match the apply_batch interface (i.e. no output and everything is an mdspan)
-               self.apply_batch(new_states_mdspan, states_mdspan_2d, c);
+               self.apply(new_states_mdspan, states_mdspan);
               // clang-format on
               return new_states;
 
@@ -175,6 +175,15 @@ NB_MODULE(_fast_pauli, m) {
       .def_prop_ro("dim", &fp::PauliOp<float_type>::dim)
       .def_prop_ro("n_qubits", &fp::PauliOp<float_type>::n_qubits)
       .def_prop_ro("n_pauli_strings", &fp::PauliOp<float_type>::n_pauli_strings)
+      // TODO these may dangerous, keep an eye on them if users start modifying
+      // internals
+      .def_prop_ro(
+          "coeffs",
+          [](fp::PauliOp<float_type> const &self) { return self.coeffs; })
+      .def_prop_ro("pauli_strings",
+                   [](fp::PauliOp<float_type> const &self) {
+                     return self.pauli_strings;
+                   })
 
       // Methods
       .def("apply",
