@@ -302,7 +302,7 @@ def test_expectation_value(
             "ti,ij,tj->t", psis.conj(), naive_pauli_operator(coeffs, strings), psis
         )
         np.testing.assert_allclose(
-            po.expectation_value(psis.T),
+            po.expectation_value(psis.T.copy()),
             expected,
             atol=1e-15,
         )

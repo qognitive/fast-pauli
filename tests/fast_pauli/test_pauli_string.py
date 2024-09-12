@@ -292,7 +292,7 @@ def test_expectation_value(
         # compute <psi_t|P_i|psi_t>
         expected = np.einsum("ti,ij,tj->t", psis.conj(), naive_pauli_converter(s), psis)
         np.testing.assert_allclose(
-            pauli_string(s).expectation_value(psis.T),
+            pauli_string(s).expectation_value(psis.T.copy()),
             expected,
             atol=1e-15,
         )

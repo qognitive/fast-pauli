@@ -1,7 +1,8 @@
 #include "fast_pauli.hpp"
 #include "__nb_helpers.hpp"
-#include "nanobind/nanobind.h"
+#include <nanobind/nanobind.h>
 #include <nanobind/stl/pair.h>
+#include <nanobind/stl/tuple.h>
 
 namespace fp = fast_pauli;
 
@@ -69,8 +70,8 @@ NB_MODULE(_fast_pauli, m) {
               // clang-format off
                auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
                auto states_mdspan_2d =std::mdspan(states_mdspan.data_handle(),states_mdspan.extent(0),1);
-               auto new_states = owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan_2d);
-               auto new_states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(new_states);
+               auto new_states = owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
+               auto new_states_mdspan = std::mdspan(new_states.data(), new_states.size(), 1);
                // TODO refactor PauliString::apply to match the apply_batch interface (i.e. no output and everything is an mdspan)
                self.apply_batch(new_states_mdspan, states_mdspan_2d, c);
               // clang-format on
@@ -96,16 +97,37 @@ NB_MODULE(_fast_pauli, m) {
           "expectation_value",
           [](fp::PauliString const &self, nb::ndarray<cfloat_t> states,
              cfloat_t c) {
-            auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
-            std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
-            auto expected_vals_out =
-                owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
-            auto expected_vals_out_mdspan =
-                ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
+            if (states.ndim() == 1) {
+              auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
+              auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(),
+                                                  states_mdspan.extent(0), 1);
+              std::array<size_t, 1> out_shape = {1};
+              auto expected_vals_out =
+                  owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+              auto expected_vals_out_mdspan =
+                  std::mdspan(expected_vals_out.data(), 1);
 
-            self.expectation_value(expected_vals_out_mdspan, states_mdspan, c);
+              self.expectation_value(expected_vals_out_mdspan, states_mdspan_2d,
+                                     c);
 
-            return expected_vals_out;
+              return expected_vals_out;
+            } else if (states.ndim() == 2) {
+              auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+              std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
+              auto expected_vals_out =
+                  owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+              auto expected_vals_out_mdspan =
+                  ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
+
+              self.expectation_value(expected_vals_out_mdspan, states_mdspan,
+                                     c);
+
+              return expected_vals_out;
+            } else {
+              throw std::invalid_argument(fmt::format(
+                  "expectation_value: expected 1 or 2 dimensions, got {}",
+                  states.ndim()));
+            }
           },
           "states"_a, "coeff"_a = cfloat_t{1.0})
       // TODO return numpy array
@@ -158,29 +180,64 @@ NB_MODULE(_fast_pauli, m) {
       .def("apply",
            [](fp::PauliOp<float_type> const &self,
               nb::ndarray<cfloat_t> states) {
-             auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
-             auto new_states =
-                 owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
-             auto new_states_mdspan =
-                 ndarray_to_mdspan<cfloat_t, 2>(new_states);
+             if (states.ndim() == 1) {
+               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
+               auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(),
+                                                   states_mdspan.extent(0), 1);
+               auto new_states =
+                   owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
+               std::mdspan new_states_mdspan =
+                   std::mdspan(new_states.data(), new_states.size(), 1);
+               //  auto new_states_mdspan =
+               //      ndarray_to_mdspan<cfloat_t, 2>(new_states);
+               self.apply(new_states_mdspan, states_mdspan_2d);
+               return new_states;
+             } else if (states.ndim() == 2) {
+               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+               auto new_states =
+                   owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+               auto new_states_mdspan =
+                   ndarray_to_mdspan<cfloat_t, 2>(new_states);
 
-             self.apply(new_states_mdspan, states_mdspan);
+               self.apply(new_states_mdspan, states_mdspan);
 
-             return new_states;
+               return new_states;
+             } else {
+               throw std::invalid_argument(fmt::format(
+                   "apply: expected 1 or 2 dimensions, got {}", states.ndim()));
+             }
            })
       .def("expectation_value",
            [](fp::PauliOp<float_type> const &self,
               nb::ndarray<cfloat_t> states) {
-             auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
-             std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
-             auto expected_vals_out =
-                 owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
-             auto expected_vals_out_mdspan =
-                 ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
+             if (states.ndim() == 1) {
+               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
+               auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(),
+                                                   states_mdspan.extent(0), 1);
+               std::array<size_t, 1> out_shape = {1};
+               auto expected_vals_out =
+                   owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+               auto expected_vals_out_mdspan =
+                   ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
+               self.expectation_value(expected_vals_out_mdspan,
+                                      states_mdspan_2d);
+               return expected_vals_out;
+             } else if (states.ndim() == 2) {
+               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+               std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
+               auto expected_vals_out =
+                   owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+               auto expected_vals_out_mdspan =
+                   ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
 
-             self.expectation_value(expected_vals_out_mdspan, states_mdspan);
+               self.expectation_value(expected_vals_out_mdspan, states_mdspan);
 
-             return expected_vals_out;
+               return expected_vals_out;
+             } else {
+               throw std::invalid_argument(fmt::format(
+                   "expectation_value: expected 1 or 2 dimensions, got {}",
+                   states.ndim()));
+             }
            })
       .def("to_tensor",
            [](fp::PauliOp<float_type> const &self) {
@@ -229,4 +286,18 @@ NB_MODULE(_fast_pauli, m) {
            })
       //
       ;
+
+  //
+  // Helpers
+  //
+  auto helpers_m = m.def_submodule("helpers");
+  helpers_m.def("get_nontrivial_paulis", &fp::get_nontrivial_paulis,
+                "weight"_a);
+  helpers_m.def("calcutate_pauli_strings", &fp::calcutate_pauli_strings,
+                "n_qubits"_a, "weight"_a);
+  helpers_m.def("calculate_pauli_strings_max_weight",
+                &fp::calculate_pauli_strings_max_weight, "n_qubits"_a,
+                "weight"_a);
+  helpers_m.def("pauli_string_sparse_repr", &fp::get_sparse_repr<float_type>,
+                "paulis"_a);
 }

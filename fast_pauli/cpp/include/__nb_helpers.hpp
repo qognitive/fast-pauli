@@ -87,6 +87,10 @@ ndarray_to_mdspan(nb::ndarray<T> a) {
   std::exclusive_scan(shape.rbegin(), shape.rend(), expected_strides.rbegin(),
                       1, std::multiplies<>{});
   if (!std::ranges::equal(strides, expected_strides)) {
+    for (size_t i = 0; i < ndim; ++i) {
+      fmt::print("stride[{}] = {}, expected = {} (shape[{}] = {})\n", i,
+                 strides[i], expected_strides[i], i, shape[i]);
+    }
     throw std::invalid_argument("nb::ndarray MUST have C-style strides.");
   }
 
@@ -120,6 +124,10 @@ ndarray_to_mdspan(nb::ndarray<ndarray_framework, T> a) {
   std::exclusive_scan(shape.rbegin(), shape.rend(), expected_strides.rbegin(),
                       1, std::multiplies<>{});
   if (!std::ranges::equal(strides, expected_strides)) {
+    for (size_t i = 0; i < ndim; ++i) {
+      fmt::print("stride[{}] = {}, expected = {} (shape[{}] = {})\n", i,
+                 strides[i], expected_strides[i], i, shape[i]);
+    }
     throw std::invalid_argument("nb::ndarray MUST have C-style strides.");
   }
 
@@ -165,7 +173,7 @@ owning_ndarray_like_mdspan(std::mdspan<T, std::dextents<size_t, ndim>> a) {
     shape[i] = a.extent(i);
     size *= a.extent(i);
   }
-  fmt::println("shape [{}] and size {}", fmt::join(shape, ", "), size);
+  // fmt::println("shape [{}] and size {}", fmt::join(shape, ", "), size);
 
   // std::vector<T> data(size);
 
@@ -180,8 +188,8 @@ owning_ndarray_like_mdspan(std::mdspan<T, std::dextents<size_t, ndim>> a) {
   Temp *tmp = new Temp{std::vector<T>(size)};
 
   nb::capsule deleter(tmp, [](void *p) noexcept {
-    fmt::println("deleting data in nb::capsule with shape");
-    std::cout << std::flush;
+    // fmt::println("deleting data in nb::capsule with shape");
+    // std::cout << std::flush;
     delete static_cast<Temp *>(p);
     // delete (Temp *)p;
   });
