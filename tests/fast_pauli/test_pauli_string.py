@@ -333,6 +333,14 @@ def test_multiplication(
         naive_pauli_converter("XYZ"),
         atol=1e-15,
     )
+    sign, pauli = pauli_string("ZYX").multiply(pauli_string("ZYX"))
+    np.testing.assert_equal(sign, 1)
+    np.testing.assert_string_equal(str(pauli), "III")
+    np.testing.assert_allclose(
+        pauli.to_tensor(),
+        np.eye(8),
+        atol=1e-15,
+    )
 
     for full_str in it.chain(
         pauli_strings_with_size(2),

@@ -389,6 +389,79 @@ def test_multiplication_with_string(
             )
 
 
+@pytest.mark.consistency
+@pytest.mark.parametrize(  # TODO pp.PauliOp
+    "pauli_op,", [fp.PauliOp], ids=resolve_parameter_repr
+)
+def test_multiplication_with_pauli_op(
+    pauli_strings_with_size: Callable,
+    generate_random_complex: Callable,
+    pauli_op: type[fp.PauliOp] | type[pp.PauliOp],
+) -> None:
+    """Test Pauli Operator multiplication with another Pauli Operator."""
+    ixyz_op = pauli_op([1, 1, 1, 1], ["I", "X", "Y", "Z"])
+    ixyz_expected = naive_pauli_operator([1, 1, 1, 1], ["I", "X", "Y", "Z"])
+
+    np.testing.assert_allclose(
+        (pauli_op([1], ["I"]) * pauli_op([1], ["I"])).to_tensor(),
+        np.eye(2),
+        atol=1e-15,
+    )
+    np.testing.assert_allclose(
+        (ixyz_op * pauli_op([1], ["I"])).to_tensor(),
+        ixyz_expected,
+        atol=1e-15,
+    )
+    np.testing.assert_allclose(
+        (pauli_op([1], ["I"]) * ixyz_op * pauli_op([1], ["I"])).to_tensor(),
+        ixyz_expected,
+        atol=1e-15,
+    )
+
+    variations = 10
+    rng = np.random.RandomState(42)
+    for strings in [
+        pauli_strings_with_size(2),
+        pauli_strings_with_size(3),
+        pauli_strings_with_size(4),
+        pauli_strings_with_size(7, limit=128),
+        pauli_strings_with_size(8, limit=200)[100:],
+        pauli_strings_with_size(10, limit=32),
+    ]:
+        for _ in range(max(1, variations)):
+            l_size = rng.choice(len(strings)) or 1
+            r_size = rng.choice(len(strings)) or 1
+            l_strings = rng.choice(strings, l_size)
+            r_strings = rng.choice(strings, r_size)
+            l_coeffs = generate_random_complex(l_size)
+            r_coeffs = generate_random_complex(r_size)
+            l_op = pauli_op(l_coeffs, l_strings)
+            r_op = pauli_op(r_coeffs, r_strings)
+
+            np.testing.assert_allclose(
+                (l_op * r_op).to_tensor(),
+                naive_pauli_operator(l_coeffs, l_strings)
+                @ naive_pauli_operator(r_coeffs, r_strings),
+                atol=1e-15,
+            )
+            np.testing.assert_allclose(
+                (r_op * r_op).to_tensor(),
+                naive_pauli_operator(r_coeffs, r_strings)
+                @ naive_pauli_operator(r_coeffs, r_strings),
+                atol=1e-15,
+            )
+
+        np.testing.assert_allclose(
+            (l_op * r_op * l_op * r_op).to_tensor(),
+            naive_pauli_operator(l_coeffs, l_strings)
+            @ naive_pauli_operator(r_coeffs, r_strings)
+            @ naive_pauli_operator(l_coeffs, l_strings)
+            @ naive_pauli_operator(r_coeffs, r_strings),
+            atol=1e-15,
+        )
+        variations -= 2
+
+
 # TODO test exceptions for PauliOp
 
 if __name__ == "__main__":
