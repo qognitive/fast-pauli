@@ -53,6 +53,15 @@ cpmaddpackage("gh:wjakob/nanobind#v2.0.0")
 
 project(fast_pauli LANGUAGES CXX)
 
+# Build type
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE
+      Release
+      CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+                                               "MinSizeRel" "RelWithDebInfo")
+endif()
+
 # Set up OpenMP
 find_package(OpenMP REQUIRED)
 
@@ -68,13 +77,7 @@ add_library(fast_pauli INTERFACE)
 target_include_directories(
   fast_pauli INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/fast_pauli/cpp/include/)
 target_link_libraries(fast_pauli INTERFACE fmt::fmt mdspan OpenMP::OpenMP_CXX)
-target_compile_options(
-  fast_pauli
-  INTERFACE -g3 -Wall -Wextra -Werror
-            # -O0
-            -O3 -march=native
-  # -Wpedantic -stdlib=libc++
-)
+target_compile_options(fast_pauli INTERFACE -g3 -Wall -Wextra -Werror)
 
 # Testing
 include(CTest)
@@ -86,5 +89,3 @@ add_subdirectory(fast_pauli/cpp/examples)
 
 # Python bindings
 add_subdirectory(fast_pauli/cpp/src)
-
-# # Python bindings using nanobind add_subdirectory(fast_pauli/cpp/src_nanobind)

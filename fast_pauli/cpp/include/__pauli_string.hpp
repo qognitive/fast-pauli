@@ -264,8 +264,13 @@ struct PauliString {
           "new_states must have the same dimensions as states");
     }
 
-    auto [k, m] = get_sparse_repr<T>(paulis);
+    // WARNING: can't use structured bindings here because of a bug in LLVM
+    // https://github.com/llvm/llvm-project/issues/63152
+    std::vector<size_t> k;
+    std::vector<std::complex<T>> m;
+    std::tie(k, m) = get_sparse_repr<T>(paulis);
 
+#pragma omp parallel for schedule(static)
     for (size_t i = 0; i < k.size(); ++i) {
       new_states[i] += m[i] * states[k[i]];
     }
@@ -309,8 +314,13 @@ struct PauliString {
           "[PauliString] new_states must have the same dimensions as states");
     }
 
-    auto [k, m] = get_sparse_repr<T>(paulis);
+    // WARNING: can't use structugred bindings here because of a bug in LLVM
+    // https://github.com/llvm/llvm-project/issues/63152
+    std::vector<size_t> k;
+    std::vector<std::complex<T>> m;
+    std::tie(k, m) = get_sparse_repr<T>(paulis);
 
+#pragma omp parallel for schedule(static)
     for (size_t i = 0; i < states_T.extent(0); ++i) {
       std::complex<T> const c_m_i = c * m[i];
       std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states_row =

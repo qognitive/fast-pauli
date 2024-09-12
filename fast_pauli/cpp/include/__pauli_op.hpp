@@ -178,7 +178,13 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     }
   }
 
-  // TODO modify in place
+  /**
+   * @brief Calculate the expectation value of the PauliOp on a batch of states.
+   *
+   * @param expectation_vals_out
+   * @param states The states we want to use in our expectation value
+   * calculation
+   */
   void expectation_value(
       std::mdspan<std::complex<T>, std::dextents<size_t, 1>>
           expectation_vals_out,
