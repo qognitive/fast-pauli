@@ -13,6 +13,8 @@ description = "fast pauli"
 dependencies = [
   "numpy",
   "scipy",
+  "qiskit",
+  "qiskit-algorithms",
 ]
 dynamic = ["version"]
 

@@ -160,6 +160,12 @@ NB_MODULE(_fast_pauli, m) {
       .def("__init__",
            [](fp::PauliOp<float_type> *new_obj,
               std::vector<cfloat_t> coeffs_vec,
+              std::vector<std::string> const &pauli_strings) {
+             new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);
+           })
+      .def("__init__",
+           [](fp::PauliOp<float_type> *new_obj,
+              std::vector<cfloat_t> coeffs_vec,
               std::vector<std::string> const &strings) {
              std::vector<fp::PauliString> pauli_strings;
              std::transform(strings.begin(), strings.end(),
@@ -183,6 +189,14 @@ NB_MODULE(_fast_pauli, m) {
                    [](fp::PauliOp<float_type> const &self) {
                      return self.pauli_strings;
                    })
+      .def("pauli_strings_as_str",
+           [](fp::PauliOp<float_type> const &self) {
+             std::vector<std::string> pauli_strings(self.n_pauli_strings());
+             for (size_t i = 0; i < self.n_pauli_strings(); ++i) {
+               pauli_strings[i] = fmt::format("{}", self.pauli_strings[i]);
+             }
+             return pauli_strings;
+           })
 
       // Methods
       .def("apply",
