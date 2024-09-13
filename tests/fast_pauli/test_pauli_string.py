@@ -249,30 +249,30 @@ def test_apply_batch(
 @pytest.mark.parametrize(
     "pauli_string,", [(fp.PauliString), (pp.PauliString)], ids=resolve_parameter_repr
 )
-def test_expected_value(
+def test_expectation_value(
     sample_pauli_strings: list,
     generate_random_complex: Callable,
     pauli_string: type[fp.PauliString] | type[pp.PauliString],
 ) -> None:
     """Test the expected value method."""
     np.testing.assert_allclose(
-        pauli_string("IXYZ").expected_value(np.zeros(16)),
+        pauli_string("IXYZ").expectation_value(np.zeros(16)),
         0,
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        pauli_string("IXYZ").expected_value(np.zeros((16, 16))),
+        pauli_string("IXYZ").expectation_value(np.zeros((16, 16))),
         np.zeros(16),
         atol=1e-15,
     )
 
     np.testing.assert_allclose(
-        pauli_string("III").expected_value(np.arange(8)),
+        pauli_string("III").expectation_value(np.arange(8)),
         np.square(np.arange(8)).sum(),
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        pauli_string("III").expected_value(np.arange(8 * 8).reshape(8, 8)),
+        pauli_string("III").expectation_value(np.arange(8 * 8).reshape(8, 8)),
         np.square(np.arange(8 * 8)).reshape(8, 8).sum(0),
         atol=1e-15,
     )
@@ -283,7 +283,7 @@ def test_expected_value(
 
         psi = generate_random_complex(n_dim)
         np.testing.assert_allclose(
-            pauli_string(s).expected_value(psi),
+            pauli_string(s).expectation_value(psi),
             naive_pauli_converter(s).dot(psi).dot(psi.conj()),
             atol=1e-15,
         )
@@ -292,7 +292,7 @@ def test_expected_value(
         # compute <psi_t|P_i|psi_t>
         expected = np.einsum("ti,ij,tj->t", psis.conj(), naive_pauli_converter(s), psis)
         np.testing.assert_allclose(
-            pauli_string(s).expected_value(psis.T),
+            pauli_string(s).expectation_value(psis.T.copy()),
             expected,
             atol=1e-15,
         )

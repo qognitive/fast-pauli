@@ -13,7 +13,7 @@ using namespace fast_pauli;
 //
 
 void __check_apply(PauliOp<double> &pauli_op, size_t n_states) {
-  size_t const dims = pauli_op.dims();
+  size_t const dims = pauli_op.dim();
 
   // Set up random states
   std::vector<std::complex<double>> states_raw;
@@ -99,7 +99,7 @@ TEST_CASE("test get_dense_repr") {
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   auto pop_dense = pauli_op.get_dense_repr();
 
-  size_t const dim = pauli_op.dims();
+  size_t const dim = pauli_op.dim();
 
   for (size_t i = 0; i < dim; ++i) {
     for (size_t j = 0; j < dim; ++j) {
@@ -189,7 +189,7 @@ TEST_CASE("test apply multistate multistring identity") {
   std::vector<std::complex<double>> coeffs(pauli_strings.size(),
                                            1. / pauli_strings.size());
   PauliOp<double> pauli_op(coeffs, pauli_strings);
-  size_t const dims = pauli_strings[0].dims();
+  size_t const dims = pauli_strings[0].dim();
 
   // Set up random states
   size_t const n_states = 10;

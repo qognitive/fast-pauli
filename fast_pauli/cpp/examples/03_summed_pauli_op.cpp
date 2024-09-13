@@ -37,7 +37,7 @@ int main() {
   //
   // Setup states
   //
-  size_t const dim = summed_op.n_dimensions();
+  size_t const dim = summed_op.dim();
   size_t const n_ops = summed_op.n_operators();
 
   std::vector<std::complex<fp_type>> states_raw(dim * n_states, 1);

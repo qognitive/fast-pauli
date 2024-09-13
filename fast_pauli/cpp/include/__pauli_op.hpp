@@ -21,6 +21,13 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
 
   PauliOp() = default;
 
+  PauliOp(std::vector<std::string> const &strings) {
+    for (auto const &s : strings) {
+      pauli_strings.push_back(PauliString(s));
+    }
+    coeffs.resize(pauli_strings.size(), 1.0);
+  }
+
   PauliOp(std::vector<PauliString> strings)
       : coeffs(strings.size(), 1.0), pauli_strings(std::move(strings))
   // note that strings are moved after coeffs initialization
@@ -51,9 +58,9 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     }
   }
 
-  size_t dims() const {
+  size_t dim() const {
     if (pauli_strings.size() > 0) {
-      return pauli_strings[0].dims();
+      return pauli_strings[0].dim();
     } else {
       return 0;
     }
@@ -63,12 +70,12 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     return pauli_strings.size() ? pauli_strings[0].n_qubits() : 0;
   }
 
-  size_t n_strings() const { return pauli_strings.size(); }
+  size_t n_pauli_strings() const { return pauli_strings.size(); }
 
   std::vector<std::complex<T>>
   apply(std::vector<std::complex<T>> const &state) const {
     // input check
-    if (state.size() != dims()) {
+    if (state.size() != dim()) {
       throw std::invalid_argument(
           "state size must match the dimension of the operators");
     }
@@ -93,7 +100,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
       mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
       mdspan<std::complex<T>, std::dextents<size_t, 2>> const states) const {
     // input check
-    if (states.extent(1) != dims()) {
+    if (states.extent(1) != dim()) {
       throw std::invalid_argument(
           "state size must match the dimension of the operators");
     }
@@ -126,7 +133,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
   apply(mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
         mdspan<std::complex<T>, std::dextents<size_t, 2>> const states) const {
     // input check
-    if (states.extent(0) != this->dims()) {
+    if (states.extent(0) != this->dim()) {
       throw std::invalid_argument(
           "[PauliOp] state size must match the dimension of the operators");
     }
@@ -171,10 +178,19 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     }
   }
 
-  std::vector<std::complex<T>> expected_value(
-      mdspan<std::complex<T> const, std::dextents<size_t, 2>> states) const {
+  /**
+   * @brief Calculate the expectation value of the PauliOp on a batch of states.
+   *
+   * @param expectation_vals_out
+   * @param states The states we want to use in our expectation value
+   * calculation
+   */
+  void expectation_value(
+      std::mdspan<std::complex<T>, std::dextents<size_t, 1>>
+          expectation_vals_out,
+      mdspan<std::complex<T>, std::dextents<size_t, 2>> states) const {
     // input check
-    if (states.extent(0) != this->dims()) {
+    if (states.extent(0) != this->dim()) {
       throw std::invalid_argument(
           "[PauliOp] state size must match the dimension of the operators");
     }
@@ -184,7 +200,6 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
 
     // no need to default initialize with 0 since std::complex constructor
     // handles that
-    std::vector<std::complex<T>> expected_vals(n_data);
     std::vector<std::complex<T>> expected_vals_per_thread_storage(n_threads *
                                                                   n_data);
     std::mdspan<std::complex<T>, std::dextents<size_t, 2>>
@@ -200,17 +215,15 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
       std::mdspan<std::complex<T>, std::dextents<size_t, 1>>
           exp_vals_accum_local =
               std::submdspan(exp_vals_accum_per_thread, tid, std::full_extent);
-      ps.expected_value(exp_vals_accum_local, states, c);
+      ps.expectation_value(exp_vals_accum_local, states, c);
     }
 
 #pragma omp parallel for schedule(static)
     for (size_t t = 0; t < states.extent(1); ++t) {
       for (size_t th = 0; th < n_threads; ++th) {
-        expected_vals[t] += exp_vals_accum_per_thread(th, t);
+        expectation_vals_out[t] += exp_vals_accum_per_thread(th, t);
       }
     }
-
-    return expected_vals;
   }
 
   //
@@ -218,14 +231,14 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
   //
   std::vector<std::vector<std::complex<T>>> get_dense_repr() const {
     std::vector<std::vector<std::complex<T>>> res(
-        dims(), std::vector<std::complex<T>>(dims(), 0));
+        dim(), std::vector<std::complex<T>>(dim(), 0));
 
     for (size_t i = 0; i < pauli_strings.size(); ++i) {
       PauliString const &ps = pauli_strings[i];
       std::complex<T> c = coeffs[i];
 
-      auto [cols, vals] = PauliString::get_sparse_repr<T>(ps.paulis);
-      for (size_t j = 0; j < dims(); ++j) {
+      auto [cols, vals] = get_sparse_repr<T>(ps.paulis);
+      for (size_t j = 0; j < dim(); ++j) {
         res[j][cols[j]] += c * vals[j];
       }
     }

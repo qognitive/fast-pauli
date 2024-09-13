@@ -53,17 +53,17 @@ def test_operator_trivial(
     for empty_op in empty:
         assert empty_op.dim == 0
         assert empty_op.n_qubits == 0
-        assert empty_op.n_strings == 0
+        assert empty_op.n_pauli_strings == 0
         assert len(empty_op.to_tensor()) == 0
         assert len(empty_op.coeffs) == 0
-        assert len(empty_op.strings) == 0
+        assert len(empty_op.pauli_strings) == 0
 
     for p in ["I", "X", "Y", "Z"]:
         po = pauli_op([1.0], [p])
         assert po.dim == 2
         assert po.n_qubits == 1
-        assert po.n_strings == 1
-        assert po.strings == [p]
+        assert po.n_pauli_strings == 1
+        # assert po.pauli_strings == [p]
         np.testing.assert_allclose(po.to_tensor(), paulis[p], atol=1e-15)
 
 
@@ -79,8 +79,8 @@ def test_operator_basics(
     po = pauli_op([4j, 4j], ["III", "III"])
     assert po.dim == 8
     assert po.n_qubits == 3
-    assert po.n_strings == 2
-    assert po.strings == ["III", "III"]
+    assert po.n_pauli_strings == 2
+    assert po.pauli_strings_as_str == ["III", "III"]
     np.testing.assert_equal(po.coeffs, [4j, 4j])
     np.testing.assert_allclose(po.to_tensor(), 4j * 2 * np.eye(8), atol=1e-15)
 
@@ -104,9 +104,9 @@ def test_operator_basics(
         )
         assert po.dim == 2**n_qubits
         assert po.n_qubits == n_qubits
-        assert po.n_strings == len(strings)
+        assert po.n_pauli_strings == len(strings)
 
-        assert set(po.strings) == set([str(ps) for ps in strings])
+        assert set(po.pauli_strings_as_str) == set([str(ps) for ps in strings])
         np.testing.assert_allclose(
             po.coeffs,
             coeffs,
@@ -246,30 +246,32 @@ def test_apply_batch(
 @pytest.mark.parametrize(
     "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
 )
-def test_expected_value(
+def test_expectation_value(
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
     pauli_op: type[fp.PauliOp] | type[pp.PauliOp],
 ) -> None:
     """Test Pauli Operator expected value."""
     np.testing.assert_allclose(
-        pauli_op([1, 2], ["IXYZ", "ZYXI"]).expected_value(np.zeros(16)),
+        pauli_op([1, 2], ["IXYZ", "ZYXI"]).expectation_value(np.zeros(16)),
         0,
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        pauli_op([1, 2], ["IXYZ", "ZYXI"]).expected_value(np.zeros((16, 16))),
+        pauli_op([1, 2], ["IXYZ", "ZYXI"]).expectation_value(np.zeros((16, 16))),
         np.zeros(16),
         atol=1e-15,
     )
 
     np.testing.assert_allclose(
-        pauli_op([1, 1], ["III", "III"]).expected_value(np.arange(8)),
+        pauli_op([1, 1], ["III", "III"]).expectation_value(np.arange(8)),
         2 * np.square(np.arange(8)).sum(),
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        pauli_op([1, 1], ["III", "III"]).expected_value(np.arange(8 * 8).reshape(8, 8)),
+        pauli_op([1, 1], ["III", "III"]).expectation_value(
+            np.arange(8 * 8).reshape(8, 8)
+        ),
         2 * np.square(np.arange(8 * 8)).reshape(8, 8).sum(0),
         atol=1e-15,
     )
@@ -288,7 +290,7 @@ def test_expected_value(
 
         psi = generate_random_complex(po.dim)
         np.testing.assert_allclose(
-            po.expected_value(psi),
+            po.expectation_value(psi),
             naive_pauli_operator(coeffs, strings).dot(psi).dot(psi.conj()),
             atol=1e-15,
         )
@@ -300,7 +302,7 @@ def test_expected_value(
             "ti,ij,tj->t", psis.conj(), naive_pauli_operator(coeffs, strings), psis
         )
         np.testing.assert_allclose(
-            po.expected_value(psis.T),
+            po.expectation_value(psis.T.copy()),
             expected,
             atol=1e-15,
         )

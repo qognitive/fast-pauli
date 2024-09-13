@@ -24,7 +24,7 @@ class PauliOp:
 
         self.coeffs = np.array(coefficients, dtype=np.complex128)
         self.pauli_strings = [PauliString(ps) for ps in strings if isinstance(ps, str)]
-        self.n_strings = len(strings)
+        self.n_pauli_strings = len(strings)
 
         if self.pauli_strings:
             self.n_qubits = self.pauli_strings[0].n_qubits
@@ -37,7 +37,7 @@ class PauliOp:
             self.dim = 0
 
     @property
-    def strings(self) -> list[str]:
+    def pauli_strings_as_str(self) -> list[str]:
         """Get the list of Pauli strings."""
         return [str(ps) for ps in self.pauli_strings]
 
@@ -71,7 +71,7 @@ class PauliOp:
             result += ps.apply(states, c)
         return result
 
-    def expected_value(self, states: np.ndarray) -> np.complex128 | np.ndarray:
+    def expectation_value(self, states: np.ndarray) -> np.complex128 | np.ndarray:
         """Compute the expected value of the operator for the given state.
 
         Args:
@@ -87,5 +87,5 @@ class PauliOp:
             1 if len(states.shape) == 1 else states.shape[-1], dtype=np.complex128
         )
         for c, ps in zip(self.coeffs, self.pauli_strings):
-            result += c * ps.expected_value(states)
+            result += c * ps.expectation_value(states)
         return result

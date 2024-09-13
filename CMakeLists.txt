@@ -34,6 +34,7 @@ cpmaddpackage("gh:doctest/doctest@2.4.11")
 cpmaddpackage("gh:pybind/pybind11@2.11.1")
 cpmaddpackage("gh:fmtlib/fmt#10.2.1")
 cpmaddpackage("gh:kokkos/mdspan#b885a2c60ad42f9e1aaa0d317a38105b950cbed0")
+cpmaddpackage("gh:wjakob/nanobind#v2.0.0")
 
 #
 # User Options
@@ -52,25 +53,31 @@ cpmaddpackage("gh:kokkos/mdspan#b885a2c60ad42f9e1aaa0d317a38105b950cbed0")
 
 project(fast_pauli LANGUAGES CXX)
 
+# Build type
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE
+      Release
+      CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+                                               "MinSizeRel" "RelWithDebInfo")
+endif()
+
 # Set up OpenMP
 find_package(OpenMP REQUIRED)
+
+# Setup Python
+find_package(Python 3.10 # This is a minimum version
+             COMPONENTS Interpreter Development REQUIRED)
+
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address
+# -fno-omit-frame-pointer")
 
 # Our primary target
 add_library(fast_pauli INTERFACE)
 target_include_directories(
   fast_pauli INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/fast_pauli/cpp/include/)
 target_link_libraries(fast_pauli INTERFACE fmt::fmt mdspan OpenMP::OpenMP_CXX)
-target_compile_options(
-  fast_pauli
-  INTERFACE -g3
-            -O3
-            -march=native
-            -Wall
-            -Wextra
-            -Werror
-            -Wpedantic
-            # -stdlib=libc++
-)
+target_compile_options(fast_pauli INTERFACE -g3 -Wall -Wextra -Werror)
 
 # Testing
 include(CTest)

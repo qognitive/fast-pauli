@@ -66,7 +66,8 @@ constexpr auto zeros(std::vector<T> &blob, std::array<size_t, n_dim> extents) {
 // Rand
 template <typename T, size_t n_dim>
   requires is_complex<T>::value || std::floating_point<T>
-auto rand(std::vector<T> &blob, std::array<size_t, n_dim> extents) {
+auto rand(std::vector<T> &blob, std::array<size_t, n_dim> extents,
+          size_t seed = 18) {
   blob.clear(); // Clear so we have consistent behavior (e.g. not overwriting
                 // some of the values)
 
@@ -78,8 +79,8 @@ auto rand(std::vector<T> &blob, std::array<size_t, n_dim> extents) {
   blob = std::vector<T>(total_size);
 
   // Fill with random numbers
-  std::random_device rd;
-  std::mt19937 gen(rd());
+  // std::random_device rd;
+  std::mt19937 gen(seed);
 
   // Internal specialization depending on whether we're dealing with regular FP
   // or complex

@@ -153,10 +153,10 @@ def test_apply_batch_n_qubits_n_states(
     benchmark(benchmark_apply, paulis=prepared_paulis, states=prepared_states)
 
 
-def benchmark_expected_value(paulis: list, states: list) -> None:
-    """Benchmark expected_value method."""
+def benchmark_expectation_value(paulis: list, states: list) -> None:
+    """Benchmark expectation_value method."""
     for p, psi in zip(paulis, states):
-        result = p.expected_value(psi)  # noqa: F841
+        result = p.expectation_value(psi)  # noqa: F841
 
 
 @pytest.mark.parametrize(
@@ -167,14 +167,14 @@ def benchmark_expected_value(paulis: list, states: list) -> None:
     ),
     ids=resolve_parameter_repr,
 )
-def test_expected_value_n_qubits(
+def test_expectation_value_n_qubits(
     benchmark: Callable,
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
     pauli_class: type[fp.PauliString] | type[pp.PauliString],
     qubits: int,
 ) -> None:
-    """Benchmark PauliString expected_value with provided state vector."""
+    """Benchmark PauliString expectation_value with provided state vector."""
     n_dims = 1 << qubits
     n_strings_limit = 128 if qubits > 4 else None
 
@@ -185,7 +185,9 @@ def test_expected_value_n_qubits(
         generate_random_complex(n_dims) for _ in range(len(prepared_paulis))
     ]
 
-    benchmark(benchmark_expected_value, paulis=prepared_paulis, states=prepared_states)
+    benchmark(
+        benchmark_expectation_value, paulis=prepared_paulis, states=prepared_states
+    )
 
 
 @pytest.mark.parametrize(
@@ -196,7 +198,7 @@ def test_expected_value_n_qubits(
     ),
     ids=resolve_parameter_repr,
 )
-def test_expected_value_batch_n_qubits_n_states(
+def test_expectation_value_batch_n_qubits_n_states(
     benchmark: Callable,
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
@@ -204,7 +206,7 @@ def test_expected_value_batch_n_qubits_n_states(
     qubits: int,
     states: int,
 ) -> None:
-    """Benchmark PauliString expected_value with provided set of state vectors."""
+    """Benchmark PauliString expectation_value with provided set of state vectors."""
     n_dims = 1 << qubits
     n_strings_limit = 128 if qubits > 4 else None
 
@@ -215,7 +217,9 @@ def test_expected_value_batch_n_qubits_n_states(
         generate_random_complex(n_dims, states) for _ in range(len(prepared_paulis))
     ]
 
-    benchmark(benchmark_expected_value, paulis=prepared_paulis, states=prepared_states)
+    benchmark(
+        benchmark_expectation_value, paulis=prepared_paulis, states=prepared_states
+    )
 
 
 if __name__ == "__main__":
