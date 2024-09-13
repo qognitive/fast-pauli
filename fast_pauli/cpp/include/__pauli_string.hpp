@@ -270,7 +270,7 @@ struct PauliString {
     std::vector<std::complex<T>> m;
     std::tie(k, m) = get_sparse_repr<T>(paulis);
 
-#pragma omp parallel for schedule(static)
+    // #pragma omp parallel for schedule(static)
     for (size_t i = 0; i < k.size(); ++i) {
       new_states[i] += m[i] * states[k[i]];
     }
@@ -320,7 +320,7 @@ struct PauliString {
     std::vector<std::complex<T>> m;
     std::tie(k, m) = get_sparse_repr<T>(paulis);
 
-#pragma omp parallel for schedule(static)
+    // #pragma omp parallel for schedule(static)
     for (size_t i = 0; i < states_T.extent(0); ++i) {
       std::complex<T> const c_m_i = c * m[i];
       std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states_row =

@@ -37,7 +37,7 @@ class PauliOp:
             self.dim = 0
 
     @property
-    def strings(self) -> list[str]:
+    def pauli_strings_as_str(self) -> list[str]:
         """Get the list of Pauli strings."""
         return [str(ps) for ps in self.pauli_strings]
 

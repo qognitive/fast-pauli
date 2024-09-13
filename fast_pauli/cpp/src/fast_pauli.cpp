@@ -3,6 +3,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/tuple.h>
+#include <vector>
 
 namespace fp = fast_pauli;
 
@@ -68,8 +69,8 @@ NB_MODULE(_fast_pauli, m) {
               // TODO we can do better with this, right now it takes a 1D array
               // and returns a 2D one which isn't very intuitive
               // clang-format off
-               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
-               auto new_states = owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
+               auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(states);
+               auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
                auto new_states_mdspan = std::mdspan(new_states.data(), new_states.size());
                // TODO refactor PauliString::apply to match the apply_batch interface (i.e. no output and everything is an mdspan)
                self.apply(new_states_mdspan, states_mdspan);
@@ -78,9 +79,9 @@ NB_MODULE(_fast_pauli, m) {
 
             } else if (states.ndim() == 2) {
               // clang-format off
-               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
-               auto new_states = owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
-               auto new_states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(new_states);
+               auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
+               auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+               auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
                self.apply_batch(new_states_mdspan, states_mdspan, c);
               // clang-format on
               return new_states;
@@ -97,30 +98,24 @@ NB_MODULE(_fast_pauli, m) {
           [](fp::PauliString const &self, nb::ndarray<cfloat_t> states,
              cfloat_t c) {
             if (states.ndim() == 1) {
-              auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
-              auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(),
-                                                  states_mdspan.extent(0), 1);
+              // clang-format off
+              auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(states);
+              auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(), states_mdspan.extent(0), 1);
               std::array<size_t, 1> out_shape = {1};
-              auto expected_vals_out =
-                  owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
-              auto expected_vals_out_mdspan =
-                  std::mdspan(expected_vals_out.data(), 1);
-
-              self.expectation_value(expected_vals_out_mdspan, states_mdspan_2d,
-                                     c);
+              auto expected_vals_out = fp::__detail::owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+              auto expected_vals_out_mdspan = std::mdspan(expected_vals_out.data(), 1);
+              self.expectation_value(expected_vals_out_mdspan, states_mdspan_2d, c);
+              // clang-format on
 
               return expected_vals_out;
             } else if (states.ndim() == 2) {
-              auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+              // clang-format off
+              auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
               std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
-              auto expected_vals_out =
-                  owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
-              auto expected_vals_out_mdspan =
-                  ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
-
-              self.expectation_value(expected_vals_out_mdspan, states_mdspan,
-                                     c);
-
+              auto expected_vals_out = fp::__detail::owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+              auto expected_vals_out_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
+              self.expectation_value(expected_vals_out_mdspan, states_mdspan, c);
+              // clang-format on
               return expected_vals_out;
             } else {
               throw std::invalid_argument(fmt::format(
@@ -148,7 +143,8 @@ NB_MODULE(_fast_pauli, m) {
            [](fp::PauliOp<float_type> *new_obj,
               std::vector<fp::PauliString> const &pauli_strings,
               nb::ndarray<cfloat_t> coeffs) {
-             auto [coeffs_vec, _] = ndarray_to_raw<cfloat_t, 1>(coeffs);
+             auto [coeffs_vec, _] =
+                 fp::__detail::ndarray_to_raw<cfloat_t, 1>(coeffs);
              new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);
            })
       .def("__init__",
@@ -183,29 +179,44 @@ NB_MODULE(_fast_pauli, m) {
                    [](fp::PauliOp<float_type> const &self) {
                      return self.pauli_strings;
                    })
+      .def_prop_ro("pauli_strings_as_str",
+                   [](fp::PauliOp<float_type> const &self) {
+                     //  return self.pauli_strings;
+                     std::vector<std::string> strings(self.n_pauli_strings());
+                     std::transform(self.pauli_strings.begin(),
+                                    self.pauli_strings.end(), strings.begin(),
+                                    [](fp::PauliString const &ps) {
+                                      return fmt::format("{}", ps);
+                                    });
+                     return strings;
+                   })
 
       // Methods
       .def("apply",
            [](fp::PauliOp<float_type> const &self,
               nb::ndarray<cfloat_t> states) {
              if (states.ndim() == 1) {
-               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
+               auto states_mdspan =
+                   fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(states);
                auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(),
                                                    states_mdspan.extent(0), 1);
                auto new_states =
-                   owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
+                   fp::__detail ::owning_ndarray_like_mdspan<cfloat_t, 1>(
+                       states_mdspan);
                std::mdspan new_states_mdspan =
                    std::mdspan(new_states.data(), new_states.size(), 1);
                //  auto new_states_mdspan =
-               //      ndarray_to_mdspan<cfloat_t, 2>(new_states);
+               //      fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
                self.apply(new_states_mdspan, states_mdspan_2d);
                return new_states;
              } else if (states.ndim() == 2) {
-               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+               auto states_mdspan =
+                   fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
                auto new_states =
-                   owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+                   fp::__detail ::owning_ndarray_like_mdspan<cfloat_t, 2>(
+                       states_mdspan);
                auto new_states_mdspan =
-                   ndarray_to_mdspan<cfloat_t, 2>(new_states);
+                   fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
 
                self.apply(new_states_mdspan, states_mdspan);
 
@@ -219,24 +230,30 @@ NB_MODULE(_fast_pauli, m) {
            [](fp::PauliOp<float_type> const &self,
               nb::ndarray<cfloat_t> states) {
              if (states.ndim() == 1) {
-               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 1>(states);
+               auto states_mdspan =
+                   fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(states);
                auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(),
                                                    states_mdspan.extent(0), 1);
                std::array<size_t, 1> out_shape = {1};
                auto expected_vals_out =
-                   owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+                   fp::__detail::owning_ndarray_from_shape<cfloat_t, 1>(
+                       out_shape);
                auto expected_vals_out_mdspan =
-                   ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
+                   fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(
+                       expected_vals_out);
                self.expectation_value(expected_vals_out_mdspan,
                                       states_mdspan_2d);
                return expected_vals_out;
              } else if (states.ndim() == 2) {
-               auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
+               auto states_mdspan =
+                   fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
                std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
                auto expected_vals_out =
-                   owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+                   fp::__detail::owning_ndarray_from_shape<cfloat_t, 1>(
+                       out_shape);
                auto expected_vals_out_mdspan =
-                   ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
+                   fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(
+                       expected_vals_out);
 
                self.expectation_value(expected_vals_out_mdspan, states_mdspan);
 
@@ -265,7 +282,8 @@ NB_MODULE(_fast_pauli, m) {
               std::vector<std::string> &pauli_strings,
               nb::ndarray<cfloat_t> coeffs) {
              //
-             auto coeffs_mdspan = ndarray_to_mdspan<cfloat_t, 2>(coeffs);
+             auto coeffs_mdspan =
+                 fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(coeffs);
 
              new (new_obj)
                  fp::SummedPauliOp<float_type>(pauli_strings, coeffs_mdspan);
@@ -279,12 +297,14 @@ NB_MODULE(_fast_pauli, m) {
       .def("apply",
            [](fp::SummedPauliOp<float_type> const &self,
               nb::ndarray<cfloat_t> states, nb::ndarray<float_type> data) {
-             auto states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(states);
-             auto data_mdspan = ndarray_to_mdspan<float_type, 2>(data);
+             auto states_mdspan =
+                 fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
+             auto data_mdspan =
+                 fp::__detail::ndarray_to_mdspan<float_type, 2>(data);
 
              // clang-format off
-             auto new_states        = owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
-             auto new_states_mdspan = ndarray_to_mdspan<cfloat_t, 2>(new_states);
+             auto new_states        = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+             auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
              // clang-format on
 
              self.apply_parallel<float_type>(new_states_mdspan, states_mdspan,

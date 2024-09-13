@@ -55,15 +55,15 @@ def test_operator_trivial(
         assert empty_op.n_qubits == 0
         assert empty_op.n_pauli_strings == 0
         assert len(empty_op.to_tensor()) == 0
-        # assert len(empty_op.coeffs) == 0 # TODO: uncomment when implemented
-        # assert len(empty_op.strings) == 0 # TODO uncomment when implemented
+        assert len(empty_op.coeffs) == 0
+        assert len(empty_op.pauli_strings) == 0
 
     for p in ["I", "X", "Y", "Z"]:
         po = pauli_op([1.0], [p])
         assert po.dim == 2
         assert po.n_qubits == 1
         assert po.n_pauli_strings == 1
-        # assert po.strings == [p] # TODO: uncomment when implemented
+        # assert po.pauli_strings == [p]
         np.testing.assert_allclose(po.to_tensor(), paulis[p], atol=1e-15)
 
 
@@ -80,8 +80,8 @@ def test_operator_basics(
     assert po.dim == 8
     assert po.n_qubits == 3
     assert po.n_pauli_strings == 2
-    # assert po.strings == ["III", "III"]
-    # np.testing.assert_equal(po.coeffs, [4j, 4j])
+    assert po.pauli_strings_as_str == ["III", "III"]
+    np.testing.assert_equal(po.coeffs, [4j, 4j])
     np.testing.assert_allclose(po.to_tensor(), 4j * 2 * np.eye(8), atol=1e-15)
 
     string_sets = [
@@ -106,12 +106,12 @@ def test_operator_basics(
         assert po.n_qubits == n_qubits
         assert po.n_pauli_strings == len(strings)
 
-        # assert set(po.strings) == set([str(ps) for ps in strings])
-        # np.testing.assert_allclose(
-        #     po.coeffs,
-        #     coeffs,
-        #     atol=1e-15,
-        # )
+        assert set(po.pauli_strings_as_str) == set([str(ps) for ps in strings])
+        np.testing.assert_allclose(
+            po.coeffs,
+            coeffs,
+            atol=1e-15,
+        )
 
         np.testing.assert_allclose(
             po.to_tensor(),
