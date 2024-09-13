@@ -66,13 +66,10 @@ NB_MODULE(_fast_pauli, m) {
 
             if (states.ndim() == 1) {
               // TODO lots of duplicate code here
-              // TODO we can do better with this, right now it takes a 1D array
-              // and returns a 2D one which isn't very intuitive
               // clang-format off
                auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(states);
                auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
                auto new_states_mdspan = std::mdspan(new_states.data(), new_states.size());
-               // TODO refactor PauliString::apply to match the apply_batch interface (i.e. no output and everything is an mdspan)
                self.apply(new_states_mdspan, states_mdspan);
               // clang-format on
               return new_states;
@@ -140,9 +137,8 @@ NB_MODULE(_fast_pauli, m) {
       .def(nb::init<std::vector<std::string> const &>(), "pauli_strings"_a)
       .def(nb::init<std::vector<fp::PauliString>>())
       .def("__init__",
-           [](fp::PauliOp<float_type> *new_obj,
-              std::vector<fp::PauliString> const &pauli_strings,
-              nb::ndarray<cfloat_t> coeffs) {
+           [](fp::PauliOp<float_type> *new_obj, nb::ndarray<cfloat_t> coeffs,
+              std::vector<fp::PauliString> const &pauli_strings) {
              auto [coeffs_vec, _] =
                  fp::__detail::ndarray_to_raw<cfloat_t, 1>(coeffs);
              new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);

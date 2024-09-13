@@ -125,27 +125,6 @@ ndarray_to_raw(nb::ndarray<T> a) {
 }
 
 /**
- * @brief Creates a new nb::ndarray that owns the data and has the same shape
- * as an mdspan.
- *
- * @tparam T Type of the underlying data in ndarray/mdspan
- * @tparam ndim Rank of the array
- * @param a The mdspan
- * @return nb::ndarray<nb::numpy, T>
- */
-template <typename T, size_t ndim>
-nb::ndarray<nb::numpy, T>
-owning_ndarray_like_mdspan(std::mdspan<T, std::dextents<size_t, ndim>> a) {
-  // Collect shape information
-  std::array<size_t, ndim> shape;
-  for (size_t i = 0; i < ndim; ++i) {
-    shape[i] = a.extent(i);
-  }
-
-  return owning_ndarray_from_shape<T, ndim>(shape);
-}
-
-/**
  * @brief This function creates a new nb::ndarray that owns the data.
  *
  * @tparam T Type of the underlying data in ndarray/mdspan
@@ -177,6 +156,27 @@ owning_ndarray_from_shape(std::array<size_t, ndim> shape) {
       /*ndim*/ shape.size(),
       /*shape */ shape.data(),
       /*deleter*/ deleter);
+}
+
+/**
+ * @brief Creates a new nb::ndarray that owns the data and has the same shape
+ * as an mdspan.
+ *
+ * @tparam T Type of the underlying data in ndarray/mdspan
+ * @tparam ndim Rank of the array
+ * @param a The mdspan
+ * @return nb::ndarray<nb::numpy, T>
+ */
+template <typename T, size_t ndim>
+nb::ndarray<nb::numpy, T>
+owning_ndarray_like_mdspan(std::mdspan<T, std::dextents<size_t, ndim>> a) {
+  // Collect shape information
+  std::array<size_t, ndim> shape;
+  for (size_t i = 0; i < ndim; ++i) {
+    shape[i] = a.extent(i);
+  }
+
+  return owning_ndarray_from_shape<T, ndim>(shape);
 }
 
 } // namespace fast_pauli::__detail
