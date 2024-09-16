@@ -14,6 +14,7 @@ Python Bindings for PauliOp
 NB_MODULE(_fast_pauli, m) {
   // TODO init default threading behavior for the module
   // TODO give up GIL when calling into long-running C++ code
+  // TODO != and == operators for our Pauli structures
   using float_type = double;
   using cfloat_t = std::complex<float_type>;
 
@@ -50,6 +51,20 @@ NB_MODULE(_fast_pauli, m) {
       //
       .def("__str__",
            [](fp::PauliString const &self) { return fmt::format("{}", self); })
+      .def("__matmul__", [](fp::PauliString const &self,
+                            fp::PauliString const &rhs) { return self * rhs; })
+      .def(
+          "__matmul__",
+          [](fp::PauliString const &self, fp::PauliOp<float_type> const &rhs) {
+            return self * rhs;
+          },
+          nb::is_operator())
+      .def(
+          "__add__",
+          [](fp::PauliString const &self, fp::PauliString const &other) {
+            return fp::PauliOp<float_type>({self, other});
+          },
+          nb::is_operator())
 
       // Properties
       .def_prop_ro("n_qubits", &fp::PauliString::n_qubits)
@@ -161,6 +176,26 @@ NB_MODULE(_fast_pauli, m) {
                             });
              new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);
            })
+      // TODO memory efficient implementations for inplace @= operators
+      // TODO multiply pauli_op with scalar (or even np.array) by scaling coeffs
+      .def("__matmul__",
+           [](fp::PauliOp<float_type> const &self,
+              fp::PauliOp<float_type> const &rhs) { return self * rhs; })
+      .def("__matmul__", [](fp::PauliOp<float_type> const &self,
+                            fp::PauliString const &rhs) { return self * rhs; })
+      .def(
+          "extend",
+          [](fp::PauliOp<float_type> &self,
+             fp::PauliOp<float_type> const &other_op) {
+            self.extend(other_op);
+          },
+          "other_op"_a)
+      .def(
+          "extend",
+          [](fp::PauliOp<float_type> &self, cfloat_t coeff,
+             fp::PauliString const &pauli_str,
+             bool dedupe) { self.extend(coeff, pauli_str, dedupe); },
+          "coeff"_a, "pauli_str"_a, "dedupe"_a = false)
 
       // Getters
       .def_prop_ro("dim", &fp::PauliOp<float_type>::dim)
