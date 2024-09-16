@@ -201,11 +201,10 @@ TEST_CASE("apply many operators many PauliString") {
   __check_apply(pauli_strings, coeff, 1000, false);
 }
 
-TEST_CASE("expectation values") {
-  size_t const n_operators = 100;
-  size_t const n_qubits = 5;
-  size_t const n_states = 100;
+//
 
+void __check_exp_vals(size_t const n_operators, size_t const n_qubits,
+                      size_t const n_states) {
   std::vector<PauliString> pauli_strings =
       fast_pauli::calculate_pauli_strings_max_weight(n_qubits, 2);
 
@@ -226,7 +225,7 @@ TEST_CASE("expectation values") {
   op.expectation_value(expected_vals, states);
 
   //
-  // Check
+  // Construct "trusted answer"
   //
 
   std::vector<std::complex<double>> expected_vals_check_raw;
@@ -246,4 +245,41 @@ TEST_CASE("expectation values") {
       }
     }
   }
+
+  //
+  // Check
+  //
+  for (size_t k = 0; k < n_operators; ++k) {
+    for (size_t t = 0; t < n_states; ++t) {
+      CHECK(abs(expected_vals(k, t) - expected_vals_check(k, t)) < 1e-6);
+    }
+  }
+}
+
+TEST_CASE("expectation values simple") {
+  size_t const n_operators = 1;
+  size_t const n_qubits = 5;
+  size_t const n_states = 1;
+  __check_exp_vals(n_operators, n_qubits, n_states);
+}
+
+TEST_CASE("expectation values multiple operators") {
+  size_t const n_operators = 100;
+  size_t const n_qubits = 5;
+  size_t const n_states = 1;
+  __check_exp_vals(n_operators, n_qubits, n_states);
+}
+
+TEST_CASE("expectation values multiple states") {
+  size_t const n_operators = 1;
+  size_t const n_qubits = 5;
+  size_t const n_states = 100;
+  __check_exp_vals(n_operators, n_qubits, n_states);
+}
+
+TEST_CASE("expectation values multiple operators and states") {
+  size_t const n_operators = 100;
+  size_t const n_qubits = 5;
+  size_t const n_states = 100;
+  __check_exp_vals(n_operators, n_qubits, n_states);
 }
