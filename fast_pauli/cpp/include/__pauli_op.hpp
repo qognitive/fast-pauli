@@ -127,9 +127,9 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
 
     std::vector<H> coefficients(pauli_op_left.coeffs);
     std::vector<PauliString> strings;
-    strings.reserve(pauli_op_left.n_strings());
+    strings.reserve(pauli_op_left.n_pauli_strings());
 
-    for (size_t i = 0; i < pauli_op_left.n_strings(); ++i) {
+    for (size_t i = 0; i < pauli_op_left.n_pauli_strings(); ++i) {
       auto [phase, pauli_str] =
           pauli_op_left.pauli_strings[i] * pauli_str_right;
       coefficients[i] *= phase;
@@ -155,9 +155,9 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
 
     std::vector<H> coefficients(pauli_op_right.coeffs);
     std::vector<PauliString> strings;
-    strings.reserve(pauli_op_right.n_strings());
+    strings.reserve(pauli_op_right.n_pauli_strings());
 
-    for (size_t i = 0; i < pauli_op_right.n_strings(); ++i) {
+    for (size_t i = 0; i < pauli_op_right.n_pauli_strings(); ++i) {
       auto [phase, pauli_str] =
           pauli_str_left * pauli_op_right.pauli_strings[i];
       coefficients[i] *= phase;
@@ -177,10 +177,11 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
    */
   friend PauliOp<T, H> operator*(PauliOp<T, H> const &lhs,
                                  PauliOp<T, H> const &rhs) {
-    if (lhs.dims() != rhs.dims())
+    if (lhs.dim() != rhs.dim())
       throw std::invalid_argument("Mismatched dimensions for provided PauliOp");
 
-    size_t init_capacity = std::max(lhs.n_strings(), rhs.n_strings());
+    size_t init_capacity =
+        std::max(lhs.n_pauli_strings(), rhs.n_pauli_strings());
     std::vector<H> coefficients;
     std::vector<PauliString> strings;
     coefficients.reserve(init_capacity);
@@ -188,8 +189,8 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
 
     std::unordered_map<PauliString, size_t> dedupe_strings;
 
-    for (size_t i = 0; i < lhs.n_strings(); ++i) {
-      for (size_t j = 0; j < rhs.n_strings(); ++j) {
+    for (size_t i = 0; i < lhs.n_pauli_strings(); ++i) {
+      for (size_t j = 0; j < rhs.n_pauli_strings(); ++j) {
         auto [phase, pauli_str] = lhs.pauli_strings[i] * rhs.pauli_strings[j];
         auto coeff_ij = phase * lhs.coeffs[i] * rhs.coeffs[j];
 
@@ -248,7 +249,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     // TODO add dedupe capabilities once we have pauli_strings stored in
     // lexicographic order
     // With current implementation it would take O(N*M) to dedupe
-    if (other_op.dims() != dim())
+    if (other_op.dim() != dim())
       throw std::invalid_argument("Mismatched dimensions for provided PauliOp");
     size_t naive_size = n_pauli_strings() + other_op.n_pauli_strings();
 
