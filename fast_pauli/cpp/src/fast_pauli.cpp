@@ -26,7 +26,7 @@ NB_MODULE(_fast_pauli, m) {
 
       // Methods
       .def(
-          "__mult__",
+          "__matmul__",
           [](fp::Pauli const &self, fp::Pauli const &rhs) {
             return self * rhs;
           },
@@ -51,8 +51,12 @@ NB_MODULE(_fast_pauli, m) {
       //
       .def("__str__",
            [](fp::PauliString const &self) { return fmt::format("{}", self); })
-      .def("__matmul__", [](fp::PauliString const &self,
-                            fp::PauliString const &rhs) { return self * rhs; })
+      .def(
+          "__matmul__",
+          [](fp::PauliString const &self, fp::PauliString const &rhs) {
+            return self * rhs;
+          },
+          nb::is_operator())
       .def(
           "__matmul__",
           [](fp::PauliString const &self, fp::PauliOp<float_type> const &rhs) {
@@ -177,12 +181,48 @@ NB_MODULE(_fast_pauli, m) {
              new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);
            })
       // TODO memory efficient implementations for inplace @= operators
-      // TODO multiply pauli_op with scalar (or even np.array) by scaling coeffs
-      .def("__matmul__",
-           [](fp::PauliOp<float_type> const &self,
-              fp::PauliOp<float_type> const &rhs) { return self * rhs; })
-      .def("__matmul__", [](fp::PauliOp<float_type> const &self,
-                            fp::PauliString const &rhs) { return self * rhs; })
+      .def(
+          "__matmul__",
+          [](fp::PauliOp<float_type> const &self,
+             fp::PauliOp<float_type> const &rhs) { return self * rhs; },
+          nb::is_operator())
+      .def(
+          "__matmul__",
+          [](fp::PauliOp<float_type> const &self, fp::PauliString const &rhs) {
+            return self * rhs;
+          },
+          nb::is_operator())
+      .def(
+          "__add__",
+          [](fp::PauliOp<float_type> const &lhs_op,
+             fp::PauliOp<float_type> const &rhs_op) {
+            fp::PauliOp<float_type> res_op(lhs_op);
+            res_op.extend(rhs_op);
+            return res_op;
+          },
+          nb::is_operator())
+      .def(
+          "__add__",
+          [](fp::PauliOp<float_type> const &lhs_op,
+             fp::PauliString const &rhs_str) {
+            fp::PauliOp<float_type> res_op(lhs_op);
+            res_op.extend(1, rhs_str);
+            return res_op;
+          },
+          nb::is_operator())
+      .def(
+          "__iadd__",
+          [](fp::PauliOp<float_type> &self,
+             fp::PauliOp<float_type> const &other_op) {
+            self.extend(other_op);
+          },
+          nb::is_operator())
+      .def(
+          "__iadd__",
+          [](fp::PauliOp<float_type> &self, fp::PauliString const &other_str) {
+            self.extend(1, other_str);
+          },
+          nb::is_operator())
       .def(
           "extend",
           [](fp::PauliOp<float_type> &self,
