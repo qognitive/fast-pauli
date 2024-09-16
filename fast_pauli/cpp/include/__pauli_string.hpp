@@ -202,7 +202,7 @@ struct PauliString {
    */
   friend std::pair<std::complex<double>, PauliString>
   operator*(PauliString const &lhs, PauliString const &rhs) {
-    if (lhs.dims() != rhs.dims()) {
+    if (lhs.dim() != rhs.dim()) {
       throw std::invalid_argument("PauliStrings must have the same size");
     }
 

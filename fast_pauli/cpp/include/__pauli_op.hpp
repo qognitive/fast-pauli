@@ -121,7 +121,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
                                  PauliString const &pauli_str_right) {
     // TODO figure out if it's possible to end up with duplicate strings and
     // need to dedupe
-    if (pauli_op_left.dims() != pauli_str_right.dims())
+    if (pauli_op_left.dim() != pauli_str_right.dim())
       throw std::invalid_argument(
           "PauliStrings must have same size as PauliOp");
 
@@ -149,7 +149,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
    */
   friend PauliOp<T, H> operator*(PauliString const &pauli_str_left,
                                  PauliOp<T, H> const &pauli_op_right) {
-    if (pauli_str_left.dims() != pauli_op_right.dims())
+    if (pauli_str_left.dim() != pauli_op_right.dim())
       throw std::invalid_argument(
           "PauliStrings must have same size as PauliOp");
 
@@ -217,7 +217,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
    */
   void extend(std::complex<T> coeff, PauliString pauli_str,
               bool dedupe = false) {
-    if (pauli_str.dims() != dims()) {
+    if (pauli_str.dim() != dim()) {
       throw std::invalid_argument(
           "PauliStrings must have same size as PauliOp");
     }
@@ -248,9 +248,9 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     // TODO add dedupe capabilities once we have pauli_strings stored in
     // lexicographic order
     // With current implementation it would take O(N*M) to dedupe
-    if (other_op.dims() != dims())
+    if (other_op.dims() != dim())
       throw std::invalid_argument("Mismatched dimensions for provided PauliOp");
-    size_t naive_size = n_strings() + other_op.n_strings();
+    size_t naive_size = n_pauli_strings() + other_op.n_pauli_strings();
 
     pauli_strings.reserve(naive_size);
     std::copy(other_op.pauli_strings.begin(), other_op.pauli_strings.end(),
