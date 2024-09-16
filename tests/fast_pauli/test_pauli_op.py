@@ -327,17 +327,17 @@ def test_multiplication_with_string(
     ixyz_expected = naive_pauli_operator([1, 1, 1, 1], ["I", "X", "Y", "Z"])
 
     np.testing.assert_allclose(
-        (ixyz_op * pauli_string("I")).to_tensor(),
+        (ixyz_op @ pauli_string("I")).to_tensor(),
         ixyz_expected,
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        (ixyz_op * pauli_string("I") * pauli_string("I")).to_tensor(),
+        (ixyz_op @ pauli_string("I") @ pauli_string("I")).to_tensor(),
         ixyz_expected,
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        (pauli_string("I") * ixyz_op * pauli_string("I")).to_tensor(),
+        (pauli_string("I") @ ixyz_op @ pauli_string("I")).to_tensor(),
         ixyz_expected,
         atol=1e-15,
     )
@@ -356,12 +356,12 @@ def test_multiplication_with_string(
         p_op = pauli_op(coeffs, strings)
 
         np.testing.assert_allclose(
-            (p_op * pauli_string(p_str)).to_tensor(),
+            (p_op @ pauli_string(p_str)).to_tensor(),
             naive_pauli_operator(coeffs, strings) @ naive_pauli_converter(p_str),
             atol=1e-15,
         )
         np.testing.assert_allclose(
-            (pauli_string(p_str) * p_op).to_tensor(),
+            (pauli_string(p_str) @ p_op).to_tensor(),
             naive_pauli_converter(p_str) @ naive_pauli_operator(coeffs, strings),
             atol=1e-15,
         )
@@ -379,7 +379,7 @@ def test_multiplication_with_string(
         for _ in range(n_mult):
             choose_string = int(generate_random_complex(1)[0].real * 100) % len(strings)
             p_str = strings[choose_string]
-            p_op = p_op * pauli_string(p_str)
+            p_op = p_op @ pauli_string(p_str)
             expected_op @= naive_pauli_converter(p_str)
 
             np.testing.assert_allclose(
@@ -403,17 +403,17 @@ def test_multiplication_with_pauli_op(
     ixyz_expected = naive_pauli_operator([1, 1, 1, 1], ["I", "X", "Y", "Z"])
 
     np.testing.assert_allclose(
-        (pauli_op([1], ["I"]) * pauli_op([1], ["I"])).to_tensor(),
+        (pauli_op([1], ["I"]) @ pauli_op([1], ["I"])).to_tensor(),
         np.eye(2),
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        (ixyz_op * pauli_op([1], ["I"])).to_tensor(),
+        (ixyz_op @ pauli_op([1], ["I"])).to_tensor(),
         ixyz_expected,
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        (pauli_op([1], ["I"]) * ixyz_op * pauli_op([1], ["I"])).to_tensor(),
+        (pauli_op([1], ["I"]) @ ixyz_op @ pauli_op([1], ["I"])).to_tensor(),
         ixyz_expected,
         atol=1e-15,
     )
@@ -439,20 +439,20 @@ def test_multiplication_with_pauli_op(
             r_op = pauli_op(r_coeffs, r_strings)
 
             np.testing.assert_allclose(
-                (l_op * r_op).to_tensor(),
+                (l_op @ r_op).to_tensor(),
                 naive_pauli_operator(l_coeffs, l_strings)
                 @ naive_pauli_operator(r_coeffs, r_strings),
                 atol=1e-15,
             )
             np.testing.assert_allclose(
-                (r_op * r_op).to_tensor(),
+                (r_op @ r_op).to_tensor(),
                 naive_pauli_operator(r_coeffs, r_strings)
                 @ naive_pauli_operator(r_coeffs, r_strings),
                 atol=1e-15,
             )
 
         np.testing.assert_allclose(
-            (l_op * r_op * l_op * r_op).to_tensor(),
+            (l_op @ r_op @ l_op @ r_op).to_tensor(),
             naive_pauli_operator(l_coeffs, l_strings)
             @ naive_pauli_operator(r_coeffs, r_strings)
             @ naive_pauli_operator(l_coeffs, l_strings)

@@ -133,6 +133,19 @@ class PauliString:
                 phase *= 1j
         return phase, PauliString("".join(p_str))
 
+    def __matmul__(self, rhs: PauliString) -> tuple[np.complex128, PauliString]:
+        """Matrix multiplication of two Pauli strings.
+
+        Args:
+        ----
+            rhs: The other PauliString object to multiply with.
+
+        Returns
+        -------
+            tuple containing the multiplication factor and resulting PauliString object.
+        """
+        return self.multiply(rhs)
+
 
 def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:
     """Produce sparse representation of the pauli string.

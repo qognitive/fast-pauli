@@ -309,7 +309,7 @@ def test_multiplication(
     pauli_string: type[fp.PauliString] | type[pp.PauliString],
 ) -> None:
     """Test pauli string multiplication with 2d tensor."""
-    sign, pauli = pauli_string("I").multiply(pauli_string("I"))
+    sign, pauli = pauli_string("I") @ (pauli_string("I"))
     np.testing.assert_equal(sign, 1)
     np.testing.assert_string_equal(str(pauli), "I")
     np.testing.assert_allclose(
@@ -317,7 +317,7 @@ def test_multiplication(
         paulis["I"],
         atol=1e-15,
     )
-    sign, pauli = pauli_string("IIII").multiply(pauli_string("IIII"))
+    sign, pauli = pauli_string("IIII") @ (pauli_string("IIII"))
     np.testing.assert_equal(sign, 1)
     np.testing.assert_string_equal(str(pauli), "IIII")
     np.testing.assert_allclose(
@@ -325,7 +325,7 @@ def test_multiplication(
         naive_pauli_converter("IIII"),
         atol=1e-15,
     )
-    sign, pauli = pauli_string("XYZ").multiply(pauli_string("III"))
+    sign, pauli = pauli_string("XYZ") @ (pauli_string("III"))
     np.testing.assert_equal(sign, 1)
     np.testing.assert_string_equal(str(pauli), "XYZ")
     np.testing.assert_allclose(
@@ -333,7 +333,7 @@ def test_multiplication(
         naive_pauli_converter("XYZ"),
         atol=1e-15,
     )
-    sign, pauli = pauli_string("ZYX").multiply(pauli_string("ZYX"))
+    sign, pauli = pauli_string("ZYX") @ (pauli_string("ZYX"))
     np.testing.assert_equal(sign, 1)
     np.testing.assert_string_equal(str(pauli), "III")
     np.testing.assert_allclose(
@@ -351,13 +351,13 @@ def test_multiplication(
         mid = len(full_str) // 2
         p_str1, p_str2 = full_str[:mid], full_str[mid:]
 
-        phase, pauli = pauli_string(p_str1).multiply(pauli_string(p_str2))
+        phase, pauli = pauli_string(p_str1) @ (pauli_string(p_str2))
         np.testing.assert_allclose(
             phase * np.array(pauli.to_tensor()),
             naive_pauli_converter(p_str1) @ naive_pauli_converter(p_str2),
             atol=1e-15,
         )
-        phase, pauli = pauli_string(p_str2).multiply(pauli_string(p_str1))
+        phase, pauli = pauli_string(p_str2) @ (pauli_string(p_str1))
         np.testing.assert_allclose(
             phase * np.array(pauli.to_tensor()),
             naive_pauli_converter(p_str2) @ naive_pauli_converter(p_str1),
