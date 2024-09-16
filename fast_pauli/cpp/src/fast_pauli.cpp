@@ -275,6 +275,15 @@ NB_MODULE(_fast_pauli, m) {
       .def(nb::init<>())
       .def("__init__",
            [](fp::SummedPauliOp<float_type> *new_obj,
+              std::vector<fp::PauliString> const &pauli_strings,
+              nb::ndarray<cfloat_t> coeffs) {
+             auto coeffs_mdspan =
+                 fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(coeffs);
+             new (new_obj)
+                 fp::SummedPauliOp<float_type>(pauli_strings, coeffs_mdspan);
+           })
+      .def("__init__",
+           [](fp::SummedPauliOp<float_type> *new_obj,
               std::vector<std::string> &pauli_strings,
               nb::ndarray<cfloat_t> coeffs) {
              //
@@ -308,6 +317,24 @@ NB_MODULE(_fast_pauli, m) {
 
              return new_states;
            })
+      .def(
+          "expectation_value",
+          [](fp::SummedPauliOp<float_type> const &self,
+             nb::ndarray<cfloat_t> states) {
+            auto states_mdspan =
+                fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
+
+            std::array<size_t, 2> out_shape = {self.n_operators(),
+                                               states_mdspan.extent(1)};
+            auto expected_vals_out =
+                fp::__detail::owning_ndarray_from_shape<cfloat_t, 2>(out_shape);
+            auto expected_vals_out_mdspan =
+                fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(expected_vals_out);
+
+            self.expectation_value(expected_vals_out_mdspan, states_mdspan);
+
+            return expected_vals_out;
+          })
       //
       ;
 
