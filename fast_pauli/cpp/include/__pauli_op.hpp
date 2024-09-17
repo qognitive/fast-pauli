@@ -249,6 +249,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
     // TODO add dedupe capabilities once we have pauli_strings stored in
     // lexicographic order
     // With current implementation it would take O(N*M) to dedupe
+    // TODO handle the case when other_op is *this object
     if (other_op.dim() != dim())
       throw std::invalid_argument("Mismatched dimensions for provided PauliOp");
     size_t naive_size = n_pauli_strings() + other_op.n_pauli_strings();

@@ -69,6 +69,15 @@ NB_MODULE(_fast_pauli, m) {
             return fp::PauliOp<float_type>({self, other});
           },
           nb::is_operator())
+      .def(
+          "__add__",
+          [](fp::PauliString const &self,
+             fp::PauliOp<float_type> const &rhs_op) {
+            fp::PauliOp<float_type> res_op(rhs_op);
+            res_op.extend(1, self);
+            return res_op;
+          },
+          nb::is_operator())
 
       // Properties
       .def_prop_ro("n_qubits", &fp::PauliString::n_qubits)
@@ -181,6 +190,7 @@ NB_MODULE(_fast_pauli, m) {
              new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);
            })
       // TODO memory efficient implementations for inplace @= operators
+      // TODO do we need sub and isub?
       .def(
           "__matmul__",
           [](fp::PauliOp<float_type> const &self,
@@ -215,12 +225,14 @@ NB_MODULE(_fast_pauli, m) {
           [](fp::PauliOp<float_type> &self,
              fp::PauliOp<float_type> const &other_op) {
             self.extend(other_op);
+            return self;
           },
           nb::is_operator())
       .def(
           "__iadd__",
           [](fp::PauliOp<float_type> &self, fp::PauliString const &other_str) {
             self.extend(1, other_str);
+            return self;
           },
           nb::is_operator())
       .def(
