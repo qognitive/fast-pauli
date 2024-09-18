@@ -22,10 +22,6 @@ def test_expectation_values(
     n_qubits: int,
 ) -> None:
     """Test expectation value calculation."""
-    n_states = 1000
-    n_operators = 100
-    n_qubits = 6
-
     # TODO This will break on python version
     pauli_strings = fp.helpers.calculate_pauli_strings_max_weight(n_qubits, 2)
     pauli_strings_str = [str(s) for s in pauli_strings]
