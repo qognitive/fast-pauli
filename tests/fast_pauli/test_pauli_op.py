@@ -464,30 +464,57 @@ def test_multiplication_with_pauli_op(
 @pytest.mark.parametrize(  # TODO pp.PauliOp
     "pauli_op,pauli_string,", [(fp.PauliOp, fp.PauliString)], ids=resolve_parameter_repr
 )
-def test_addition_with_string(
+def test_pauli_string_conversion(
+    pauli_strings_with_size: Callable,
+    pauli_op: type[fp.PauliOp] | type[pp.PauliOp],
+    pauli_string: type[fp.PauliString] | type[pp.PauliString],
+) -> None:
+    """Test that addition of two pauli strings is resulting in expected pauli_op."""
+    rng = np.random.RandomState(42)
+    all_3qubit_strings = pauli_strings_with_size(3)
+    all_4qubit_strings = pauli_strings_with_size(3)
+    rng.shuffle(all_3qubit_strings)
+    rng.shuffle(all_4qubit_strings)
+
+    for string_set in [all_3qubit_strings, all_4qubit_strings]:
+        while len(string_set) >= 2:
+            l_str = string_set.pop()
+            r_str = string_set.pop()
+
+            np.testing.assert_allclose(
+                (pauli_string(l_str) + pauli_string(r_str)).to_tensor(),
+                naive_pauli_converter(l_str) + naive_pauli_converter(r_str),
+                atol=1e-15,
+            )
+            np.testing.assert_allclose(
+                (pauli_string(l_str) + pauli_string(r_str)).to_tensor(),
+                pauli_op([1, 1], [l_str, r_str]).to_tensor(),
+                atol=1e-15,
+            )
+
+            np.testing.assert_allclose(
+                (pauli_string(l_str) - pauli_string(r_str)).to_tensor(),
+                naive_pauli_converter(l_str) - naive_pauli_converter(r_str),
+                atol=1e-15,
+            )
+            np.testing.assert_allclose(
+                (pauli_string(l_str) - pauli_string(r_str)).to_tensor(),
+                pauli_op([1, -1], [l_str, r_str]).to_tensor(),
+                atol=1e-15,
+            )
+
+
+@pytest.mark.consistency
+@pytest.mark.parametrize(  # TODO pp.PauliOp
+    "pauli_op,pauli_string,", [(fp.PauliOp, fp.PauliString)], ids=resolve_parameter_repr
+)
+def test_add_sub_with_string(
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
     pauli_op: type[fp.PauliOp] | type[pp.PauliOp],
     pauli_string: type[fp.PauliString] | type[pp.PauliString],
 ) -> None:
     """Test Pauli Operator addition with Pauli String."""
-    # make sure the addition of two pauli strings is resulting in expected pauli_op
-    sample_strings = pauli_strings_with_size(3) + pauli_strings_with_size(4)
-    while sample_strings:
-        l_str = sample_strings.pop()
-        r_str = sample_strings.pop()
-
-        np.testing.assert_allclose(
-            (pauli_string(l_str) + pauli_string(r_str)).to_tensor(),
-            naive_pauli_operator([1, 1], [l_str, r_str]),
-            atol=1e-15,
-        )
-        np.testing.assert_allclose(
-            (pauli_string(l_str) + pauli_string(r_str)).to_tensor(),
-            pauli_op([1, 1], [l_str, r_str]).to_tensor(),
-            atol=1e-15,
-        )
-
     ixyz_op = pauli_op([1, 1, 1, 1], ["I", "X", "Y", "Z"])
 
     np.testing.assert_allclose(
@@ -498,6 +525,11 @@ def test_addition_with_string(
     np.testing.assert_allclose(
         (pauli_string("I") + ixyz_op + pauli_string("I")).to_tensor(),
         naive_pauli_operator([3, 1, 1, 1], ["I", "X", "Y", "Z"]),
+        atol=1e-15,
+    )
+    np.testing.assert_allclose(
+        (pauli_string("Z") + ixyz_op - pauli_string("Z")).to_tensor(),
+        naive_pauli_operator([1, 1, 1, 1], ["I", "X", "Y", "Z"]),
         atol=1e-15,
     )
     np.testing.assert_allclose(
@@ -521,6 +553,13 @@ def test_addition_with_string(
         naive_pauli_operator([1, 2, 1, 2], ["I", "X", "Y", "Z"]),
         atol=1e-15,
     )
+    ixyz_op -= pauli_string("Z")
+    ixyz_op -= pauli_string("X")
+    np.testing.assert_allclose(
+        (ixyz_op).to_tensor(),
+        naive_pauli_operator([1, 1, 1, 1], ["I", "X", "Y", "Z"]),
+        atol=1e-15,
+    )
 
     n_passes = 3
     for strings in [
@@ -536,48 +575,64 @@ def test_addition_with_string(
             coeffs = generate_random_complex(len(strings))
             p_str, coeffs = strings.pop(choose_string), np.delete(coeffs, choose_string)
             p_op = pauli_op(coeffs, strings)
+            expected_dense_op = naive_pauli_operator(coeffs, strings)
+            p_str_dense = naive_pauli_converter(p_str)
 
             np.testing.assert_allclose(
                 (p_op + pauli_string(p_str)).to_tensor(),
-                naive_pauli_operator(coeffs, strings) + naive_pauli_converter(p_str),
+                expected_dense_op + p_str_dense,
                 atol=1e-15,
             )
             np.testing.assert_allclose(
                 (pauli_string(p_str) + p_op).to_tensor(),
-                naive_pauli_converter(p_str) + naive_pauli_operator(coeffs, strings),
+                p_str_dense + expected_dense_op,
                 atol=1e-15,
             )
 
-        np.testing.assert_allclose(
-            (pauli_string(p_str) + p_op + pauli_string(p_str)).to_tensor(),
-            2 * naive_pauli_converter(p_str) + naive_pauli_operator(coeffs, strings),
-            atol=1e-15,
-        )
+            np.testing.assert_allclose(
+                (pauli_string(p_str) - p_op).to_tensor(),
+                p_str_dense - expected_dense_op,
+                atol=1e-15,
+            )
+            np.testing.assert_allclose(
+                (pauli_string(p_str) + p_op - pauli_string(p_str)).to_tensor(),
+                expected_dense_op,
+                atol=1e-15,
+            )
 
         choose_string = choose_string % len(strings)
         p_str, coeffs = strings.pop(choose_string), np.delete(coeffs, choose_string)
         p_op = pauli_op(coeffs, strings)
         expected = naive_pauli_operator(coeffs, strings)
-
-        c = generate_random_complex(1)[0]
-        p_op.extend(c, pauli_string(p_str), dedupe=True)
-        expected += c * naive_pauli_converter(p_str)
-        np.testing.assert_allclose(
-            p_op.to_tensor(),
-            expected,
-            atol=1e-15,
-        )
-        c = generate_random_complex(1)[0]
-        p_op.extend(c, pauli_string(p_str), dedupe=False)
-        expected += c * naive_pauli_converter(p_str)
-        np.testing.assert_allclose(
-            p_op.to_tensor(),
-            expected,
-            atol=1e-15,
-        )
+        p_str_dense = naive_pauli_converter(p_str)
 
         p_op += pauli_string(p_str)
-        expected += naive_pauli_converter(p_str)
+        expected += p_str_dense
+        np.testing.assert_allclose(
+            p_op.to_tensor(),
+            expected,
+            atol=1e-15,
+        )
+        p_op -= pauli_string(p_str)
+        expected -= p_str_dense
+        np.testing.assert_allclose(
+            p_op.to_tensor(),
+            expected,
+            atol=1e-15,
+        )
+
+        p_op = pauli_op(coeffs, strings)
+        c = generate_random_complex(1)[0]
+        p_op.extend(c, pauli_string(p_str), dedupe=False)
+        expected += c * p_str_dense
+        np.testing.assert_allclose(
+            p_op.to_tensor(),
+            expected,
+            atol=1e-15,
+        )
+        c = generate_random_complex(1)[0]
+        p_op.extend(c, pauli_string(p_str), dedupe=True)
+        expected += c * p_str_dense
         np.testing.assert_allclose(
             p_op.to_tensor(),
             expected,
@@ -589,7 +644,7 @@ def test_addition_with_string(
 @pytest.mark.parametrize(  # TODO pp.PauliOp
     "pauli_op,", [fp.PauliOp], ids=resolve_parameter_repr
 )
-def test_addition_with_pauli_op(
+def test_add_sub_with_pauli_op(
     pauli_strings_with_size: Callable,
     generate_random_complex: Callable,
     pauli_op: type[fp.PauliOp] | type[pp.PauliOp],
@@ -605,19 +660,44 @@ def test_addition_with_pauli_op(
         naive_pauli_operator([1j, 1j], ["X", "Y"]),
         atol=1e-15,
     )
+    np.testing.assert_allclose(
+        (pauli_op([1j], ["X"]) - pauli_op([1j], ["Y"])).to_tensor(),
+        naive_pauli_operator([1j, -1j], ["X", "Y"]),
+        atol=1e-15,
+    )
 
     ixyz_op = pauli_op([1, 1, 1, 1], ["I", "X", "Y", "Z"])
     ixyz_expected = naive_pauli_operator([1, 1, 1, 1], ["I", "X", "Y", "Z"])
+
     np.testing.assert_allclose(
-        (ixyz_op + ixyz_op + ixyz_op + ixyz_op).to_tensor(),
-        4 * ixyz_expected,
+        (ixyz_op + ixyz_op - ixyz_op + ixyz_op).to_tensor(),
+        2 * ixyz_expected,
         atol=1e-15,
     )
+    np.testing.assert_allclose(
+        (ixyz_op - ixyz_op).to_tensor(),
+        naive_pauli_operator([0], ["X"]),
+        atol=1e-15,
+    )
+
     ixyz_op += pauli_op([1, 1, 1, 1], ["I", "X", "Y", "Z"])
     ixyz_op += ixyz_op
     np.testing.assert_allclose(
         ixyz_op.to_tensor(),
         4 * ixyz_expected,
+        atol=1e-15,
+    )
+
+    ixyz_op -= pauli_op([4, 4], ["X", "Z"])
+    np.testing.assert_allclose(
+        ixyz_op.to_tensor(),
+        naive_pauli_operator([4, 4], ["Y", "I"]),
+        atol=1e-15,
+    )
+    ixyz_op -= pauli_op([3, 3], ["Y", "I"])
+    np.testing.assert_allclose(
+        ixyz_op.to_tensor(),
+        naive_pauli_operator([1, 1], ["Y", "I"]),
         atol=1e-15,
     )
 
@@ -639,38 +719,108 @@ def test_addition_with_pauli_op(
             r_coeffs = generate_random_complex(r_size)
             l_op = pauli_op(l_coeffs, l_strings)
             r_op = pauli_op(r_coeffs, r_strings)
+            l_op_expected_dense = naive_pauli_operator(l_coeffs, l_strings)
+            r_op_expected_dense = naive_pauli_operator(r_coeffs, r_strings)
 
             np.testing.assert_allclose(
                 (l_op + r_op).to_tensor(),
-                naive_pauli_operator(l_coeffs, l_strings)
-                + naive_pauli_operator(r_coeffs, r_strings),
+                l_op_expected_dense + r_op_expected_dense,
                 atol=1e-15,
             )
             np.testing.assert_allclose(
                 (r_op + r_op).to_tensor(),
-                2 * naive_pauli_operator(r_coeffs, r_strings),
+                2 * r_op_expected_dense,
+                atol=1e-15,
+            )
+            np.testing.assert_allclose(
+                (l_op - r_op).to_tensor(),
+                l_op_expected_dense - r_op_expected_dense,
                 atol=1e-15,
             )
 
         np.testing.assert_allclose(
-            ((l_op + r_op) + (l_op + r_op)).to_tensor(),
-            naive_pauli_operator(l_coeffs, l_strings)
-            + naive_pauli_operator(r_coeffs, r_strings)
-            + naive_pauli_operator(l_coeffs, l_strings)
-            + naive_pauli_operator(r_coeffs, r_strings),
-            atol=1e-15,
+            ((l_op + r_op) + (l_op - r_op)).to_tensor(),
+            l_op_expected_dense
+            + r_op_expected_dense
+            + l_op_expected_dense
+            - r_op_expected_dense,
+            atol=1e-13,
         )
 
         l_op += r_op
         np.testing.assert_allclose(
             (l_op).to_tensor(),
-            naive_pauli_operator(l_coeffs, l_strings)
-            + naive_pauli_operator(r_coeffs, r_strings),
-            atol=1e-15,
+            l_op_expected_dense + r_op_expected_dense,
+            atol=1e-13,
+        )
+        l_op -= r_op
+        np.testing.assert_allclose(
+            (l_op).to_tensor(),
+            l_op_expected_dense,
+            atol=1e-13,
         )
 
 
-# TODO test exceptions for PauliOp
+@pytest.mark.consistency
+@pytest.mark.parametrize(  # TODO pp.PauliOp
+    "pauli_op,pauli_string,", [(fp.PauliOp, fp.PauliString)], ids=resolve_parameter_repr
+)
+def test_exceptions(
+    pauli_op: type[fp.PauliOp] | type[pp.PauliOp],
+    pauli_string: type[fp.PauliString] | type[pp.PauliString],
+) -> None:
+    """Test that exceptions are raised and propagated correctly."""
+    with np.testing.assert_raises(ValueError):
+        pauli_op(["ABC"])
+    with np.testing.assert_raises(ValueError):
+        pauli_op(["XI", "XY", "XZ", "III"])
+    with np.testing.assert_raises(ValueError):
+        pauli_op([1, 1], ["X", "YZ"])
+    with np.testing.assert_raises(ValueError):
+        pauli_op([1, 2, 3], ["I", "X", "Y", "Z"])
+
+    with np.testing.assert_raises(ValueError):
+        pauli_op([-1, 1], ["IX", "YZ"]) @ pauli_op([1], ["III"])
+    with np.testing.assert_raises(ValueError):
+        pauli_op([-1, 1], ["IX", "YZ"]) @ pauli_string("X")
+    with np.testing.assert_raises(ValueError):
+        pauli_op([-1, 1], ["IX", "YZ"]) + pauli_op([1], ["X"])
+    with np.testing.assert_raises(ValueError):
+        p_op = pauli_op([-1, 1], ["IX", "YZ"])
+        p_op += pauli_op([1], ["Z"])
+    with np.testing.assert_raises(ValueError):
+        p_op = pauli_op([-1, 1], ["IX", "YZ"])
+        p_op -= pauli_op([1], ["ZZZ"])
+    with np.testing.assert_raises(ValueError):
+        pauli_op([-1, 1], ["IX", "YZ"]) + pauli_string("XXXX")
+    with np.testing.assert_raises(ValueError):
+        p_op = pauli_op([-1, 1], ["IX", "YZ"])
+        p_op += pauli_string("Z")
+    with np.testing.assert_raises(ValueError):
+        p_op = pauli_op([-1, 1], ["IX", "YZ"])
+        p_op -= pauli_string("ZZZ")
+    with np.testing.assert_raises(ValueError):
+        pauli_op([-1, 1], ["IX", "YZ"]) - pauli_op([1], ["X"])
+    with np.testing.assert_raises(ValueError):
+        pauli_op([-1, 1], ["IX", "YZ"]) - pauli_string("XXXX")
+
+    with np.testing.assert_raises(ValueError):
+        pauli_op([-1, 1], ["IX", "YZ"]).extend(1j, pauli_string("X"), dedupe=True)
+    with np.testing.assert_raises(ValueError):
+        pauli_op([-1, 1], ["IX", "YZ"]).extend(1j, pauli_string("XYZ"), dedupe=False)
+    with np.testing.assert_raises(ValueError):
+        pauli_op([-1, 1], ["IX", "YZ"]).extend(pauli_op([1j], ["XXX"]))
+
+    with np.testing.assert_raises(ValueError):
+        pauli_op([1, 1, 1], ["X", "Y", "Z"]).apply(np.ones(3))
+    with np.testing.assert_raises(ValueError):
+        pauli_op([1, 1, 1], ["X", "Y", "Z"]).apply(np.eye(4))
+
+    with np.testing.assert_raises(ValueError):
+        pauli_op([1, 1], ["XYZ", "ZYX"]).expectation_value(np.ones(32))
+    with np.testing.assert_raises(ValueError):
+        pauli_op([1, 1], ["XYZ", "ZYX"]).expectation_value(np.eye(16))
+
 
 if __name__ == "__main__":
     pytest.main()

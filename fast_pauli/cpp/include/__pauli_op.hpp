@@ -33,50 +33,48 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
    */
   PauliOp() = default;
 
+  /**
+   * @brief Construct a PauliOp from a vector of strings and default
+   * corresponding coeffs to ones.
+   *
+   * @param strings vector of strings
+   */
   PauliOp(std::vector<std::string> const &strings) {
     for (auto const &s : strings) {
       pauli_strings.push_back(PauliString(s));
     }
     coeffs.resize(pauli_strings.size(), 1.0);
+    validate_pauli_strings(this->pauli_strings);
   }
 
   /**
-   * @brief Constructs a PauliOp from a vector of PauliStrings and
-   * defaults corresponding coeffs to ones.
+   * @brief Construct a PauliOp from a vector of PauliStrings and
+   * default corresponding coeffs to ones.
    *
+   * @param strings vector of PauliString objects
    */
   PauliOp(std::vector<PauliString> strings)
       : coeffs(strings.size(), 1.0), pauli_strings(std::move(strings))
   // note that strings are moved after coeffs initialization
   // according to the order of data member declarations in the class
-  {}
+  {
+    validate_pauli_strings(this->pauli_strings);
+  }
 
   /**
-   * @brief Constructs a PauliOp from a vector of PauliStrings and coefficients.
+   * @brief Construct a PauliOp from a vector of PauliStrings and
+   * corresponding coefficients.
    *
+   * @param coefficients vector of coefficients
+   * @param strings vector of PauliString objects
    */
   PauliOp(std::vector<H> coefficients, std::vector<PauliString> strings)
       : coeffs(std::move(coefficients)), pauli_strings(std::move(strings)) {
-    // TODO should we prohibit identical pauli strings in strings vector ?
-    // TODO may want to wrap this in a #IFDEF DEBUG block to avoid the overhead
-    // input check
     if (coeffs.size() != pauli_strings.size()) {
       throw std::invalid_argument(
           "coeffs and pauli_strings must have the same size");
     }
-
-    if (pauli_strings.size() > 0) {
-      // Check that the dims are all the same
-      size_t const n_qubits = pauli_strings[0].n_qubits();
-      bool const qubits_match =
-          std::all_of(pauli_strings.begin(), pauli_strings.end(),
-                      [n_qubits](PauliString const &ps) {
-                        return ps.n_qubits() == n_qubits;
-                      });
-      if (!qubits_match) {
-        throw std::invalid_argument("All PauliStrings must have the same size");
-      }
-    }
+    validate_pauli_strings(this->pauli_strings);
   }
 
   /**
@@ -108,6 +106,19 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
    * @return  size_t
    */
   size_t n_pauli_strings() const { return pauli_strings.size(); }
+
+  /**
+   * @brief Return the copy of PauliOp with the coefficients negated.
+   *
+   * @return PauliOp<T, H>
+   */
+  PauliOp<T, H> operator-() const {
+    std::vector<H> neg_coeffs;
+    neg_coeffs.reserve(coeffs.size());
+    std::transform(coeffs.begin(), coeffs.end(), std::back_inserter(neg_coeffs),
+                   [](auto const &c) { return -c; });
+    return PauliOp<T, H>(std::move(neg_coeffs), pauli_strings);
+  }
 
   /**
    * @brief Matrix multiplication of PauliOp with a PauliString on the right.
@@ -466,6 +477,26 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp {
       }
     }
     return res;
+  }
+
+  /**
+   * @brief Check that the dims of pauli strings are all the same
+   *
+   * @param pauli_strings
+   */
+  static inline void
+  validate_pauli_strings(std::vector<PauliString> const &pauli_strings) {
+    if (pauli_strings.size() > 0) {
+      size_t const n_qubits = pauli_strings[0].n_qubits();
+      bool const qubits_match =
+          std::all_of(pauli_strings.begin(), pauli_strings.end(),
+                      [n_qubits](PauliString const &ps) {
+                        return ps.n_qubits() == n_qubits;
+                      });
+      if (!qubits_match) {
+        throw std::invalid_argument("All PauliStrings must have the same size");
+      }
+    }
   }
 };
 

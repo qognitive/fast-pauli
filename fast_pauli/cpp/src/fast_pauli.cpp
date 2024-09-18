@@ -70,10 +70,25 @@ NB_MODULE(_fast_pauli, m) {
           },
           nb::is_operator())
       .def(
+          "__sub__",
+          [](fp::PauliString const &self, fp::PauliString const &other) {
+            return fp::PauliOp<float_type>({1, -1}, {self, other});
+          },
+          nb::is_operator())
+      .def(
           "__add__",
           [](fp::PauliString const &self,
              fp::PauliOp<float_type> const &rhs_op) {
             fp::PauliOp<float_type> res_op(rhs_op);
+            res_op.extend(1, self);
+            return res_op;
+          },
+          nb::is_operator())
+      .def(
+          "__sub__",
+          [](fp::PauliString const &self,
+             fp::PauliOp<float_type> const &rhs_op) {
+            fp::PauliOp<float_type> res_op(-rhs_op);
             res_op.extend(1, self);
             return res_op;
           },
@@ -190,7 +205,6 @@ NB_MODULE(_fast_pauli, m) {
              new (new_obj) fp::PauliOp<float_type>(coeffs_vec, pauli_strings);
            })
       // TODO memory efficient implementations for inplace @= operators
-      // TODO do we need sub and isub?
       .def(
           "__matmul__",
           [](fp::PauliOp<float_type> const &self,
@@ -232,6 +246,39 @@ NB_MODULE(_fast_pauli, m) {
           "__iadd__",
           [](fp::PauliOp<float_type> &self, fp::PauliString const &other_str) {
             self.extend(1, other_str);
+            return self;
+          },
+          nb::is_operator())
+      .def(
+          "__sub__",
+          [](fp::PauliOp<float_type> const &lhs_op,
+             fp::PauliOp<float_type> const &rhs_op) {
+            fp::PauliOp<float_type> res_op(lhs_op);
+            res_op.extend(-rhs_op);
+            return res_op;
+          },
+          nb::is_operator())
+      .def(
+          "__sub__",
+          [](fp::PauliOp<float_type> const &lhs_op,
+             fp::PauliString const &rhs_str) {
+            fp::PauliOp<float_type> res_op(lhs_op);
+            res_op.extend(-1, rhs_str);
+            return res_op;
+          },
+          nb::is_operator())
+      .def(
+          "__isub__",
+          [](fp::PauliOp<float_type> &self,
+             fp::PauliOp<float_type> const &other_op) {
+            self.extend(-other_op);
+            return self;
+          },
+          nb::is_operator())
+      .def(
+          "__isub__",
+          [](fp::PauliOp<float_type> &self, fp::PauliString const &other_str) {
+            self.extend(-1, other_str);
             return self;
           },
           nb::is_operator())
