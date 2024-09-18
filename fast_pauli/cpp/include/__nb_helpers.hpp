@@ -37,25 +37,25 @@ pass a view of the data to the C++ function.
 ambiguity about ownership.
 */
 
-template <size_t ndim>
-void assert_row_major(std::array<size_t, ndim> const &shape,
-                      std::array<size_t, ndim> const &strides) {
+template<size_t ndim>
+void
+assert_row_major(std::array<size_t, ndim> const& shape, std::array<size_t, ndim> const& strides)
+{
   // Check if the strides are C-style (row-major)
   std::array<size_t, ndim> expected_strides;
 
   // Calculate the expected strides using a prefix product (reversed)
-  std::exclusive_scan(shape.rbegin(), shape.rend(), expected_strides.rbegin(),
-                      1, std::multiplies<>{});
+  std::exclusive_scan(shape.rbegin(), shape.rend(), expected_strides.rbegin(), 1, std::multiplies<>{});
 
   //
   if (!std::ranges::equal(strides, expected_strides)) {
-    throw std::invalid_argument(
-        fmt::format("ndarray MUST have C-style strides.\n"
-                    "Expected strides: {}\n"
-                    "Got strides:      {}\n"
-                    "Shape:            {}",
-                    fmt::join(expected_strides, ", "), fmt::join(strides, ", "),
-                    fmt::join(shape, ", ")));
+    throw std::invalid_argument(fmt::format("ndarray MUST have C-style strides.\n"
+                                            "Expected strides: {}\n"
+                                            "Got strides:      {}\n"
+                                            "Shape:            {}",
+                                            fmt::join(expected_strides, ", "),
+                                            fmt::join(strides, ", "),
+                                            fmt::join(shape, ", ")));
   }
 }
 
@@ -73,12 +73,13 @@ void assert_row_major(std::array<size_t, ndim> const &shape,
  * @return std::mdspan<T, std::dextents<size_t, ndim>>
  */
 
-template <typename T, size_t ndim, typename U>
-std::mdspan<T, std::dextents<size_t, ndim>> ndarray_to_mdspan(U a) {
+template<typename T, size_t ndim, typename U>
+std::mdspan<T, std::dextents<size_t, ndim>>
+ndarray_to_mdspan(U a)
+{
 
   if (a.ndim() != ndim) {
-    throw std::invalid_argument(fmt::format(
-        "ndarray_to_mdspan: expected {} dimensions, got {}", ndim, a.ndim()));
+    throw std::invalid_argument(fmt::format("ndarray_to_mdspan: expected {} dimensions, got {}", ndim, a.ndim()));
   }
 
   // Collect shape information
@@ -106,9 +107,10 @@ std::mdspan<T, std::dextents<size_t, ndim>> ndarray_to_mdspan(U a) {
  * @param a
  * @return std::pair<std::vector<T>, std::array<size_t, ndim>>
  */
-template <typename T, size_t ndim>
+template<typename T, size_t ndim>
 std::pair<std::vector<T>, std::array<size_t, ndim>>
-ndarray_to_raw(nb::ndarray<T> a) {
+ndarray_to_raw(nb::ndarray<T> a)
+{
   // Shape info
   std::array<size_t, ndim> shape;
   std::array<size_t, ndim> strides;
@@ -132,9 +134,10 @@ ndarray_to_raw(nb::ndarray<T> a) {
  * @param shape Shape array
  * @return nb::ndarray<nb::numpy, T>
  */
-template <typename T, size_t ndim>
+template<typename T, size_t ndim>
 nb::ndarray<nb::numpy, T>
-owning_ndarray_from_shape(std::array<size_t, ndim> shape) {
+owning_ndarray_from_shape(std::array<size_t, ndim> shape)
+{
   // Collect shape information
   size_t size = std::reduce(shape.begin(), shape.end(), 1, std::multiplies<>());
 
@@ -142,20 +145,20 @@ owning_ndarray_from_shape(std::array<size_t, ndim> shape) {
 
   // weirdness required by nanobind to properly pass ownership through
   // nb::handle, see https://github.com/wjakob/nanobind/discussions/573
-  struct Temp {
+  struct Temp
+  {
     std::vector<T> data;
   };
-  Temp *tmp = new Temp{std::vector<T>(size)};
+  Temp* tmp = new Temp{ std::vector<T>(size) };
 
-  nb::capsule deleter(
-      tmp, [](void *data) noexcept { delete static_cast<Temp *>(data); });
+  nb::capsule deleter(tmp, [](void* data) noexcept { delete static_cast<Temp*>(data); });
 
   // TODO can we do this without speciyfin that it's a numpy array?
   return nb::ndarray<nb::numpy, T>(
-      /*data*/ tmp->data.data(),
-      /*ndim*/ shape.size(),
-      /*shape */ shape.data(),
-      /*deleter*/ deleter);
+    /*data*/ tmp->data.data(),
+    /*ndim*/ shape.size(),
+    /*shape */ shape.data(),
+    /*deleter*/ deleter);
 }
 
 /**
@@ -167,9 +170,10 @@ owning_ndarray_from_shape(std::array<size_t, ndim> shape) {
  * @param a The mdspan
  * @return nb::ndarray<nb::numpy, T>
  */
-template <typename T, size_t ndim>
+template<typename T, size_t ndim>
 nb::ndarray<nb::numpy, T>
-owning_ndarray_like_mdspan(std::mdspan<T, std::dextents<size_t, ndim>> a) {
+owning_ndarray_like_mdspan(std::mdspan<T, std::dextents<size_t, ndim>> a)
+{
   // Collect shape information
   std::array<size_t, ndim> shape;
   for (size_t i = 0; i < ndim; ++i) {

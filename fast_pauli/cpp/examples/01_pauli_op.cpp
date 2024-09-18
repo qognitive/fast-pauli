@@ -5,7 +5,9 @@
 
 using namespace fast_pauli;
 
-int main() {
+int
+main()
+{
   std::vector<PauliString> pauli_strings(100000, "XYZXYZXYZXYZ");
 
   std::vector<std::complex<double>> coeffs(pauli_strings.size(), 1);
@@ -18,8 +20,7 @@ int main() {
   std::mt19937 gen(rd());
   std::uniform_real_distribution<> dis(0, 1.0);
   std::vector<std::complex<double>> state(dims, 0);
-  std::generate(state.begin(), state.end(),
-                [&]() { return std::complex<double>(dis(gen), dis(gen)); });
+  std::generate(state.begin(), state.end(), [&]() { return std::complex<double>(dis(gen), dis(gen)); });
 
   // Apply the PauliOp
   std::vector<std::complex<double>> res = pauli_op.apply(state);

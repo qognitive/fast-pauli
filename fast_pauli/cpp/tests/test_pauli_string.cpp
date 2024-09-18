@@ -13,12 +13,13 @@ using namespace fast_pauli;
 // Helpers
 //
 
-template <std::floating_point T>
+template<std::floating_point T>
 using ComplexMatrix = std::vector<std::vector<std::complex<T>>>;
 
-template <std::floating_point T>
-ComplexMatrix<T> tensor_prod(ComplexMatrix<T> const &A,
-                             ComplexMatrix<T> const &B) {
+template<std::floating_point T>
+ComplexMatrix<T>
+tensor_prod(ComplexMatrix<T> const& A, ComplexMatrix<T> const& B)
+{
   size_t const n = A.size();
   size_t const m = A[0].size();
   size_t const p = B.size();
@@ -39,12 +40,14 @@ ComplexMatrix<T> tensor_prod(ComplexMatrix<T> const &A,
   return C;
 }
 
-template <std::floating_point T>
-ComplexMatrix<T> paulistring_to_dense(PauliString const &ps) {
+template<std::floating_point T>
+ComplexMatrix<T>
+paulistring_to_dense(PauliString const& ps)
+{
   ComplexMatrix<double> res, tmp;
-  res = {{1.}};
+  res = { { 1. } };
 
-  for (auto const &p : ps.paulis | std::views::reverse) {
+  for (auto const& p : ps.paulis | std::views::reverse) {
     tmp = p.to_tensor<double>();
     res = tensor_prod(tmp, res);
   }
@@ -52,8 +55,8 @@ ComplexMatrix<T> paulistring_to_dense(PauliString const &ps) {
 }
 
 std::vector<std::complex<double>>
-dense_apply(PauliString const &ps,
-            std::vector<std::complex<double>> const &state) {
+dense_apply(PauliString const& ps, std::vector<std::complex<double>> const& state)
+{
   ComplexMatrix<double> pauli_mat = paulistring_to_dense<double>(ps);
   std::vector<std::complex<double>> res(state.size(), 0);
   for (size_t i = 0; i < pauli_mat.size(); ++i) {
@@ -64,59 +67,61 @@ dense_apply(PauliString const &ps,
   return res;
 }
 
-TEST_CASE("check tensor_prod helper") {
-  ComplexMatrix<double> A{{1, 2}, {3, 4}};
-  ComplexMatrix<double> B{{5, 6}, {7, 8}};
+TEST_CASE("check tensor_prod helper")
+{
+  ComplexMatrix<double> A{ { 1, 2 }, { 3, 4 } };
+  ComplexMatrix<double> B{ { 5, 6 }, { 7, 8 } };
   ComplexMatrix<double> C = tensor_prod(A, B);
 
   fmt::print("C: \n{}\n", fmt::join(C, "\n"));
 
-  CHECK(C == ComplexMatrix<double>{{5, 6, 10, 12},
-                                   {7, 8, 14, 16},
-                                   {15, 18, 20, 24},
-                                   {21, 24, 28, 32}});
+  CHECK(C == ComplexMatrix<double>{ { 5, 6, 10, 12 }, { 7, 8, 14, 16 }, { 15, 18, 20, 24 }, { 21, 24, 28, 32 } });
 }
 
 //
 // Tests
 //
 
-TEST_CASE("test pauli default init") {
+TEST_CASE("test pauli default init")
+{
   std::vector<Pauli> paulis(10);
   PauliString ps(paulis);
   CHECK(ps.weight == 0);
   fmt::print("PauliString: {}\n", ps);
 }
 
-TEST_CASE("pauli string manual init") {
-  std::vector paulis{Pauli{0}, Pauli{1}, Pauli{2}, Pauli{3}};
-  PauliString ps{paulis};
+TEST_CASE("pauli string manual init")
+{
+  std::vector paulis{ Pauli{ 0 }, Pauli{ 1 }, Pauli{ 2 }, Pauli{ 3 } };
+  PauliString ps{ paulis };
   CHECK(ps.weight == 3);
   fmt::print("PauliString: {}\n", ps);
 }
 
-TEST_CASE("string init") {
-  PauliString ps{"IXYZ"};
+TEST_CASE("string init")
+{
+  PauliString ps{ "IXYZ" };
   CHECK(ps.weight == 3);
   fmt::print("PauliString: {}\n", ps);
 }
 
-TEST_CASE("getters") {
+TEST_CASE("getters")
+{
 
   {
-    PauliString ps{"I"};
+    PauliString ps{ "I" };
     CHECK(ps.n_qubits() == 1);
     CHECK(ps.dim() == 2);
   }
 
   {
-    PauliString ps{"IXYZI"};
+    PauliString ps{ "IXYZI" };
     CHECK(ps.n_qubits() == 5);
     CHECK(ps.dim() == 32);
   }
 
   {
-    PauliString ps{"IXYZ"};
+    PauliString ps{ "IXYZ" };
     CHECK(ps.n_qubits() == 4);
     CHECK(ps.dim() == 16);
   }
@@ -128,8 +133,9 @@ TEST_CASE("getters") {
   }
 }
 
-TEST_CASE("test sparse repr") {
-  for (PauliString ps : {"IXYZ", "IX", "XXYIYZI"}) {
+TEST_CASE("test sparse repr")
+{
+  for (PauliString ps : { "IXYZ", "IX", "XXYIYZI" }) {
     ComplexMatrix<double> res = paulistring_to_dense<double>(ps);
     ComplexMatrix<double> myres = ps.get_dense_repr<double>();
 
@@ -146,8 +152,9 @@ TEST_CASE("test sparse repr") {
   }
 }
 
-TEST_CASE("test apply trivial") {
-  PauliString ps{"IIII"};
+TEST_CASE("test apply trivial")
+{
+  PauliString ps{ "IIII" };
 
   std::vector<std::complex<double>> state(1 << ps.paulis.size(), 1.);
 
@@ -156,8 +163,9 @@ TEST_CASE("test apply trivial") {
   CHECK(new_state == state);
 }
 
-TEST_CASE("test apply simple") {
-  PauliString ps{"IXI"};
+TEST_CASE("test apply simple")
+{
+  PauliString ps{ "IXI" };
 
   std::vector<std::complex<double>> state(1 << ps.paulis.size(), 0);
   state[6] = 1.;
@@ -169,15 +177,15 @@ TEST_CASE("test apply simple") {
   CHECK(new_state == expected);
 }
 
-TEST_CASE("test apply") {
+TEST_CASE("test apply")
+{
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_real_distribution<> dis(1.0, 2.0);
 
-  for (PauliString ps : {"IXYZ", "YYIX", "XXYIYZ", "IZIXYYZ", "IZIXYYZIXYZ"}) {
+  for (PauliString ps : { "IXYZ", "YYIX", "XXYIYZ", "IZIXYYZ", "IZIXYYZIXYZ" }) {
     std::vector<std::complex<double>> state(1 << ps.paulis.size());
-    std::generate(state.begin(), state.end(),
-                  [&]() { return std::complex<double>(dis(gen), dis(gen)); });
+    std::generate(state.begin(), state.end(), [&]() { return std::complex<double>(dis(gen), dis(gen)); });
 
     auto new_state = ps.apply(state);
     auto expected = dense_apply(ps, state);
@@ -192,7 +200,8 @@ TEST_CASE("test apply") {
   }
 }
 
-TEST_CASE("test apply batch") {
+TEST_CASE("test apply batch")
+{
   // For random states
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -202,26 +211,22 @@ TEST_CASE("test apply batch") {
 
   // Testing each of these pauli strings individually
   // NOTE: apply_batch takes the transpose of the states and new_states
-  for (PauliString ps : {"IXYZ", "YYIX", "XXYIYZ", "IZIXYYZ"}) {
+  for (PauliString ps : { "IXYZ", "YYIX", "XXYIYZ", "IZIXYYZ" }) {
     size_t const dims = ps.dim();
 
     std::vector<std::complex<double>> states_raw(dims * n_states);
-    std::generate(states_raw.begin(), states_raw.end(),
-                  [&]() { return std::complex<double>(dis(gen), dis(gen)); });
-    std::mdspan<std::complex<double>, std::dextents<size_t, 2>> states_T(
-        states_raw.data(), dims, n_states);
+    std::generate(states_raw.begin(), states_raw.end(), [&]() { return std::complex<double>(dis(gen), dis(gen)); });
+    std::mdspan<std::complex<double>, std::dextents<size_t, 2>> states_T(states_raw.data(), dims, n_states);
 
     std::vector<std::complex<double>> new_states_raw(dims * n_states);
-    std::mdspan<std::complex<double>, std::dextents<size_t, 2>> new_states_T(
-        new_states_raw.data(), dims, n_states);
+    std::mdspan<std::complex<double>, std::dextents<size_t, 2>> new_states_T(new_states_raw.data(), dims, n_states);
 
     ps.apply_batch(new_states_T, states_T, std::complex<double>(1.));
 
     // Calculate expected
     auto ps_dense = ps.get_dense_repr<double>(); // d x d
     std::vector<std::complex<double>> expected_raw(dims * n_states, 0);
-    std::mdspan<std::complex<double>, std::dextents<size_t, 2>> expected(
-        expected_raw.data(), dims, n_states);
+    std::mdspan<std::complex<double>, std::dextents<size_t, 2>> expected(expected_raw.data(), dims, n_states);
 
     for (size_t i = 0; i < (dims); ++i) {
       for (size_t t = 0; t < n_states; ++t) {
@@ -240,7 +245,8 @@ TEST_CASE("test apply batch") {
   }
 }
 
-TEST_CASE("get nontrivial paulis") {
+TEST_CASE("get nontrivial paulis")
+{
   {
     auto res = get_nontrivial_paulis(0);
     CHECK(res.size() == 0);
@@ -301,29 +307,31 @@ TEST_CASE("get nontrivial paulis") {
   }
 }
 
-TEST_CASE("idx combinations") {
+TEST_CASE("idx combinations")
+{
   {
     auto res = idx_combinations(4, 1);
     CHECK(res.size() == 4);
-    CHECK(res[0] == std::vector<size_t>{0});
-    CHECK(res[1] == std::vector<size_t>{1});
-    CHECK(res[2] == std::vector<size_t>{2});
-    CHECK(res[3] == std::vector<size_t>{3});
+    CHECK(res[0] == std::vector<size_t>{ 0 });
+    CHECK(res[1] == std::vector<size_t>{ 1 });
+    CHECK(res[2] == std::vector<size_t>{ 2 });
+    CHECK(res[3] == std::vector<size_t>{ 3 });
   }
 
   {
     auto res = idx_combinations(4, 2);
     CHECK(res.size() == 6);
-    CHECK(res[0] == std::vector<size_t>{0, 1});
-    CHECK(res[1] == std::vector<size_t>{0, 2});
-    CHECK(res[2] == std::vector<size_t>{0, 3});
-    CHECK(res[3] == std::vector<size_t>{1, 2});
-    CHECK(res[4] == std::vector<size_t>{1, 3});
-    CHECK(res[5] == std::vector<size_t>{2, 3});
+    CHECK(res[0] == std::vector<size_t>{ 0, 1 });
+    CHECK(res[1] == std::vector<size_t>{ 0, 2 });
+    CHECK(res[2] == std::vector<size_t>{ 0, 3 });
+    CHECK(res[3] == std::vector<size_t>{ 1, 2 });
+    CHECK(res[4] == std::vector<size_t>{ 1, 3 });
+    CHECK(res[5] == std::vector<size_t>{ 2, 3 });
   }
 }
 
-TEST_CASE("calculate pauli strings") {
+TEST_CASE("calculate pauli strings")
+{
   {
     auto res = calcutate_pauli_strings(4, 0);
     CHECK(res.size() == 1);
@@ -350,7 +358,8 @@ TEST_CASE("calculate pauli strings") {
   }
 }
 
-TEST_CASE("calculate pauli string max weight") {
+TEST_CASE("calculate pauli string max weight")
+{
   {
     auto res = calculate_pauli_strings_max_weight(4, 0);
     CHECK(res.size() == 1);

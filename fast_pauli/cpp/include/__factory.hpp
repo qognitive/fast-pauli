@@ -13,12 +13,17 @@ namespace fast_pauli {
 //
 // Types traits and concepts
 //
-template <typename T> struct is_complex : std::false_type {};
+template<typename T>
+struct is_complex : std::false_type
+{};
 
-template <std::floating_point T>
-struct is_complex<std::complex<T>> : std::true_type {};
+template<std::floating_point T>
+struct is_complex<std::complex<T>> : std::true_type
+{};
 
-template <typename T> struct type_identity {
+template<typename T>
+struct type_identity
+{
   typedef T type;
 };
 
@@ -32,9 +37,11 @@ https://pytorch.org/cppdocs/notes/tensor_creation.html#picking-a-factory-functio
 */
 
 // Empty
-template <typename T, size_t n_dim>
+template<typename T, size_t n_dim>
   requires is_complex<T>::value || std::floating_point<T>
-constexpr auto empty(std::vector<T> &blob, std::array<size_t, n_dim> extents) {
+constexpr auto
+empty(std::vector<T>& blob, std::array<size_t, n_dim> extents)
+{
 
   // Calculate the total size and reserve the memory
   size_t total_size = 1;
@@ -47,9 +54,11 @@ constexpr auto empty(std::vector<T> &blob, std::array<size_t, n_dim> extents) {
 }
 
 // Zeros
-template <typename T, size_t n_dim>
+template<typename T, size_t n_dim>
   requires is_complex<T>::value || std::floating_point<T>
-constexpr auto zeros(std::vector<T> &blob, std::array<size_t, n_dim> extents) {
+constexpr auto
+zeros(std::vector<T>& blob, std::array<size_t, n_dim> extents)
+{
   blob.clear(); // Clear so we have consistent behavior (e.g. not overwriting
                 // some of the values)
 
@@ -64,10 +73,11 @@ constexpr auto zeros(std::vector<T> &blob, std::array<size_t, n_dim> extents) {
 }
 
 // Rand
-template <typename T, size_t n_dim>
+template<typename T, size_t n_dim>
   requires is_complex<T>::value || std::floating_point<T>
-auto rand(std::vector<T> &blob, std::array<size_t, n_dim> extents,
-          size_t seed = 18) {
+auto
+rand(std::vector<T>& blob, std::array<size_t, n_dim> extents, size_t seed = 18)
+{
   blob.clear(); // Clear so we have consistent behavior (e.g. not overwriting
                 // some of the values)
 
@@ -87,12 +97,11 @@ auto rand(std::vector<T> &blob, std::array<size_t, n_dim> extents,
   if constexpr (is_complex<T>::value) {
     std::uniform_real_distribution<typename T::value_type> dis(0, 1.0);
 
-    std::generate(blob.begin(), blob.end(),
-                  [&]() { return T{dis(gen), dis(gen)}; });
+    std::generate(blob.begin(), blob.end(), [&]() { return T{ dis(gen), dis(gen) }; });
   } else {
     std::uniform_real_distribution<T> dis(0, 1.0);
 
-    std::generate(blob.begin(), blob.end(), [&]() { return T{dis(gen)}; });
+    std::generate(blob.begin(), blob.end(), [&]() { return T{ dis(gen) }; });
   }
 
   return std::mdspan<T, std::dextents<size_t, n_dim>>(blob.data(), extents);

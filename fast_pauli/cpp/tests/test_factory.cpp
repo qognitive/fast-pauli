@@ -3,11 +3,12 @@
 #include "fast_pauli.hpp"
 #include <doctest/doctest.h>
 
-TEST_CASE("empty") {
+TEST_CASE("empty")
+{
   // Simple test
   {
     std::vector<float> v_raw;
-    std::mdspan v = fast_pauli::empty<float, 3>(v_raw, {3, 9, 19});
+    std::mdspan v = fast_pauli::empty<float, 3>(v_raw, { 3, 9, 19 });
 
     CHECK(v.extent(0) == 3);
     CHECK(v.extent(1) == 9);
@@ -17,8 +18,7 @@ TEST_CASE("empty") {
   // Complex test
   {
     std::vector<std::complex<double>> v_raw;
-    std::mdspan v =
-        fast_pauli::empty<std::complex<double>, 3>(v_raw, {3, 9, 19});
+    std::mdspan v = fast_pauli::empty<std::complex<double>, 3>(v_raw, { 3, 9, 19 });
 
     CHECK(v.extent(0) == 3);
     CHECK(v.extent(1) == 9);
@@ -26,11 +26,12 @@ TEST_CASE("empty") {
   }
 }
 
-TEST_CASE("zeros") {
+TEST_CASE("zeros")
+{
   // Simple test
   {
     std::vector<float> v_raw;
-    std::mdspan v = fast_pauli::zeros<float, 3>(v_raw, {3, 9, 19});
+    std::mdspan v = fast_pauli::zeros<float, 3>(v_raw, { 3, 9, 19 });
     CHECK(v.extent(0) == 3);
     CHECK(v.extent(1) == 9);
     CHECK(v.extent(2) == 19);
@@ -47,8 +48,7 @@ TEST_CASE("zeros") {
   // Complex test
   {
     std::vector<std::complex<double>> v_raw;
-    std::mdspan v =
-        fast_pauli::zeros<std::complex<double>, 3>(v_raw, {3, 9, 19});
+    std::mdspan v = fast_pauli::zeros<std::complex<double>, 3>(v_raw, { 3, 9, 19 });
     CHECK(v.extent(0) == 3);
     CHECK(v.extent(1) == 9);
     CHECK(v.extent(2) == 19);
@@ -63,10 +63,11 @@ TEST_CASE("zeros") {
   }
 }
 
-TEST_CASE("rand") {
+TEST_CASE("rand")
+{
   {
     std::vector<float> v_raw;
-    std::mdspan v = fast_pauli::rand<float, 3>(v_raw, {3, 9, 19});
+    std::mdspan v = fast_pauli::rand<float, 3>(v_raw, { 3, 9, 19 });
     CHECK(v.extent(0) == 3);
     CHECK(v.extent(1) == 9);
     CHECK(v.extent(2) == 19);
@@ -74,8 +75,7 @@ TEST_CASE("rand") {
 
   {
     std::vector<std::complex<double>> v_raw;
-    std::mdspan v =
-        fast_pauli::rand<std::complex<double>, 3>(v_raw, {3, 9, 19});
+    std::mdspan v = fast_pauli::rand<std::complex<double>, 3>(v_raw, { 3, 9, 19 });
     CHECK(v.extent(0) == 3);
     CHECK(v.extent(1) == 9);
     CHECK(v.extent(2) == 19);

@@ -29,16 +29,15 @@ namespace fast_pauli {
  * @param k The column index of the matrix
  * @param m The values of the matrix
  */
-template <std::floating_point T>
+template<std::floating_point T>
 std::tuple<std::vector<size_t>, std::vector<std::complex<T>>>
-get_sparse_repr(std::vector<Pauli> const &paulis) {
+get_sparse_repr(std::vector<Pauli> const& paulis)
+{
   // We reverse the view here because the tensor product is taken from right
   // to left
   auto ps = paulis | std::views::reverse;
   size_t const n = paulis.size();
-  size_t const nY =
-      std::count_if(ps.begin(), ps.end(),
-                    [](fast_pauli::Pauli const &p) { return p.code == 2; });
+  size_t const nY = std::count_if(ps.begin(), ps.end(), [](fast_pauli::Pauli const& p) { return p.code == 2; });
   size_t const dim = n ? 1 << n : 0;
 
   if (dim == 0)
@@ -49,7 +48,7 @@ get_sparse_repr(std::vector<Pauli> const &paulis) {
 
   // Helper function that let's us know if a pauli matrix has diagonal (or
   // conversely off-diagonal) elements
-  auto diag = [](Pauli const &p) {
+  auto diag = [](Pauli const& p) {
     if (p.code == 0 || p.code == 3) {
       return 0UL;
     } else {
@@ -59,14 +58,14 @@ get_sparse_repr(std::vector<Pauli> const &paulis) {
   // Helper function that resolves first value of pauli string
   auto initial_value = [&nY]() -> std::complex<T> {
     switch (nY % 4) {
-    case 0:
-      return 1.0;
-    case 1:
-      return {0.0, -1.0};
-    case 2:
-      return -1.0;
-    case 3:
-      return {0.0, 1.0};
+      case 0:
+        return 1.0;
+      case 1:
+        return { 0.0, -1.0 };
+      case 2:
+        return -1.0;
+      case 3:
+        return { 0.0, 1.0 };
     }
     return {};
   };
@@ -80,7 +79,7 @@ get_sparse_repr(std::vector<Pauli> const &paulis) {
 
   // Populate the rest of the values in a recursive-like manner
   for (size_t l = 0; l < n; ++l) {
-    Pauli const &po = ps[l];
+    Pauli const& po = ps[l];
 
     T eps = 1.0;
     if (po.code == 2 || po.code == 3) {
@@ -105,7 +104,8 @@ get_sparse_repr(std::vector<Pauli> const &paulis) {
  * where \f$ \sigma_i \in \{ I,X,Y,Z \} \f$
  *
  */
-struct PauliString {
+struct PauliString
+{
   uint8_t weight;
   std::vector<Pauli> paulis;
 
@@ -125,8 +125,10 @@ struct PauliString {
    *
    */
   PauliString(std::vector<Pauli> paulis)
-      : weight(0), paulis(std::move(paulis)) {
-    for (auto const &pauli : this->paulis) {
+    : weight(0)
+    , paulis(std::move(paulis))
+  {
+    for (auto const& pauli : this->paulis) {
       weight += pauli.code > 0;
     }
   }
@@ -137,8 +139,10 @@ struct PauliString {
    *
    */
   PauliString(std::span<fast_pauli::Pauli> paulis)
-      : weight(0), paulis(paulis.begin(), paulis.end()) {
-    for (auto const &pauli : paulis) {
+    : weight(0)
+    , paulis(paulis.begin(), paulis.end())
+  {
+    for (auto const& pauli : paulis) {
       weight += pauli.code > 0;
     }
   }
@@ -148,27 +152,28 @@ struct PauliString {
    * This is often the most compact way to initialize a PauliString.
    *
    */
-  PauliString(std::string const &str) : weight(0) {
-    for (auto const &c : str) {
+  PauliString(std::string const& str)
+    : weight(0)
+  {
+    for (auto const& c : str) {
       switch (c) {
-      case 'I':
-        paulis.push_back(fast_pauli::Pauli{0});
-        break;
-      case 'X':
-        paulis.push_back(fast_pauli::Pauli{1});
-        weight += 1;
-        break;
-      case 'Y':
-        paulis.push_back(fast_pauli::Pauli{2});
-        weight += 1;
-        break;
-      case 'Z':
-        paulis.push_back(fast_pauli::Pauli{3});
-        weight += 1;
-        break;
-      default:
-        throw std::invalid_argument(std::string("Invalid Pauli character ") +
-                                    c);
+        case 'I':
+          paulis.push_back(fast_pauli::Pauli{ 0 });
+          break;
+        case 'X':
+          paulis.push_back(fast_pauli::Pauli{ 1 });
+          weight += 1;
+          break;
+        case 'Y':
+          paulis.push_back(fast_pauli::Pauli{ 2 });
+          weight += 1;
+          break;
+        case 'Z':
+          paulis.push_back(fast_pauli::Pauli{ 3 });
+          weight += 1;
+          break;
+        default:
+          throw std::invalid_argument(std::string("Invalid Pauli character ") + c);
       }
     }
   }
@@ -178,18 +183,23 @@ struct PauliString {
    * Ex: std::vector<PauliString> pauli_strings = {"IXYZ", "IIIII"};
    *
    */
-  PauliString(char const *str) : PauliString(std::string(str)) {}
+  PauliString(char const* str)
+    : PauliString(std::string(str))
+  {
+  }
 
-  PauliString(PauliString const &other)
-      : weight(other.weight), paulis(other.paulis) {};
-  PauliString &operator=(PauliString const &other) {
+  PauliString(PauliString const& other)
+    : weight(other.weight)
+    , paulis(other.paulis) {};
+  PauliString& operator=(PauliString const& other)
+  {
     this->weight = other.weight;
     this->paulis = other.paulis;
     return *this;
   };
 
   // TODO should we separately define <,> operators based just on pualis vector
-  friend auto operator<=>(PauliString const &, PauliString const &) = default;
+  friend auto operator<=>(PauliString const&, PauliString const&) = default;
 
   /**
    * @brief Returns the result of matrix multiplication of two PauliStrings and
@@ -200,8 +210,8 @@ struct PauliString {
    * @return  std::pair<std::complex<double>, PauliString> phase and resulting
    * PauliString
    */
-  friend std::pair<std::complex<double>, PauliString>
-  operator*(PauliString const &lhs, PauliString const &rhs) {
+  friend std::pair<std::complex<double>, PauliString> operator*(PauliString const& lhs, PauliString const& rhs)
+  {
     if (lhs.dim() != rhs.dim()) {
       throw std::invalid_argument("PauliStrings must have the same size");
     }
@@ -216,7 +226,7 @@ struct PauliString {
       new_paulis.push_back(new_pauli);
     }
 
-    return {new_phase, PauliString(std::move(new_paulis))};
+    return { new_phase, PauliString(std::move(new_paulis)) };
   }
 
   //
@@ -233,9 +243,7 @@ struct PauliString {
    *
    * @return  size_t
    */
-  size_t dim() const noexcept {
-    return paulis.size() ? 1UL << paulis.size() : 0;
-  }
+  size_t dim() const noexcept { return paulis.size() ? 1UL << paulis.size() : 0; }
 
   /**
    * @brief @copybrief PauliString::apply(std::mdspan)
@@ -246,9 +254,9 @@ struct PauliString {
    * @return  std::vector<std::complex<T>> The output state after
    * applying the PauliString.
    */
-  template <std::floating_point T>
-  std::vector<std::complex<T>>
-  apply(std::vector<std::complex<T>> const &v) const {
+  template<std::floating_point T>
+  std::vector<std::complex<T>> apply(std::vector<std::complex<T>> const& v) const
+  {
     // route this to implementation we have for mdspan specialization
     return this->apply(std::mdspan(v.data(), v.size()));
   }
@@ -264,13 +272,12 @@ struct PauliString {
    * @return  std::vector<std::complex<T>> The output state after
    * applying the PauliString.
    */
-  template <std::floating_point T>
-  std::vector<std::complex<T>>
-  apply(std::mdspan<std::complex<T> const, std::dextents<size_t, 1>> v) const {
+  template<std::floating_point T>
+  std::vector<std::complex<T>> apply(std::mdspan<std::complex<T> const, std::dextents<size_t, 1>> v) const
+  {
     // Input check
     if (v.size() != dim()) {
-      throw std::invalid_argument(
-          "Input vector size must match the number of qubits");
+      throw std::invalid_argument("Input vector size must match the number of qubits");
     }
 
     auto [k, m] = get_sparse_repr<T>(paulis);
@@ -291,18 +298,16 @@ struct PauliString {
    * @param states The input vector to apply the PauliString to. Must be the
    * same size as PauliString.dim().
    */
-  template <std::floating_point T>
-  void
-  apply(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> new_states,
-        std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states) const {
+  template<std::floating_point T>
+  void apply(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> new_states,
+             std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states) const
+  {
     // Input check
     if (states.size() != dim()) {
-      throw std::invalid_argument(
-          "Input vector size must match the number of qubits");
+      throw std::invalid_argument("Input vector size must match the number of qubits");
     }
     if (states.size() != new_states.size()) {
-      throw std::invalid_argument(
-          "new_states must have the same dimensions as states");
+      throw std::invalid_argument("new_states must have the same dimensions as states");
     }
 
     // WARNING: can't use structured bindings here because of a bug in LLVM
@@ -334,25 +339,23 @@ struct PauliString {
    * (n_dim x n_states)
    * @param c Multiplication factor to apply to the PauliString
    */
-  template <std::floating_point T>
-  void apply_batch(std::mdspan<std::complex<T>, std::dextents<size_t, 2>>
-                       new_states_T, // extent(0) = dims, extent(1) = n_states
-                   std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const
-                       states_T, // extent(0) = dims, extent(1) = n_states
-                   std::complex<T> const c) const {
+  template<std::floating_point T>
+  void apply_batch(
+    std::mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states_T,   // extent(0) = dims, extent(1) = n_states
+    std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const states_T, // extent(0) = dims, extent(1) = n_states
+    std::complex<T> const c) const
+  {
     // Input check
     if (states_T.extent(0) != dim()) {
-      auto error_msg =
-          fmt::format("[PauliString] states shape ({}) must match the "
-                      "dimension of the operators ({})",
-                      states_T.extent(0), dim());
+      auto error_msg = fmt::format("[PauliString] states shape ({}) must match the "
+                                   "dimension of the operators ({})",
+                                   states_T.extent(0),
+                                   dim());
       throw std::invalid_argument(error_msg);
     }
 
-    if ((states_T.extent(0) != new_states_T.extent(0)) ||
-        states_T.extent(1) != new_states_T.extent(1)) {
-      throw std::invalid_argument(
-          "[PauliString] new_states must have the same dimensions as states");
+    if ((states_T.extent(0) != new_states_T.extent(0)) || states_T.extent(1) != new_states_T.extent(1)) {
+      throw std::invalid_argument("[PauliString] new_states must have the same dimensions as states");
     }
 
     // WARNING: can't use structugred bindings here because of a bug in LLVM
@@ -365,7 +368,7 @@ struct PauliString {
     for (size_t i = 0; i < states_T.extent(0); ++i) {
       std::complex<T> const c_m_i = c * m[i];
       std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states_row =
-          std::submdspan(states_T, k[i], std::full_extent);
+        std::submdspan(states_T, k[i], std::full_extent);
       for (size_t t = 0; t < states_T.extent(1); ++t) {
         new_states_T(i, t) += c_m_i * states_row[t];
       }
@@ -390,30 +393,27 @@ struct PauliString {
    * (n_dim x n_states)
    * @param c Multiplication factor to apply to the PauliString
    */
-  template <std::floating_point T>
-  void expectation_value(
-      std::mdspan<std::complex<T>, std::dextents<size_t, 1>>
-          expectation_vals_out,
-      std::mdspan<std::complex<T>, std::dextents<size_t, 2>> states,
-      std::complex<T> const c = 1.0) const {
+  template<std::floating_point T>
+  void expectation_value(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> expectation_vals_out,
+                         std::mdspan<std::complex<T>, std::dextents<size_t, 2>> states,
+                         std::complex<T> const c = 1.0) const
+  {
     // Input check
     if (states.extent(0) != dim())
-      throw std::invalid_argument(
-          fmt::format("[PauliString] states shape ({}) must match the dimension"
-                      " of the operators ({})",
-                      states.extent(0), dim()));
+      throw std::invalid_argument(fmt::format("[PauliString] states shape ({}) must match the dimension"
+                                              " of the operators ({})",
+                                              states.extent(0),
+                                              dim()));
     if (expectation_vals_out.extent(0) != states.extent(1))
-      throw std::invalid_argument(
-          "[PauliString] expectation_vals_out shape must "
-          "match the number of states");
+      throw std::invalid_argument("[PauliString] expectation_vals_out shape must "
+                                  "match the number of states");
 
     auto [k, m] = get_sparse_repr<T>(paulis);
 
     for (size_t i = 0; i < states.extent(0); ++i) {
       const std::complex<T> c_m_i = c * m[i];
       for (size_t t = 0; t < states.extent(1); ++t) {
-        expectation_vals_out[t] +=
-            std::conj(states(i, t)) * c_m_i * states(k[i], t);
+        expectation_vals_out[t] += std::conj(states(i, t)) * c_m_i * states(k[i], t);
       }
     }
   }
@@ -427,13 +427,13 @@ struct PauliString {
    * @tparam T The floating point base to use for all the complex numbers
    * @return  std::vector<std::vector<std::complex<T>>>
    */
-  template <std::floating_point T>
-  std::vector<std::vector<std::complex<T>>> get_dense_repr() const {
+  template<std::floating_point T>
+  std::vector<std::vector<std::complex<T>>> get_dense_repr() const
+  {
     // Convert to dense representation
     auto [k, m] = get_sparse_repr<T>(paulis);
 
-    std::vector<std::vector<std::complex<T>>> result(
-        dim(), std::vector<std::complex<T>>(dim(), 0));
+    std::vector<std::vector<std::complex<T>>> result(dim(), std::vector<std::complex<T>>(dim(), 0));
 
     for (size_t i = 0; i < k.size(); ++i) {
       result[i][k[i]] = m[i];
@@ -450,11 +450,14 @@ struct PauliString {
 //
 
 //
-template <> struct fmt::formatter<fast_pauli::PauliString> {
-  constexpr auto parse(format_parse_context &ctx) { return ctx.begin(); }
+template<>
+struct fmt::formatter<fast_pauli::PauliString>
+{
+  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
 
-  template <typename FormatContext>
-  auto format(fast_pauli::PauliString const &ps, FormatContext &ctx) const {
+  template<typename FormatContext>
+  auto format(fast_pauli::PauliString const& ps, FormatContext& ctx) const
+  {
     return fmt::format_to(ctx.out(), "{}", fmt::join(ps.paulis, ""));
   }
 };
@@ -462,8 +465,11 @@ template <> struct fmt::formatter<fast_pauli::PauliString> {
 //
 // std::hash specialization
 //
-template <> struct std::hash<fast_pauli::PauliString> {
-  std::size_t operator()(fast_pauli::PauliString const &key) const {
+template<>
+struct std::hash<fast_pauli::PauliString>
+{
+  std::size_t operator()(fast_pauli::PauliString const& key) const
+  {
     // this is pretty slow way to hash our PauliString. we might want to come
     // up with something more effiecient based on internal vector of uints
     return std::hash<std::string>()(fmt::format("{}", key));

@@ -12,35 +12,33 @@ using namespace fast_pauli;
 // Helpers
 //
 
-void __check_apply(PauliOp<double> &pauli_op, size_t n_states) {
+void
+__check_apply(PauliOp<double>& pauli_op, size_t n_states)
+{
   size_t const dims = pauli_op.dim();
 
   // Set up random states
   std::vector<std::complex<double>> states_raw;
-  std::mdspan states =
-      fast_pauli::rand<std::complex<double>, 2>(states_raw, {dims, n_states});
+  std::mdspan states = fast_pauli::rand<std::complex<double>, 2>(states_raw, { dims, n_states });
   // fmt::println("states: \n{}\n", fmt::join(states_raw, ",\n "));
 
   // Apply the PauliOp to a batch of states
   std::vector<std::complex<double>> new_states_raw(dims * n_states, 0);
-  std::mdspan<std::complex<double>, std::dextents<size_t, 2>> new_states(
-      new_states_raw.data(), dims, n_states);
+  std::mdspan<std::complex<double>, std::dextents<size_t, 2>> new_states(new_states_raw.data(), dims, n_states);
   pauli_op.apply(new_states, states);
   // fmt::println("new_states: \n{}\n", fmt::join(new_states_raw, ",\n "));
 
   //
   // Calculate the expected new states
   //
-  std::vector<std::vector<std::complex<double>>> pop_dense =
-      pauli_op.get_dense_repr();
+  std::vector<std::vector<std::complex<double>>> pop_dense = pauli_op.get_dense_repr();
 
   // pop_dense : d x d
   // states : n x d
   // expected_states : n x d
 
   std::vector<std::complex<double>> expected(dims * n_states, 0);
-  std::mdspan<std::complex<double>, std::dextents<size_t, 2>> expected_span(
-      expected.data(), dims, n_states);
+  std::mdspan<std::complex<double>, std::dextents<size_t, 2>> expected_span(expected.data(), dims, n_states);
 
   // Calculate the expected new states
   for (size_t t = 0; t < n_states; ++t) {
@@ -67,9 +65,10 @@ void __check_apply(PauliOp<double> &pauli_op, size_t n_states) {
 // Constructors
 //
 
-TEST_CASE("test pauli op") {
-  std::vector<PauliString> pauli_strings = {"IXYZ", "XIII", "XXYZ"};
-  std::vector<std::complex<double>> coeffs = {1i, 2., -1i};
+TEST_CASE("test pauli op")
+{
+  std::vector<PauliString> pauli_strings = { "IXYZ", "XIII", "XXYZ" };
+  std::vector<std::complex<double>> coeffs = { 1i, 2., -1i };
 
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   auto pop_dense = pauli_op.get_dense_repr();
@@ -77,13 +76,15 @@ TEST_CASE("test pauli op") {
   fmt::print("pop_dense: \n{}\n", fmt::join(pop_dense, "\n"));
 }
 
-TEST_CASE("test bad init") {
-  CHECK_THROWS(PauliOp<double>({1i, 2.}, {"IXYZ", "XII", "XXYZ"}));
+TEST_CASE("test bad init")
+{
+  CHECK_THROWS(PauliOp<double>({ 1i, 2. }, { "IXYZ", "XII", "XXYZ" }));
 }
 
-TEST_CASE("test bad apply") {
-  std::vector<PauliString> pauli_strings = {"IXYZ", "XIII", "XXYZ"};
-  std::vector<std::complex<double>> coeffs = {1i, 2., -1i};
+TEST_CASE("test bad apply")
+{
+  std::vector<PauliString> pauli_strings = { "IXYZ", "XIII", "XXYZ" };
+  std::vector<std::complex<double>> coeffs = { 1i, 2., -1i };
   std::vector<std::complex<double>> state(5, 0);
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   CHECK_THROWS(pauli_op.apply(state));
@@ -93,9 +94,10 @@ TEST_CASE("test bad apply") {
 // Member functions
 //
 
-TEST_CASE("test get_dense_repr") {
-  std::vector<PauliString> pauli_strings = {"III", "III", "III"};
-  std::vector<std::complex<double>> coeffs = {1, 2., 1};
+TEST_CASE("test get_dense_repr")
+{
+  std::vector<PauliString> pauli_strings = { "III", "III", "III" };
+  std::vector<std::complex<double>> coeffs = { 1, 2., 1 };
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   auto pop_dense = pauli_op.get_dense_repr();
 
@@ -113,18 +115,18 @@ TEST_CASE("test get_dense_repr") {
 }
 
 // TODO add tests for multiple pauli strings
-TEST_CASE("test apply simple") {
+TEST_CASE("test apply simple")
+{
   // Set up PauliOp
-  std::vector<PauliString> pauli_strings = {"IXYZ"};
-  std::vector<std::complex<double>> coeffs = {1};
+  std::vector<PauliString> pauli_strings = { "IXYZ" };
+  std::vector<std::complex<double>> coeffs = { 1 };
   PauliOp<double> pauli_op(coeffs, pauli_strings);
 
   // Set up random state
-  std::vector<std::complex<double>> state = {
-      0.6514 + 0.8887i, 0.0903 + 0.8848i, 0.8130 + 0.6729i, 0.9854 + 0.9497i,
-      0.0410 + 0.5132i, 0.7920 + 0.6519i, 0.4683 + 0.5708i, 0.2148 + 0.4561i,
-      0.5400 + 0.9932i, 0.9736 + 0.0449i, 0.2979 + 0.9834i, 0.4346 + 0.5635i,
-      0.0767 + 0.3516i, 0.4873 + 0.4097i, 0.1543 + 0.7329i, 0.4121 + 0.5059i};
+  std::vector<std::complex<double>> state = { 0.6514 + 0.8887i, 0.0903 + 0.8848i, 0.8130 + 0.6729i, 0.9854 + 0.9497i,
+                                              0.0410 + 0.5132i, 0.7920 + 0.6519i, 0.4683 + 0.5708i, 0.2148 + 0.4561i,
+                                              0.5400 + 0.9932i, 0.9736 + 0.0449i, 0.2979 + 0.9834i, 0.4346 + 0.5635i,
+                                              0.0767 + 0.3516i, 0.4873 + 0.4097i, 0.1543 + 0.7329i, 0.4121 + 0.5059i };
 
   fmt::print("state: \n[{}]\n", fmt::join(state, ",\n "));
 
@@ -140,67 +142,69 @@ TEST_CASE("test apply simple") {
   }
 }
 
-TEST_CASE("test apply single state") {
+TEST_CASE("test apply single state")
+{
   // Set up PauliOp
-  std::vector<PauliString> pauli_strings = {"IXYZ"};
-  std::vector<std::complex<double>> coeffs = {1i};
+  std::vector<PauliString> pauli_strings = { "IXYZ" };
+  std::vector<std::complex<double>> coeffs = { 1i };
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   __check_apply(pauli_op, 1);
 }
 
-TEST_CASE("test apply two states") {
+TEST_CASE("test apply two states")
+{
   // Set up PauliOp
-  std::vector<PauliString> pauli_strings = {"IXYZ"};
-  std::vector<std::complex<double>> coeffs = {1i};
+  std::vector<PauliString> pauli_strings = { "IXYZ" };
+  std::vector<std::complex<double>> coeffs = { 1i };
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   __check_apply(pauli_op, 2);
 }
 
-TEST_CASE("test apply multistate") {
+TEST_CASE("test apply multistate")
+{
   // Set up PauliOp
-  std::vector<PauliString> pauli_strings = {"IXYZ"};
-  std::vector<std::complex<double>> coeffs = {1i};
+  std::vector<PauliString> pauli_strings = { "IXYZ" };
+  std::vector<std::complex<double>> coeffs = { 1i };
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   __check_apply(pauli_op, 10);
 }
 
-TEST_CASE("test apply single state multistring") {
+TEST_CASE("test apply single state multistring")
+{
   // Set up PauliOp
-  std::vector<PauliString> pauli_strings = {"XXY", "YYZ"};
-  std::vector<std::complex<double>> coeffs = {1i, -1.23};
+  std::vector<PauliString> pauli_strings = { "XXY", "YYZ" };
+  std::vector<std::complex<double>> coeffs = { 1i, -1.23 };
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   __check_apply(pauli_op, 1);
 }
 
-TEST_CASE("test apply multistate multistring") {
+TEST_CASE("test apply multistate multistring")
+{
   // Set up PauliOp
-  std::vector<PauliString> pauli_strings = {"IXXZYZ", "XXXXZX", "YZZXZZ",
-                                            "ZXZIII", "IIIXZI", "ZZXZYY"};
-  std::vector<std::complex<double>> coeffs = {1i, -2., 42i, 0.5, 1, 0.1};
+  std::vector<PauliString> pauli_strings = { "IXXZYZ", "XXXXZX", "YZZXZZ", "ZXZIII", "IIIXZI", "ZZXZYY" };
+  std::vector<std::complex<double>> coeffs = { 1i, -2., 42i, 0.5, 1, 0.1 };
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   __check_apply(pauli_op, 10);
 }
 
-TEST_CASE("test apply multistate multistring identity") {
+TEST_CASE("test apply multistate multistring identity")
+{
   fmt::println("test apply multistate multistring identity");
 
   // Set up PauliOp
   std::vector<PauliString> pauli_strings(16, "IIII");
-  std::vector<std::complex<double>> coeffs(pauli_strings.size(),
-                                           1. / pauli_strings.size());
+  std::vector<std::complex<double>> coeffs(pauli_strings.size(), 1. / pauli_strings.size());
   PauliOp<double> pauli_op(coeffs, pauli_strings);
   size_t const dims = pauli_strings[0].dim();
 
   // Set up random states
   size_t const n_states = 10;
   std::vector<std::complex<double>> states_raw;
-  std::mdspan states =
-      fast_pauli::rand<std::complex<double>, 2>(states_raw, {dims, n_states});
+  std::mdspan states = fast_pauli::rand<std::complex<double>, 2>(states_raw, { dims, n_states });
 
   // Apply the PauliOp to a batch of states
   std::vector<std::complex<double>> new_states_raw(dims * n_states, 0);
-  std::mdspan<std::complex<double>, std::dextents<size_t, 2>> new_states(
-      new_states_raw.data(), dims, n_states);
+  std::mdspan<std::complex<double>, std::dextents<size_t, 2>> new_states(new_states_raw.data(), dims, n_states);
   pauli_op.apply(new_states, states);
 
   // States should be unchanged
@@ -209,8 +213,7 @@ TEST_CASE("test apply multistate multistring identity") {
     for (size_t i = 0; i < dims; ++i) {
       CHECK(abs(new_states(i, t) - states(i, t)) < 1e-6);
       if (abs(new_states(i, t) - states(i, t)) > 1e-6) {
-        fmt::print("new_states(i, t): {}, states(i, t): {}", new_states(i, t),
-                   states(i, t));
+        fmt::print("new_states(i, t): {}, states(i, t): {}", new_states(i, t), states(i, t));
         fmt::println(" ratio {}", new_states(i, t) / states(i, t));
       }
     }

@@ -18,19 +18,21 @@ namespace fast_pauli {
  * @param weight
  * @return std::vector<std::string>
  */
-std::vector<std::string> get_nontrivial_paulis(size_t const weight) {
+std::vector<std::string>
+get_nontrivial_paulis(size_t const weight)
+{
   // We want to return no paulis for weight 0
   if (weight == 0) {
     return {};
   }
 
   // For Weight >= 1
-  std::vector<std::string> set_of_nontrivial_paulis{"X", "Y", "Z"};
+  std::vector<std::string> set_of_nontrivial_paulis{ "X", "Y", "Z" };
 
   for (size_t i = 1; i < weight; i++) {
     std::vector<std::string> updated_set_of_nontrivial_paulis;
-    for (auto const &str : set_of_nontrivial_paulis) {
-      for (auto pauli : {"X", "Y", "Z"}) {
+    for (auto const& str : set_of_nontrivial_paulis) {
+      for (auto pauli : { "X", "Y", "Z" }) {
         updated_set_of_nontrivial_paulis.push_back(str + pauli);
       }
     }
@@ -46,8 +48,9 @@ std::vector<std::string> get_nontrivial_paulis(size_t const weight) {
  * @param k
  * @return std::vector<std::vector<size_t>>
  */
-std::vector<std::vector<size_t>> idx_combinations(size_t const n,
-                                                  size_t const k) {
+std::vector<std::vector<size_t>>
+idx_combinations(size_t const n, size_t const k)
+{
 
   // TODO this is a very inefficient way to do this
   std::vector<std::vector<size_t>> result;
@@ -74,12 +77,13 @@ std::vector<std::vector<size_t>> idx_combinations(size_t const n,
  * @param weight
  * @return std::vector<PauliString>
  */
-std::vector<PauliString> calcutate_pauli_strings(size_t const n_qubits,
-                                                 size_t const weight) {
+std::vector<PauliString>
+calcutate_pauli_strings(size_t const n_qubits, size_t const weight)
+{
 
   // base case
   if (weight == 0) {
-    return {PauliString(std::string(n_qubits, 'I'))};
+    return { PauliString(std::string(n_qubits, 'I')) };
   }
 
   // for weight >= 1
@@ -90,9 +94,11 @@ std::vector<PauliString> calcutate_pauli_strings(size_t const n_qubits,
   size_t n_pauli_strings = nontrivial_paulis.size() * idx_combos.size();
   std::vector<PauliString> result(n_pauli_strings);
 
-  fmt::println(
-      "n_qubits = {}  weight = {}  n_nontrivial_paulis = {}  n_combos = {}",
-      n_qubits, weight, nontrivial_paulis.size(), idx_combos.size());
+  fmt::println("n_qubits = {}  weight = {}  n_nontrivial_paulis = {}  n_combos = {}",
+               n_qubits,
+               weight,
+               nontrivial_paulis.size(),
+               idx_combos.size());
 
   // Iterate through all the nontrivial paulis and all the combinations
   for (size_t i = 0; i < nontrivial_paulis.size(); ++i) {
@@ -120,16 +126,16 @@ std::vector<PauliString> calcutate_pauli_strings(size_t const n_qubits,
  * @param weight
  * @return std::vector<PauliString>
  */
-std::vector<PauliString> calculate_pauli_strings_max_weight(size_t n_qubits,
-                                                            size_t weight) {
+std::vector<PauliString>
+calculate_pauli_strings_max_weight(size_t n_qubits, size_t weight)
+{
   std::vector<PauliString> result;
   for (size_t i = 0; i <= weight; ++i) {
     auto ps = calcutate_pauli_strings(n_qubits, i);
     result.insert(result.end(), ps.begin(), ps.end());
   }
 
-  fmt::println("n_qubits = {}  weight = {}  n_pauli_strings = {}", n_qubits,
-               weight, result.size());
+  fmt::println("n_qubits = {}  weight = {}  n_pauli_strings = {}", n_qubits, weight, result.size());
   return result;
 }
 
