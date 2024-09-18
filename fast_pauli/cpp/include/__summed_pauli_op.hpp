@@ -2,6 +2,7 @@
 #define __SUMMED_PAULI_OP_HPP
 
 #include "__pauli_string.hpp"
+#include <cstddef>
 #include <fmt/core.h>
 #include <omp.h>
 #include <stdexcept>
@@ -308,6 +309,74 @@ template <std::floating_point T> struct SummedPauliOp {
           for (size_t i = 0; i < n_threads; ++i) {
             new_states(l, t) += new_states_th(i, l, t);
           }
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief Calculate the expectation value of the SummedPauliOp on a batch of
+   * states. This function returns the expectation values of each operator for
+   * each input states, so the output tensor will have shape (n_operators x
+   * n_states).
+   *
+   * @param expectation_vals_out Output tensor for the expectation values
+   * (n_operators x n_states)
+   * @param states The states used to calculate the expectation values (n_dim x
+   * n_states)
+   */
+  void expectation_value(Tensor<2> expectation_vals_out,
+                         Tensor<2> states) const {
+    size_t const n_data = states.extent(1);
+    size_t const n_ops = n_operators();
+
+    //
+    // Input checking
+    //
+    if (expectation_vals_out.extent(0) != n_ops) {
+      throw std::invalid_argument(
+          fmt::format("expectation_vals_out must have the same number of "
+                      "operators ({}) as the SummedPauliOp ({})",
+                      expectation_vals_out.extent(0), n_ops));
+    }
+
+    if (states.extent(0) != dim()) {
+      throw std::invalid_argument(
+          fmt::format("states must have the same dimension ({}) as the "
+                      "SummedPauliOp ({})",
+                      states.extent(0), dim()));
+    }
+
+    if (expectation_vals_out.extent(1) != n_data) {
+      throw std::invalid_argument(
+          fmt::format("expectation_vals_out must have the same number of "
+                      "states ({}) as the input states ({})",
+                      expectation_vals_out.extent(1), n_data));
+    }
+
+    //
+    // Calculate the expectation values
+    //
+
+    // Expectation value of paulis (n_pauli_strings, n_data)
+    std::vector<std::complex<T>> expectation_vals_raw(n_pauli_strings() *
+                                                      n_data);
+    Tensor<2> expectation_vals(expectation_vals_raw.data(), n_pauli_strings(),
+                               n_data);
+
+#pragma omp parallel for schedule(static)
+    for (size_t j = 0; j < n_pauli_strings(); ++j) {
+      std::mdspan expectation_vals_j =
+          std::submdspan(expectation_vals, j, std::full_extent);
+      pauli_strings[j].expectation_value(expectation_vals_j, states);
+    }
+
+    // einsum("jk,jt->kt", coeffs, expectation_vals)
+#pragma omp parallel for collapse(2)
+    for (size_t t = 0; t < n_data; ++t) {
+      for (size_t k = 0; k < n_ops; ++k) {
+        for (size_t j = 0; j < n_pauli_strings(); ++j) {
+          expectation_vals_out(k, t) += coeffs(j, k) * expectation_vals(j, t);
         }
       }
     }
