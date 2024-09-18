@@ -300,6 +300,73 @@ def test_expectation_value(
 
 @pytest.mark.consistency
 @pytest.mark.parametrize(
+    "pauli_string,", [fp.PauliString, pp.PauliString], ids=resolve_parameter_repr
+)
+def test_multiplication(
+    sample_pauli_strings: list,
+    pauli_strings_with_size: Callable,
+    paulis: dict,
+    pauli_string: type[fp.PauliString] | type[pp.PauliString],
+) -> None:
+    """Test pauli string multiplication with 2d tensor."""
+    sign, pauli = pauli_string("I") @ (pauli_string("I"))
+    np.testing.assert_equal(sign, 1)
+    np.testing.assert_string_equal(str(pauli), "I")
+    np.testing.assert_allclose(
+        pauli.to_tensor(),
+        paulis["I"],
+        atol=1e-15,
+    )
+    sign, pauli = pauli_string("IIII") @ (pauli_string("IIII"))
+    np.testing.assert_equal(sign, 1)
+    np.testing.assert_string_equal(str(pauli), "IIII")
+    np.testing.assert_allclose(
+        pauli.to_tensor(),
+        naive_pauli_converter("IIII"),
+        atol=1e-15,
+    )
+    sign, pauli = pauli_string("XYZ") @ (pauli_string("III"))
+    np.testing.assert_equal(sign, 1)
+    np.testing.assert_string_equal(str(pauli), "XYZ")
+    np.testing.assert_allclose(
+        pauli.to_tensor(),
+        naive_pauli_converter("XYZ"),
+        atol=1e-15,
+    )
+    sign, pauli = pauli_string("ZYX") @ (pauli_string("ZYX"))
+    np.testing.assert_equal(sign, 1)
+    np.testing.assert_string_equal(str(pauli), "III")
+    np.testing.assert_allclose(
+        pauli.to_tensor(),
+        np.eye(8),
+        atol=1e-15,
+    )
+
+    for full_str in it.chain(
+        pauli_strings_with_size(2),
+        pauli_strings_with_size(4),
+        pauli_strings_with_size(8, limit=100),
+        pauli_strings_with_size(12, limit=10),
+    ):
+        mid = len(full_str) // 2
+        p_str1, p_str2 = full_str[:mid], full_str[mid:]
+
+        phase, pauli = pauli_string(p_str1) @ (pauli_string(p_str2))
+        np.testing.assert_allclose(
+            phase * np.array(pauli.to_tensor()),
+            naive_pauli_converter(p_str1) @ naive_pauli_converter(p_str2),
+            atol=1e-15,
+        )
+        phase, pauli = pauli_string(p_str2) @ (pauli_string(p_str1))
+        np.testing.assert_allclose(
+            phase * np.array(pauli.to_tensor()),
+            naive_pauli_converter(p_str2) @ naive_pauli_converter(p_str1),
+            atol=1e-15,
+        )
+
+
+@pytest.mark.consistency
+@pytest.mark.parametrize(
     "pauli_string,", [(fp.PauliString), (pp.PauliString)], ids=resolve_parameter_repr
 )
 def test_exceptions(pauli_string: type[fp.PauliString] | type[pp.PauliString]) -> None:

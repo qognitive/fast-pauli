@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <experimental/mdspan>
+#include <functional>
 #include <ranges>
 #include <string>
 
@@ -119,7 +120,19 @@ struct PauliString {
   PauliString() noexcept = default;
 
   /**
-   * @brief Constructs a PauliString from a span of pauli operators and
+   * @brief Constructs a PauliString from a vector of pauli matrices and
+   * calculates the weight.
+   *
+   */
+  PauliString(std::vector<Pauli> paulis)
+      : weight(0), paulis(std::move(paulis)) {
+    for (auto const &pauli : this->paulis) {
+      weight += pauli.code > 0;
+    }
+  }
+
+  /**
+   * @brief Constructs a PauliString from a span of pauli matrices and
    * calculates the weight.
    *
    */
@@ -175,8 +188,36 @@ struct PauliString {
     return *this;
   };
 
-  //
+  // TODO should we separately define <,> operators based just on pualis vector
   friend auto operator<=>(PauliString const &, PauliString const &) = default;
+
+  /**
+   * @brief Returns the result of matrix multiplication of two PauliStrings and
+   * their phase as a pair.
+   *
+   * @param lhs left hand side PauliString
+   * @param rhs right hand side PauliString
+   * @return  std::pair<std::complex<double>, PauliString> phase and resulting
+   * PauliString
+   */
+  friend std::pair<std::complex<double>, PauliString>
+  operator*(PauliString const &lhs, PauliString const &rhs) {
+    if (lhs.dim() != rhs.dim()) {
+      throw std::invalid_argument("PauliStrings must have the same size");
+    }
+
+    std::complex<double> new_phase = 1;
+    std::vector<Pauli> new_paulis;
+    new_paulis.reserve(lhs.n_qubits());
+
+    for (size_t i = 0; i < lhs.n_qubits(); ++i) {
+      auto [phase, new_pauli] = lhs.paulis[i] * rhs.paulis[i];
+      new_phase *= phase;
+      new_paulis.push_back(new_pauli);
+    }
+
+    return {new_phase, PauliString(std::move(new_paulis))};
+  }
 
   //
   /**
@@ -414,8 +455,18 @@ template <> struct fmt::formatter<fast_pauli::PauliString> {
 
   template <typename FormatContext>
   auto format(fast_pauli::PauliString const &ps, FormatContext &ctx) const {
-    std::vector<fast_pauli::Pauli> paulis = ps.paulis;
-    return fmt::format_to(ctx.out(), "{}", fmt::join(paulis, ""));
+    return fmt::format_to(ctx.out(), "{}", fmt::join(ps.paulis, ""));
+  }
+};
+
+//
+// std::hash specialization
+//
+template <> struct std::hash<fast_pauli::PauliString> {
+  std::size_t operator()(fast_pauli::PauliString const &key) const {
+    // this is pretty slow way to hash our PauliString. we might want to come
+    // up with something more effiecient based on internal vector of uints
+    return std::hash<std::string>()(fmt::format("{}", key));
   }
 };
 

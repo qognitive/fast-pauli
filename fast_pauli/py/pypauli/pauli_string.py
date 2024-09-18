@@ -1,5 +1,7 @@
 """Efficient operations on Pauli string using numpy."""
 
+from __future__ import annotations
+
 import numpy as np
 
 
@@ -87,6 +89,62 @@ class PauliString:
 
         """
         return np.multiply(state.conj(), self.apply(state)).sum(axis=0)
+
+    def multiply(self, rhs: PauliString) -> tuple[np.complex128, PauliString]:
+        """Matrix multiplication of two Pauli strings.
+
+        Args:
+        ----
+            rhs: The other PauliString object to multiply with.
+
+        Returns
+        -------
+            tuple containing the multiplication factor and resulting PauliString object.
+        """
+        if self.dim != rhs.dim:
+            raise ValueError("Pauli strings must have the same length")
+
+        phase = 1 + 0j
+        p_str = []
+        for p_left, p_right in zip(self.string, rhs.string):
+            if p_left == p_right:
+                p_str.append("I")
+            elif p_left == "I":
+                p_str.append(p_right)
+            elif p_right == "I":
+                p_str.append(p_left)
+            elif p_left == "X" and p_right == "Y":
+                p_str.append("Z")
+                phase *= 1j
+            elif p_left == "X" and p_right == "Z":
+                p_str.append("Y")
+                phase *= -1j
+            elif p_left == "Y" and p_right == "X":
+                p_str.append("Z")
+                phase *= -1j
+            elif p_left == "Y" and p_right == "Z":
+                p_str.append("X")
+                phase *= 1j
+            elif p_left == "Z" and p_right == "Y":
+                p_str.append("X")
+                phase *= -1j
+            elif p_left == "Z" and p_right == "X":
+                p_str.append("Y")
+                phase *= 1j
+        return phase, PauliString("".join(p_str))
+
+    def __matmul__(self, rhs: PauliString) -> tuple[np.complex128, PauliString]:
+        """Matrix multiplication of two Pauli strings.
+
+        Args:
+        ----
+            rhs: The other PauliString object to multiply with.
+
+        Returns
+        -------
+            tuple containing the multiplication factor and resulting PauliString object.
+        """
+        return self.multiply(rhs)
 
 
 def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:

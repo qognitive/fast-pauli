@@ -38,7 +38,7 @@ def test_basics(paulis: dict, pauli: type[fp.Pauli]) -> None:
 def test_multiply(paulis: dict, pauli: type[fp.Pauli]) -> None:
     """Test custom __mul__ in c++ wrapper."""
     for p1, p2 in it.product("IXYZ", repeat=2):
-        c, pcpp = pauli(p1).multiply(pauli(p2))
+        c, pcpp = pauli(p1) @ pauli(p2)
         np.testing.assert_allclose(
             c * np.array(pcpp.to_tensor()),
             paulis[p1] @ paulis[p2],
