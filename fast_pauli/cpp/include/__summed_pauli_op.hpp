@@ -316,7 +316,9 @@ template <std::floating_point T> struct SummedPauliOp {
 
   /**
    * @brief Calculate the expectation value of the SummedPauliOp on a batch of
-   * states
+   * states. This function returns the expectation values of each operator for
+   * each input states, so the output tensor will have shape (n_operators x
+   * n_states).
    *
    * @param expectation_vals_out Output tensor for the expectation values
    * (n_operators x n_states)
@@ -327,6 +329,34 @@ template <std::floating_point T> struct SummedPauliOp {
                          Tensor<2> states) const {
     size_t const n_data = states.extent(1);
     size_t const n_ops = n_operators();
+
+    //
+    // Input checking
+    //
+    if (expectation_vals_out.extent(0) != n_ops) {
+      throw std::invalid_argument(
+          fmt::format("expectation_vals_out must have the same number of "
+                      "operators ({}) as the SummedPauliOp ({})",
+                      expectation_vals_out.extent(0), n_ops));
+    }
+
+    if (states.extent(0) != dim()) {
+      throw std::invalid_argument(
+          fmt::format("states must have the same dimension ({}) as the "
+                      "SummedPauliOp ({})",
+                      states.extent(0), dim()));
+    }
+
+    if (expectation_vals_out.extent(1) != n_data) {
+      throw std::invalid_argument(
+          fmt::format("expectation_vals_out must have the same number of "
+                      "states ({}) as the input states ({})",
+                      expectation_vals_out.extent(1), n_data));
+    }
+
+    //
+    // Calculate the expectation values
+    //
 
     // Expectation value of paulis (n_pauli_strings, n_data)
     std::vector<std::complex<T>> expectation_vals_raw(n_pauli_strings() *

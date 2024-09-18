@@ -11,7 +11,16 @@ from tests.conftest import resolve_parameter_repr
 @pytest.mark.parametrize(
     "summed_pauli_op", [fp.SummedPauliOp], ids=resolve_parameter_repr
 )
-def test_expectation_values(summed_pauli_op: type[fp.SummedPauliOp]) -> None:
+@pytest.mark.parametrize(
+    "n_states,n_operators,n_qubits",
+    [(s, o, q) for s in [1, 10, 1000] for o in [1, 10, 100] for q in [1, 2, 6]],
+)
+def test_expectation_values(
+    summed_pauli_op: type[fp.SummedPauliOp],
+    n_states: int,
+    n_operators: int,
+    n_qubits: int,
+) -> None:
     """Test expectation value calculation."""
     n_states = 1000
     n_operators = 100
