@@ -313,8 +313,10 @@ def test_expectation_value(
 
 
 @pytest.mark.consistency
-@pytest.mark.parametrize(  # TODO pp.PauliOp
-    "pauli_op,pauli_string,", [(fp.PauliOp, fp.PauliString)], ids=resolve_parameter_repr
+@pytest.mark.parametrize(
+    "pauli_op,pauli_string,",
+    [(fp.PauliOp, fp.PauliString), (pp.PauliOp, pp.PauliString)],
+    ids=resolve_parameter_repr,
 )
 def test_multiplication_with_string(
     pauli_strings_with_size: Callable,
@@ -390,8 +392,8 @@ def test_multiplication_with_string(
 
 
 @pytest.mark.consistency
-@pytest.mark.parametrize(  # TODO pp.PauliOp
-    "pauli_op,", [fp.PauliOp], ids=resolve_parameter_repr
+@pytest.mark.parametrize(
+    "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
 )
 def test_multiplication_with_pauli_op(
     pauli_strings_with_size: Callable,
@@ -461,8 +463,10 @@ def test_multiplication_with_pauli_op(
 
 
 @pytest.mark.consistency
-@pytest.mark.parametrize(  # TODO pp.PauliOp
-    "pauli_op,pauli_string,", [(fp.PauliOp, fp.PauliString)], ids=resolve_parameter_repr
+@pytest.mark.parametrize(
+    "pauli_op,pauli_string,",
+    [(fp.PauliOp, fp.PauliString), (pp.PauliOp, pp.PauliString)],
+    ids=resolve_parameter_repr,
 )
 def test_pauli_string_conversion(
     pauli_strings_with_size: Callable,
@@ -505,8 +509,10 @@ def test_pauli_string_conversion(
 
 
 @pytest.mark.consistency
-@pytest.mark.parametrize(  # TODO pp.PauliOp
-    "pauli_op,pauli_string,", [(fp.PauliOp, fp.PauliString)], ids=resolve_parameter_repr
+@pytest.mark.parametrize(
+    "pauli_op,pauli_string,",
+    [(fp.PauliOp, fp.PauliString), (pp.PauliOp, pp.PauliString)],
+    ids=resolve_parameter_repr,
 )
 def test_add_sub_with_string(
     pauli_strings_with_size: Callable,
@@ -641,8 +647,8 @@ def test_add_sub_with_string(
 
 
 @pytest.mark.consistency
-@pytest.mark.parametrize(  # TODO pp.PauliOp
-    "pauli_op,", [fp.PauliOp], ids=resolve_parameter_repr
+@pytest.mark.parametrize(
+    "pauli_op,", [fp.PauliOp, pp.PauliOp], ids=resolve_parameter_repr
 )
 def test_add_sub_with_pauli_op(
     pauli_strings_with_size: Callable,
@@ -762,18 +768,26 @@ def test_add_sub_with_pauli_op(
 
 
 @pytest.mark.consistency
-@pytest.mark.parametrize(  # TODO pp.PauliOp
-    "pauli_op,pauli_string,", [(fp.PauliOp, fp.PauliString)], ids=resolve_parameter_repr
+@pytest.mark.parametrize(
+    "pauli_op,pauli_string,",
+    [(fp.PauliOp, fp.PauliString), (pp.PauliOp, pp.PauliString)],
+    ids=resolve_parameter_repr,
 )
 def test_exceptions(
     pauli_op: type[fp.PauliOp] | type[pp.PauliOp],
     pauli_string: type[fp.PauliString] | type[pp.PauliString],
 ) -> None:
     """Test that exceptions are raised and propagated correctly."""
-    with np.testing.assert_raises(ValueError):
-        pauli_op(["ABC"])
-    with np.testing.assert_raises(ValueError):
-        pauli_op(["XI", "XY", "XZ", "III"])
+    if isinstance(pauli_op, fp.PauliOp):
+        with np.testing.assert_raises(ValueError):
+            pauli_op(["ABC"])
+        with np.testing.assert_raises(ValueError):
+            pauli_op(["XI", "XY", "XZ", "III"])
+    else:
+        with np.testing.assert_raises(ValueError):
+            pauli_op([1], ["ABC"])
+        with np.testing.assert_raises(ValueError):
+            pauli_op([1, 1, 1, 1], ["XI", "XY", "XZ", "III"])
     with np.testing.assert_raises(ValueError):
         pauli_op([1, 1], ["X", "YZ"])
     with np.testing.assert_raises(ValueError):
