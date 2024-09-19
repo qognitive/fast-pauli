@@ -623,7 +623,7 @@ def test_add_sub_with_string(
 
         p_op = pauli_op(coeffs, strings)
         c = generate_random_complex(1)[0]
-        p_op.extend(c, pauli_string(p_str), dedupe=False)
+        p_op.extend(pauli_string(p_str), c, dedupe=False)
         expected += c * p_str_dense
         np.testing.assert_allclose(
             p_op.to_tensor(),
@@ -631,7 +631,7 @@ def test_add_sub_with_string(
             atol=1e-15,
         )
         c = generate_random_complex(1)[0]
-        p_op.extend(c, pauli_string(p_str), dedupe=True)
+        p_op.extend(pauli_string(p_str), c, dedupe=True)
         expected += c * p_str_dense
         np.testing.assert_allclose(
             p_op.to_tensor(),
@@ -805,9 +805,9 @@ def test_exceptions(
         pauli_op([-1, 1], ["IX", "YZ"]) - pauli_string("XXXX")
 
     with np.testing.assert_raises(ValueError):
-        pauli_op([-1, 1], ["IX", "YZ"]).extend(1j, pauli_string("X"), dedupe=True)
+        pauli_op([-1, 1], ["IX", "YZ"]).extend(pauli_string("X"), 1j, dedupe=True)
     with np.testing.assert_raises(ValueError):
-        pauli_op([-1, 1], ["IX", "YZ"]).extend(1j, pauli_string("XYZ"), dedupe=False)
+        pauli_op([-1, 1], ["IX", "YZ"]).extend(pauli_string("XYZ"), 1j, dedupe=False)
     with np.testing.assert_raises(ValueError):
         pauli_op([-1, 1], ["IX", "YZ"]).extend(pauli_op([1j], ["XXX"]))
 

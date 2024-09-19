@@ -238,11 +238,11 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
      * @brief Add a PauliString term with appropriate coefficient
      * to the summation inside PauliOp.
      *
-     * @param coeff coefficient to apply to the PauliString
      * @param pauli_str PauliString to add to the summation
+     * @param coeff coefficient to apply to the PauliString
      * @param dedupe whether to deduplicate provided PauliString
      */
-    void extend(std::complex<T> coeff, PauliString pauli_str, bool dedupe = false)
+    void extend(PauliString pauli_str, std::complex<T> coeff, bool dedupe = false)
     {
         if (pauli_str.dim() != dim())
         {
