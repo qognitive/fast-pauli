@@ -173,7 +173,7 @@ class PauliString:
         from .pauli_op import PauliOp
 
         # reroute this to PauliOp operator since the resulting object is PauliOp anyway
-        return PauliOp([1.0], [self]) + rhs  # type: ignore
+        return PauliOp([1.0], [self]) + rhs
 
     def __sub__(self, rhs: PauliString):  # type: ignore
         """Subtract PauliString from the current one.
@@ -192,7 +192,7 @@ class PauliString:
         from .pauli_op import PauliOp
 
         # reroute this to PauliOp operator since the resulting object is PauliOp anyway
-        return PauliOp([1.0], [self]) - rhs  # type: ignore
+        return PauliOp([1.0], [self]) - rhs
 
     def __eq__(self, other: PauliString | Any) -> bool:
         """Check if two PauliString objects are equal.
