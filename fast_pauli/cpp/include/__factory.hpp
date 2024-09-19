@@ -8,23 +8,23 @@
 #include <random>
 #include <vector>
 
-namespace fast_pauli {
+namespace fast_pauli
+{
 
 //
 // Types traits and concepts
 //
-template<typename T>
-struct is_complex : std::false_type
-{};
-
-template<std::floating_point T>
-struct is_complex<std::complex<T>> : std::true_type
-{};
-
-template<typename T>
-struct type_identity
+template <typename T> struct is_complex : std::false_type
 {
-  typedef T type;
+};
+
+template <std::floating_point T> struct is_complex<std::complex<T>> : std::true_type
+{
+};
+
+template <typename T> struct type_identity
+{
+    typedef T type;
 };
 
 //
@@ -37,74 +37,76 @@ https://pytorch.org/cppdocs/notes/tensor_creation.html#picking-a-factory-functio
 */
 
 // Empty
-template<typename T, size_t n_dim>
-  requires is_complex<T>::value || std::floating_point<T>
-constexpr auto
-empty(std::vector<T>& blob, std::array<size_t, n_dim> extents)
+template <typename T, size_t n_dim>
+    requires is_complex<T>::value || std::floating_point<T>
+constexpr auto empty(std::vector<T> &blob, std::array<size_t, n_dim> extents)
 {
+    // Calculate the total size and reserve the memory
+    size_t total_size = 1;
+    for (auto ei : extents)
+    {
+        total_size *= ei;
+    }
+    blob.reserve(total_size);
 
-  // Calculate the total size and reserve the memory
-  size_t total_size = 1;
-  for (auto ei : extents) {
-    total_size *= ei;
-  }
-  blob.reserve(total_size);
-
-  return std::mdspan<T, std::dextents<size_t, n_dim>>(blob.data(), extents);
+    return std::mdspan<T, std::dextents<size_t, n_dim>>(blob.data(), extents);
 }
 
 // Zeros
-template<typename T, size_t n_dim>
-  requires is_complex<T>::value || std::floating_point<T>
-constexpr auto
-zeros(std::vector<T>& blob, std::array<size_t, n_dim> extents)
+template <typename T, size_t n_dim>
+    requires is_complex<T>::value || std::floating_point<T>
+constexpr auto zeros(std::vector<T> &blob, std::array<size_t, n_dim> extents)
 {
-  blob.clear(); // Clear so we have consistent behavior (e.g. not overwriting
-                // some of the values)
+    blob.clear(); // Clear so we have consistent behavior (e.g. not overwriting
+                  // some of the values)
 
-  // Calculate the total size and reserve the memory
-  size_t total_size = 1;
-  for (auto ei : extents) {
-    total_size *= ei;
-  }
-  blob = std::vector<T>(total_size, 0);
+    // Calculate the total size and reserve the memory
+    size_t total_size = 1;
+    for (auto ei : extents)
+    {
+        total_size *= ei;
+    }
+    blob = std::vector<T>(total_size, 0);
 
-  return std::mdspan<T, std::dextents<size_t, n_dim>>(blob.data(), extents);
+    return std::mdspan<T, std::dextents<size_t, n_dim>>(blob.data(), extents);
 }
 
 // Rand
-template<typename T, size_t n_dim>
-  requires is_complex<T>::value || std::floating_point<T>
-auto
-rand(std::vector<T>& blob, std::array<size_t, n_dim> extents, size_t seed = 18)
+template <typename T, size_t n_dim>
+    requires is_complex<T>::value || std::floating_point<T>
+auto rand(std::vector<T> &blob, std::array<size_t, n_dim> extents, size_t seed = 18)
 {
-  blob.clear(); // Clear so we have consistent behavior (e.g. not overwriting
-                // some of the values)
+    blob.clear(); // Clear so we have consistent behavior (e.g. not overwriting
+                  // some of the values)
 
-  // Calculate the total size and reserve the memory
-  size_t total_size = 1;
-  for (auto ei : extents) {
-    total_size *= ei;
-  }
-  blob = std::vector<T>(total_size);
+    // Calculate the total size and reserve the memory
+    size_t total_size = 1;
+    for (auto ei : extents)
+    {
+        total_size *= ei;
+    }
+    blob = std::vector<T>(total_size);
 
-  // Fill with random numbers
-  // std::random_device rd;
-  std::mt19937 gen(seed);
+    // Fill with random numbers
+    // std::random_device rd;
+    std::mt19937 gen(seed);
 
-  // Internal specialization depending on whether we're dealing with regular FP
-  // or complex
-  if constexpr (is_complex<T>::value) {
-    std::uniform_real_distribution<typename T::value_type> dis(0, 1.0);
+    // Internal specialization depending on whether we're dealing with regular FP
+    // or complex
+    if constexpr (is_complex<T>::value)
+    {
+        std::uniform_real_distribution<typename T::value_type> dis(0, 1.0);
 
-    std::generate(blob.begin(), blob.end(), [&]() { return T{ dis(gen), dis(gen) }; });
-  } else {
-    std::uniform_real_distribution<T> dis(0, 1.0);
+        std::generate(blob.begin(), blob.end(), [&]() { return T{dis(gen), dis(gen)}; });
+    }
+    else
+    {
+        std::uniform_real_distribution<T> dis(0, 1.0);
 
-    std::generate(blob.begin(), blob.end(), [&]() { return T{ dis(gen) }; });
-  }
+        std::generate(blob.begin(), blob.end(), [&]() { return T{dis(gen)}; });
+    }
 
-  return std::mdspan<T, std::dextents<size_t, n_dim>>(blob.data(), extents);
+    return std::mdspan<T, std::dextents<size_t, n_dim>>(blob.data(), extents);
 }
 
 } // namespace fast_pauli

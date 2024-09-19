@@ -1,4 +1,4 @@
-BasedOnStyle: Mozilla
+BasedOnStyle: Microsoft
 ---
 Language: Cpp
 ColumnLimit: 120
