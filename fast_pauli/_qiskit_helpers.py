@@ -5,12 +5,15 @@ from typing import Any
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 
-import fast_pauli._fast_pauli as fp
+from . import _fast_pauli as fp
 
 
 def from_qiskit(qiskit_type: Any) -> Any:
     if isinstance(qiskit_type, SparsePauliOp):
-        return fp.PauliOp(qiskit_type.coeffs, qiskit_type.paulis)
+        tuples = qiskit_type.to_list(array=True)
+        coeffs = [c for _, c in tuples]
+        strings = [s for s, _ in tuples]
+        return fp.PauliOp(coeffs, strings)
 
     else:
         raise NotImplementedError(
@@ -22,7 +25,7 @@ def from_qiskit(qiskit_type: Any) -> Any:
 def to_qiskit(fast_pauli_type: Any) -> Any:
     if isinstance(fast_pauli_type, fp.PauliOp):
         return SparsePauliOp(
-            fast_pauli_type.pauli_strings_as_str(),
+            fast_pauli_type.pauli_strings_as_str,
             fast_pauli_type.coeffs,
         )
 
