@@ -4,6 +4,8 @@
 
 # Since the code for our bindings contain several helper functions we allow the
 # bindings to respect the optimization flags used by the project as a whole
+
+# TODO RENAME to fppy
 nanobind_add_module(_fast_pauli NOMINSIZE NOSTRIP PROTECT_STACK fast_pauli.cpp)
 target_link_libraries(_fast_pauli PRIVATE fast_pauli)
 

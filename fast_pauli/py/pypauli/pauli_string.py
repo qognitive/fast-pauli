@@ -1,5 +1,9 @@
 """Efficient operations on Pauli string using numpy."""
 
+from __future__ import annotations
+
+from typing import Any
+
 import numpy as np
 
 
@@ -40,6 +44,10 @@ class PauliString:
             str: A string representation of the PauliString object.
         """
         return f'PauliString("{self.string}")'
+
+    def copy(self) -> PauliString:
+        """Return a copy of the Pauli string."""
+        return PauliString(self.string)
 
     def to_tensor(self) -> np.ndarray:
         """Return the dense matrix representation of the Pauli string."""
@@ -87,6 +95,136 @@ class PauliString:
 
         """
         return np.multiply(state.conj(), self.apply(state)).sum(axis=0)
+
+    def multiply(self, rhs: PauliString) -> tuple[np.complex128, PauliString]:
+        """Matrix multiplication of two Pauli strings.
+
+        Args:
+        ----
+            rhs: The other PauliString object to multiply with.
+
+        Returns
+        -------
+            tuple containing the multiplication factor and resulting PauliString object.
+        """
+        if self.dim != rhs.dim:
+            raise ValueError("Pauli strings must have the same length")
+
+        phase = 1 + 0j
+        p_str = []
+        for p_left, p_right in zip(self.string, rhs.string):
+            if p_left == p_right:
+                p_str.append("I")
+            elif p_left == "I":
+                p_str.append(p_right)
+            elif p_right == "I":
+                p_str.append(p_left)
+            elif p_left == "X" and p_right == "Y":
+                p_str.append("Z")
+                phase *= 1j
+            elif p_left == "X" and p_right == "Z":
+                p_str.append("Y")
+                phase *= -1j
+            elif p_left == "Y" and p_right == "X":
+                p_str.append("Z")
+                phase *= -1j
+            elif p_left == "Y" and p_right == "Z":
+                p_str.append("X")
+                phase *= 1j
+            elif p_left == "Z" and p_right == "Y":
+                p_str.append("X")
+                phase *= -1j
+            elif p_left == "Z" and p_right == "X":
+                p_str.append("Y")
+                phase *= 1j
+        return phase, PauliString("".join(p_str))
+
+    def __matmul__(self, rhs: PauliString) -> tuple[np.complex128, PauliString]:
+        """Matrix multiplication of two Pauli strings.
+
+        Args:
+        ----
+            rhs: The other PauliString object to multiply with.
+
+        Returns
+        -------
+            tuple containing the multiplication factor and resulting PauliString object.
+        """
+        if isinstance(rhs, PauliString):
+            return self.multiply(rhs)
+        else:
+            # point python to __rmatmul__ method of PauliOp in case if rhs is PauliOp
+            return NotImplemented
+
+    def __add__(self, rhs: PauliString):  # type: ignore
+        """Add two PauliString objects.
+
+        Args:
+        ----
+            rhs: The other PauliString object to add.
+
+        Returns
+        -------
+            PauliOp: Pauli Op holding the sum of the two PauliStrings.
+        """
+        if self.dim != rhs.dim:
+            raise ValueError("Pauli strings must have the same length")
+
+        from .pauli_op import PauliOp
+
+        # reroute this to PauliOp operator since the resulting object is PauliOp anyway
+        return PauliOp([1.0], [self]) + rhs
+
+    def __sub__(self, rhs: PauliString):  # type: ignore
+        """Subtract PauliString from the current one.
+
+        Args:
+        ----
+            rhs: The other PauliString object to subtract.
+
+        Returns
+        -------
+            PauliOp: Pauli Op holding the difference of the two PauliStrings.
+        """
+        if self.dim != rhs.dim:
+            raise ValueError("Pauli strings must have the same length")
+
+        from .pauli_op import PauliOp
+
+        # reroute this to PauliOp operator since the resulting object is PauliOp anyway
+        return PauliOp([1.0], [self]) - rhs
+
+    def __eq__(self, other: PauliString | Any) -> bool:
+        """Check if two PauliString objects are equal.
+
+        Args:
+        ----
+            other: The other PauliString object to compare with.
+
+        Returns
+        -------
+            bool: True if the PauliString objects are equal, False otherwise.
+        """
+        if not isinstance(other, PauliString):
+            raise NotImplementedError("Cannot compare PauliString with other types")
+        return self.string == other.string
+
+    def __ne__(self, other: PauliString | Any) -> bool:
+        """Check if two PauliString objects are not equal.
+
+        Args:
+        ----
+            other: The other PauliString object to compare with.
+
+        Returns
+        -------
+            bool: True if the PauliString objects are not equal, False otherwise.
+        """
+        return not (self == other)
+
+    def __hash__(self) -> int:
+        """Return the hash value of the PauliString object."""
+        return hash(self.string)
 
 
 def compose_sparse_pauli(string: str) -> tuple[np.ndarray, np.ndarray]:
