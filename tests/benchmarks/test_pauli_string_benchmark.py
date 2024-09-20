@@ -9,43 +9,11 @@ import fast_pauli._fast_pauli as fp
 import fast_pauli.pypauli as pp
 from tests.conftest import resolve_parameter_repr
 
-QUBITS_TO_BENCHMARK = [1, 2, 4, 10]
+SAMPLE_STRINGS_LIMIT = 256
+QUBITS_TO_BENCHMARK = [2, 4, 6, 10]
+N_STATES_TO_BENCHMARK = [16, 128, 1024]
 
-
-def benchmark_sparse_composer(paulis: list, composer: Callable) -> None:
-    """Benchmark algorithm for sparse representation of pauli string."""
-    for ps in paulis:
-        cols, vals = composer(ps)  # noqa: F841
-
-
-@pytest.mark.parametrize(
-    "qubits,composer_func,",
-    it.chain(
-        [(q, fp.helpers.pauli_string_sparse_repr) for q in QUBITS_TO_BENCHMARK],
-        [(q, pp.pauli_string.compose_sparse_pauli) for q in QUBITS_TO_BENCHMARK],
-    ),
-    ids=resolve_parameter_repr,
-)
-def test_string_sparse_composer_n_qubits(
-    benchmark: Callable,
-    pauli_strings_with_size: Callable,
-    composer_func: Callable,
-    qubits: int,
-) -> None:
-    """Benchmark algorithm for sparse representation of pauli string.
-
-    Parametrized test case to run the benchmark across
-    all Pauli strings of given length for given PauliString class.
-    """
-    n_strings_limit = 128 if qubits > 4 else None
-    prepared_paulis = pauli_strings_with_size(qubits, n_strings_limit)
-
-    if "pypauli" not in composer_func.__module__:  # check if it's c++ wrapper
-        prepared_paulis = list(
-            map(lambda pstr: [fp.Pauli(c) for c in pstr], prepared_paulis)
-        )
-
-    benchmark(benchmark_sparse_composer, paulis=prepared_paulis, composer=composer_func)
+HEAVY_QUBITS = [14, 17, 20]
 
 
 def benchmark_dense_conversion(paulis: list) -> None:
@@ -73,10 +41,13 @@ def test_dense_conversion_n_qubits(
     Parametrized test case to run the benchmark across
     all Pauli strings of given length for given PauliString class.
     """
-    n_strings_limit = 128 if qubits > 4 else None
     prepared_paulis = list(
-        map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
+        map(
+            lambda s: pauli_class(s),
+            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
+        )
     )
+
     benchmark(benchmark_dense_conversion, paulis=prepared_paulis)
 
 
@@ -107,10 +78,11 @@ def test_apply_n_qubits(
     all Pauli strings of given length for given PauliString class.
     """
     n_dims = 1 << qubits
-    n_strings_limit = 128 if qubits > 4 else None
-
     prepared_paulis = list(
-        map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
+        map(
+            lambda s: pauli_class(s),
+            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
+        )
     )
     prepared_states = [
         generate_random_complex(n_dims) for _ in range(len(prepared_paulis))
@@ -122,8 +94,16 @@ def test_apply_n_qubits(
 @pytest.mark.parametrize(
     "qubits,states,pauli_class,",
     it.chain(
-        [(q, n, fp.PauliString) for q in QUBITS_TO_BENCHMARK for n in [16, 128]],
-        [(q, n, pp.PauliString) for q in QUBITS_TO_BENCHMARK for n in [16, 128]],
+        [
+            (q, n, fp.PauliString)
+            for q in QUBITS_TO_BENCHMARK
+            for n in N_STATES_TO_BENCHMARK
+        ],
+        [
+            (q, n, pp.PauliString)
+            for q in QUBITS_TO_BENCHMARK
+            for n in N_STATES_TO_BENCHMARK
+        ],
     ),
     ids=resolve_parameter_repr,
 )
@@ -141,10 +121,11 @@ def test_apply_batch_n_qubits_n_states(
     all Pauli strings of given length for given PauliString class.
     """
     n_dims = 1 << qubits
-    n_strings_limit = 128 if qubits > 4 else None
-
     prepared_paulis = list(
-        map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
+        map(
+            lambda s: pauli_class(s),
+            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
+        )
     )
     prepared_states = [
         generate_random_complex(n_dims, states) for _ in range(len(prepared_paulis))
@@ -176,10 +157,11 @@ def test_expectation_value_n_qubits(
 ) -> None:
     """Benchmark PauliString expectation_value with provided state vector."""
     n_dims = 1 << qubits
-    n_strings_limit = 128 if qubits > 4 else None
-
     prepared_paulis = list(
-        map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
+        map(
+            lambda s: pauli_class(s),
+            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
+        )
     )
     prepared_states = [
         generate_random_complex(n_dims) for _ in range(len(prepared_paulis))
@@ -193,8 +175,16 @@ def test_expectation_value_n_qubits(
 @pytest.mark.parametrize(
     "qubits,states,pauli_class,",
     it.chain(
-        [(q, n, fp.PauliString) for q in QUBITS_TO_BENCHMARK for n in [16, 128]],
-        [(q, n, pp.PauliString) for q in QUBITS_TO_BENCHMARK for n in [16, 128]],
+        [
+            (q, n, fp.PauliString)
+            for q in QUBITS_TO_BENCHMARK
+            for n in N_STATES_TO_BENCHMARK
+        ],
+        [
+            (q, n, pp.PauliString)
+            for q in QUBITS_TO_BENCHMARK
+            for n in N_STATES_TO_BENCHMARK
+        ],
     ),
     ids=resolve_parameter_repr,
 )
@@ -208,10 +198,11 @@ def test_expectation_value_batch_n_qubits_n_states(
 ) -> None:
     """Benchmark PauliString expectation_value with provided set of state vectors."""
     n_dims = 1 << qubits
-    n_strings_limit = 128 if qubits > 4 else None
-
     prepared_paulis = list(
-        map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
+        map(
+            lambda s: pauli_class(s),
+            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
+        )
     )
     prepared_states = [
         generate_random_complex(n_dims, states) for _ in range(len(prepared_paulis))
@@ -220,6 +211,44 @@ def test_expectation_value_batch_n_qubits_n_states(
     benchmark(
         benchmark_expectation_value, paulis=prepared_paulis, states=prepared_states
     )
+
+
+def benchmark_sparse_composer(paulis: list, composer: Callable) -> None:
+    """Benchmark algorithm for sparse representation of pauli string."""
+    for ps in paulis:
+        cols, vals = composer(ps)  # noqa: F841
+
+
+@pytest.mark.skip(
+    reason="currently std::vector conversion on c++ side "
+    "takes majority of time -> results are not representative"
+)
+@pytest.mark.parametrize(
+    "qubits,composer_func,",
+    it.chain(
+        [(q, fp.helpers.pauli_string_sparse_repr) for q in QUBITS_TO_BENCHMARK],
+        [(q, pp.pauli_string.compose_sparse_pauli) for q in QUBITS_TO_BENCHMARK],
+    ),
+    ids=resolve_parameter_repr,
+)
+def test_string_sparse_composer_n_qubits(
+    benchmark: Callable,
+    pauli_strings_with_size: Callable,
+    composer_func: Callable,
+    qubits: int,
+) -> None:
+    """Benchmark algorithm for sparse representation of pauli string.
+
+    Parametrized test case to run the benchmark across
+    all Pauli strings of given length for given PauliString class.
+    """
+    prepared_paulis = pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT)
+    if "pypauli" not in composer_func.__module__:  # check if it's c++ wrapper
+        prepared_paulis = list(
+            map(lambda pstr: [fp.Pauli(c) for c in pstr], prepared_paulis)
+        )
+
+    benchmark(benchmark_sparse_composer, paulis=prepared_paulis, composer=composer_func)
 
 
 if __name__ == "__main__":
