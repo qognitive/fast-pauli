@@ -7,8 +7,10 @@ fast_pauli documentation
 ========================
 
 
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :caption: Contents
 
    install
    examples
@@ -16,3 +18,8 @@ fast_pauli documentation
    cpp_api
 
 
+Introduction
+============
+
+Our Goals
+=========
