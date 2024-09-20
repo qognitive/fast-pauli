@@ -242,7 +242,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
      * @param coeff coefficient to apply to the PauliString
      * @param dedupe whether to deduplicate provided PauliString
      */
-    void extend(PauliString pauli_str, std::complex<T> coeff, bool dedupe = false)
+    void extend(PauliString pauli_str, std::complex<T> coeff, bool dedupe = true)
     {
         if (pauli_str.dim() != dim())
         {

@@ -230,7 +230,7 @@ class PauliOp:
         self,
         other: PauliOp | PauliString,
         multiplier: complex | None = None,
-        dedupe: bool = False,
+        dedupe: bool = True,
     ) -> None:
         """Add another PauliOp to the current one
         by extending the internal summation with new terms.

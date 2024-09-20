@@ -257,7 +257,7 @@ NB_MODULE(_fast_pauli, m)
             [](fp::PauliOp<float_type> &self, fp::PauliString const &other, cfloat_t multiplier, bool dedupe) {
                 self.extend(other, multiplier, dedupe);
             },
-            "other"_a, "multiplier"_a, "dedupe"_a = false)
+            "other"_a, "multiplier"_a, "dedupe"_a = true)
 
         // Getters
         .def_prop_ro("dim", &fp::PauliOp<float_type>::dim)
