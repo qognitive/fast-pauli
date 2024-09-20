@@ -29,10 +29,17 @@ dev = [
   "pytest",
   "pytest-benchmark",
   "setuptools_scm[toml]>=8",
+]
+docs = [
+
   "sphinx",
-  "sphinx_rtd_theme",
+  "sphinx-rtd-theme",
+  "sphinx-autobuild",
+  "sphinx-copybutton",
+  "breathe",
   "sphinx-autobuild",
 ]
+
 examples = [
 ]
 
@@ -96,7 +103,7 @@ exclude = [
     "venv",
     ".venv",
     "fast_pauli/__version__.py",
-    "nanobind_test"
+    "docs",
 ]
 
 line-length = 88

@@ -89,3 +89,5 @@ add_subdirectory(fast_pauli/cpp/examples)
 
 # Python bindings
 add_subdirectory(fast_pauli/cpp/src)
+
+add_subdirectory(docs)
