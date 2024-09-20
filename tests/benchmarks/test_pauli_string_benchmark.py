@@ -3,17 +3,17 @@
 import itertools as it
 from typing import Callable
 
+import numpy as np
 import pytest
 
 import fast_pauli._fast_pauli as fp
 import fast_pauli.pypauli as pp
-from tests.conftest import resolve_parameter_repr
-
-SAMPLE_STRINGS_LIMIT = 256
-QUBITS_TO_BENCHMARK = [2, 4, 6, 10]
-N_STATES_TO_BENCHMARK = [16, 128, 1024]
-
-HEAVY_QUBITS = [14, 17, 20]
+from tests.conftest import (
+    N_STATES_TO_BENCHMARK,
+    QUBITS_TO_BENCHMARK,
+    SAMPLE_STRINGS_LIMIT,
+    resolve_parameter_repr,
+)
 
 
 def benchmark_dense_conversion(paulis: list) -> None:
@@ -211,6 +211,79 @@ def test_expectation_value_batch_n_qubits_n_states(
     benchmark(
         benchmark_expectation_value, paulis=prepared_paulis, states=prepared_states
     )
+
+
+def benchmark_matmul(left_paulis: list, right_paulis: list) -> None:
+    """Benchmark PauliString multiplication."""
+    for lp, rp in zip(left_paulis, right_paulis):
+        phase, p_str = lp @ rp  # noqa: F841
+
+
+@pytest.mark.parametrize(
+    "qubits,pauli_class,",
+    it.chain(
+        [(q, fp.PauliString) for q in QUBITS_TO_BENCHMARK],
+        [(q, pp.PauliString) for q in QUBITS_TO_BENCHMARK],
+    ),
+    ids=resolve_parameter_repr,
+)
+def test_multiplication_n_qubits(
+    benchmark: Callable,
+    pauli_strings_with_size: Callable,
+    pauli_class: type[fp.PauliString] | type[pp.PauliString],
+    qubits: int,
+) -> None:
+    """Benchmark matrix multiplication of PauliStrings.
+
+    Parametrized test case to run the benchmark across
+    all Pauli strings of given length for given PauliString class.
+    """
+    prepared_paulis = list(
+        map(
+            lambda s: pauli_class(s),
+            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
+        )
+    )
+    left_paulis, right_paulis = np.array_split(prepared_paulis, 2)
+
+    benchmark(benchmark_matmul, left_paulis=left_paulis, right_paulis=right_paulis)
+
+
+def benchmark_arithmetic(left_paulis: list, right_paulis: list) -> None:
+    """Benchmark PauliString arithmetic."""
+    for lp, rp in zip(left_paulis, right_paulis):
+        p_op1 = lp + rp  # noqa: F841
+        p_op2 = rp - lp  # noqa: F841
+
+
+@pytest.mark.parametrize(
+    "qubits,pauli_class,",
+    it.chain(
+        [(q, fp.PauliString) for q in QUBITS_TO_BENCHMARK],
+        [(q, pp.PauliString) for q in QUBITS_TO_BENCHMARK],
+    ),
+    ids=resolve_parameter_repr,
+)
+def test_arithmetic_n_qubits(
+    benchmark: Callable,
+    pauli_strings_with_size: Callable,
+    pauli_class: type[fp.PauliString] | type[pp.PauliString],
+    qubits: int,
+) -> None:
+    """Benchmark addition and subtraction of PauliStrings.
+
+    Parametrized test case to run the benchmark across
+    all Pauli strings of given length for given PauliString class.
+    """
+    prepared_paulis = list(
+        map(
+            lambda s: pauli_class(s),
+            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
+        )
+    )
+    left_paulis, right_paulis = np.array_split(prepared_paulis, 2)
+
+    benchmark(benchmark_arithmetic, left_paulis=left_paulis, right_paulis=right_paulis)
 
 
 def benchmark_sparse_composer(paulis: list, composer: Callable) -> None:

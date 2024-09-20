@@ -8,6 +8,17 @@ import pytest
 
 from fast_pauli.pypauli.helpers import pauli_matrices
 
+### TEST CONSTANTS ###
+
+SAMPLE_STRINGS_LIMIT = 256
+QUBITS_TO_BENCHMARK = [2, 4, 6, 10]
+N_STATES_TO_BENCHMARK = [16, 128, 1024]
+
+LARGE_QUBITS = [14, 17, 20]
+
+
+### TEST FIXTURES ###
+
 
 @pytest.fixture
 def paulis() -> dict[str | int, np.ndarray]:
