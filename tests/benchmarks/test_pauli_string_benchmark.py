@@ -9,11 +9,27 @@ import pytest
 import fast_pauli._fast_pauli as fp
 import fast_pauli.pypauli as pp
 from tests.conftest import (
-    N_STATES_TO_BENCHMARK,
     QUBITS_TO_BENCHMARK,
     SAMPLE_STRINGS_LIMIT,
     resolve_parameter_repr,
 )
+
+N_STATES_TO_BENCHMARK = [16, 128, 1024]
+
+
+@pytest.fixture
+def prepared_paulis(
+    pauli_strings_with_size: Callable,
+    pauli_class: type[fp.PauliString] | type[pp.PauliString],
+    qubits: int,
+) -> list[str]:
+    """Fixture to provide initialized Pauli strings for testing."""
+    return list(
+        map(
+            lambda s: pauli_class(s),
+            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
+        )
+    )
 
 
 def benchmark_dense_conversion(paulis: list) -> None:
@@ -32,7 +48,7 @@ def benchmark_dense_conversion(paulis: list) -> None:
 )
 def test_dense_conversion_n_qubits(
     benchmark: Callable,
-    pauli_strings_with_size: Callable,
+    prepared_paulis: list,
     pauli_class: type[fp.PauliString] | type[pp.PauliString],
     qubits: int,
 ) -> None:
@@ -41,13 +57,6 @@ def test_dense_conversion_n_qubits(
     Parametrized test case to run the benchmark across
     all Pauli strings of given length for given PauliString class.
     """
-    prepared_paulis = list(
-        map(
-            lambda s: pauli_class(s),
-            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
-        )
-    )
-
     benchmark(benchmark_dense_conversion, paulis=prepared_paulis)
 
 
@@ -67,7 +76,7 @@ def benchmark_apply(paulis: list, states: list) -> None:
 )
 def test_apply_n_qubits(
     benchmark: Callable,
-    pauli_strings_with_size: Callable,
+    prepared_paulis: list,
     generate_random_complex: Callable,
     pauli_class: type[fp.PauliString] | type[pp.PauliString],
     qubits: int,
@@ -78,12 +87,6 @@ def test_apply_n_qubits(
     all Pauli strings of given length for given PauliString class.
     """
     n_dims = 1 << qubits
-    prepared_paulis = list(
-        map(
-            lambda s: pauli_class(s),
-            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
-        )
-    )
     prepared_states = [
         generate_random_complex(n_dims) for _ in range(len(prepared_paulis))
     ]
@@ -109,7 +112,7 @@ def test_apply_n_qubits(
 )
 def test_apply_batch_n_qubits_n_states(
     benchmark: Callable,
-    pauli_strings_with_size: Callable,
+    prepared_paulis: list,
     generate_random_complex: Callable,
     pauli_class: type[fp.PauliString] | type[pp.PauliString],
     qubits: int,
@@ -121,12 +124,6 @@ def test_apply_batch_n_qubits_n_states(
     all Pauli strings of given length for given PauliString class.
     """
     n_dims = 1 << qubits
-    prepared_paulis = list(
-        map(
-            lambda s: pauli_class(s),
-            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
-        )
-    )
     prepared_states = [
         generate_random_complex(n_dims, states) for _ in range(len(prepared_paulis))
     ]
@@ -150,19 +147,13 @@ def benchmark_expectation_value(paulis: list, states: list) -> None:
 )
 def test_expectation_value_n_qubits(
     benchmark: Callable,
-    pauli_strings_with_size: Callable,
+    prepared_paulis: list,
     generate_random_complex: Callable,
     pauli_class: type[fp.PauliString] | type[pp.PauliString],
     qubits: int,
 ) -> None:
     """Benchmark PauliString expectation_value with provided state vector."""
     n_dims = 1 << qubits
-    prepared_paulis = list(
-        map(
-            lambda s: pauli_class(s),
-            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
-        )
-    )
     prepared_states = [
         generate_random_complex(n_dims) for _ in range(len(prepared_paulis))
     ]
@@ -190,7 +181,7 @@ def test_expectation_value_n_qubits(
 )
 def test_expectation_value_batch_n_qubits_n_states(
     benchmark: Callable,
-    pauli_strings_with_size: Callable,
+    prepared_paulis: list,
     generate_random_complex: Callable,
     pauli_class: type[fp.PauliString] | type[pp.PauliString],
     qubits: int,
@@ -198,12 +189,6 @@ def test_expectation_value_batch_n_qubits_n_states(
 ) -> None:
     """Benchmark PauliString expectation_value with provided set of state vectors."""
     n_dims = 1 << qubits
-    prepared_paulis = list(
-        map(
-            lambda s: pauli_class(s),
-            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
-        )
-    )
     prepared_states = [
         generate_random_complex(n_dims, states) for _ in range(len(prepared_paulis))
     ]
@@ -229,7 +214,7 @@ def benchmark_matmul(left_paulis: list, right_paulis: list) -> None:
 )
 def test_multiplication_n_qubits(
     benchmark: Callable,
-    pauli_strings_with_size: Callable,
+    prepared_paulis: list,
     pauli_class: type[fp.PauliString] | type[pp.PauliString],
     qubits: int,
 ) -> None:
@@ -238,12 +223,6 @@ def test_multiplication_n_qubits(
     Parametrized test case to run the benchmark across
     all Pauli strings of given length for given PauliString class.
     """
-    prepared_paulis = list(
-        map(
-            lambda s: pauli_class(s),
-            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
-        )
-    )
     left_paulis, right_paulis = np.array_split(prepared_paulis, 2)
 
     benchmark(benchmark_matmul, left_paulis=left_paulis, right_paulis=right_paulis)
@@ -266,7 +245,7 @@ def benchmark_arithmetic(left_paulis: list, right_paulis: list) -> None:
 )
 def test_arithmetic_n_qubits(
     benchmark: Callable,
-    pauli_strings_with_size: Callable,
+    prepared_paulis: list,
     pauli_class: type[fp.PauliString] | type[pp.PauliString],
     qubits: int,
 ) -> None:
@@ -275,12 +254,6 @@ def test_arithmetic_n_qubits(
     Parametrized test case to run the benchmark across
     all Pauli strings of given length for given PauliString class.
     """
-    prepared_paulis = list(
-        map(
-            lambda s: pauli_class(s),
-            pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
-        )
-    )
     left_paulis, right_paulis = np.array_split(prepared_paulis, 2)
 
     benchmark(benchmark_arithmetic, left_paulis=left_paulis, right_paulis=right_paulis)
