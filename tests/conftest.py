@@ -12,7 +12,7 @@ from fast_pauli.pypauli.helpers import pauli_matrices
 @pytest.fixture
 def paulis() -> dict[str | int, np.ndarray]:
     """Fixture to provide dict with Pauli matrices."""
-    return pauli_matrices()  # type: ignore
+    return pauli_matrices()
 
 
 @pytest.fixture

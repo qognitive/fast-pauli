@@ -32,11 +32,6 @@ packages = ["fast_pauli"]
 [tool.setuptools.package-dir]
 fast_pauli = "fast_pauli"
 
-# Have to explicitly include subpackages because of the non-std layout =(
-# https://github.com/pypa/setuptools/issues/4248
-# "fast_pauli.pypauli" = "fast_pauli/py/pypauli"
-# "fast_pauli.pypauli.helpers" = "fast_pauli/py/pypauli/helpers"
-
 [tool.setuptools_scm]
 version_file = "fast_pauli/__version__.py"
 
@@ -90,7 +85,6 @@ exclude = [
   "venv",
   ".venv",
   "fast_pauli/__version__.py",
-  "nanobind_test",
 ]
 
 line-length = 88
