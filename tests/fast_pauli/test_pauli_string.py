@@ -83,7 +83,7 @@ def test_string_basics(
         if isinstance(pauli_string, fp.PauliString)
         else [],
     ):
-        p = pauli_string(s)
+        p = pauli_string(s)  # type: ignore[arg-type]
         assert p.weight == 1 or str(p) == "I"
         assert p.dim == 2
         assert p.n_qubits == 1
@@ -96,7 +96,7 @@ def test_string_basics(
             )
 
     for s in pauli_strings_with_size(3):
-        p = pauli_string(s)
+        p = pauli_string(s)  # type: ignore[arg-type]
         assert p.weight == len(s) - s.count("I")
         assert p.dim == 8
         assert p.n_qubits == 3
