@@ -1,0 +1,3 @@
+method,mean,median,n_qubits,n_ops
+fast_pauli,1.0,1.0,10,100
+numpy,10,1.,10,100
