@@ -14,6 +14,14 @@ build-py:
 .PHONY: build
 build: build-cpp build-py
 
+docs:
+	cmake -B build -DENABLE_DOCS=ON
+	cmake --build build --target docs
+	python -m pip install ".[docs]"
+	sphinx-autobuild docs/source docs/build/html
+
+
+
 test-cpp:
 	ctest --test-dir build --verbose
 

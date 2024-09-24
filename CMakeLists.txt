@@ -90,4 +90,7 @@ add_subdirectory(fast_pauli/cpp/examples)
 # Python bindings
 add_subdirectory(fast_pauli/cpp/src)
 
-add_subdirectory(docs)
+option(ENABLE_DOCS "Enable documentation generation" OFF)
+if(ENABLE_DOCS)
+  add_subdirectory(docs)
+endif()
