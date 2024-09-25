@@ -258,62 +258,19 @@ struct PauliString
     }
 
     /**
-     * @brief @copybrief PauliString::apply(std::mdspan)
-     *
-     * @tparam T The floating point base to use for all the complex numbers
-     * @param v The input vector to apply the PauliString to. Must be the same
-     * size as PauliString.dim().
-     * @return  std::vector<std::complex<T>> The output state after
-     * applying the PauliString.
-     */
-    template <std::floating_point T> std::vector<std::complex<T>> apply(std::vector<std::complex<T>> const &v) const
-    {
-        // route this to implementation we have for mdspan specialization
-        return this->apply(std::mdspan(v.data(), v.size()));
-    }
-
-    /**
      * @brief Apply the PauliString (using the sparse representation) to a vector.
      * This performs following matrix-vector multiplication \f$ \mathcal{\hat{P}}
      * \ket{\psi} \f$
      *
      * @tparam T The floating point base to use for all the complex numbers
-     * @param v The input vector to apply the PauliString to. Must be the same
-     * size as PauliString.dim().
-     * @return  std::vector<std::complex<T>> The output state after
-     * applying the PauliString.
-     */
-    template <std::floating_point T>
-    std::vector<std::complex<T>> apply(std::mdspan<std::complex<T> const, std::dextents<size_t, 1>> v) const
-    {
-        // Input check
-        if (v.size() != dim())
-        {
-            throw std::invalid_argument("Input vector size must match the number of qubits");
-        }
-
-        auto [k, m] = get_sparse_repr<T>(paulis);
-
-        std::vector<std::complex<T>> result(v.size(), 0);
-        for (size_t i = 0; i < k.size(); ++i)
-        {
-            result[i] += m[i] * v(k[i]);
-        }
-
-        return result;
-    }
-
-    /**
-     * @brief Apply a pauli string (using the sparse representation) to a vector.
-     *
-     * @tparam T The floating point base to use for all the complex numbers
      * @param new_states Output state
      * @param states The input vector to apply the PauliString to. Must be the
+     * @param c Multiplication factor to apply to the PauliString
      * same size as PauliString.dim().
      */
     template <std::floating_point T>
     void apply(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> new_states,
-               std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states) const
+               std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states, std::complex<T> const c = 1.0) const
     {
         // Input check
         if (states.size() != dim())
@@ -334,7 +291,7 @@ struct PauliString
         // #pragma omp parallel for schedule(static)
         for (size_t i = 0; i < k.size(); ++i)
         {
-            new_states[i] += m[i] * states[k[i]];
+            new_states[i] += c * m[i] * states[k[i]];
         }
     }
 
@@ -442,24 +399,26 @@ struct PauliString
     // Debugging Helpers
     //
     /**
-     * @brief Get the dense representation of the object as a 2D-std::vector
+     * @brief Get the dense representation of the object as a 2D-array
      *
      * @tparam T The floating point base to use for all the complex numbers
-     * @return  std::vector<std::vector<std::complex<T>>>
+     * @param output The output tensor to fill with the dense representation
      */
-    template <std::floating_point T> std::vector<std::vector<std::complex<T>>> get_dense_repr() const
+    template <std::floating_point T> void to_tensor(std::mdspan<std::complex<T>, std::dextents<size_t, 2>> output) const
     {
+        if (output.extent(0) != dim() or output.extent(1) != dim())
+            throw std::invalid_argument("Output tensor must have the same dimensions as the PauliString");
+
         // Convert to dense representation
         auto [k, m] = get_sparse_repr<T>(paulis);
 
-        std::vector<std::vector<std::complex<T>>> result(dim(), std::vector<std::complex<T>>(dim(), 0));
-
+        // TODO on the calling side: based on the output shape and num of cores we should decide if we invoke parallel
+        // or serial version
+#pragma omp parallel for schedule(static)
         for (size_t i = 0; i < k.size(); ++i)
         {
-            result[i][k[i]] = m[i];
+            output(i, k[i]) = m[i];
         }
-
-        return result;
     }
 };
 
