@@ -291,29 +291,6 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
         std::copy(other_op.coeffs.begin(), other_op.coeffs.end(), std::back_inserter(coeffs));
     }
 
-    std::vector<std::complex<T>> apply(std::vector<std::complex<T>> const &state) const
-    {
-        // input check
-        if (state.size() != dim())
-        {
-            throw std::invalid_argument("state size must match the dimension of the operators");
-        }
-
-        std::vector<std::complex<T>> res(state.size(), 0);
-
-        for (size_t i = 0; i < pauli_strings.size(); ++i)
-        {
-            PauliString const &ps = pauli_strings[i];
-            std::complex<T> c = coeffs[i];
-            std::vector<std::complex<T>> tmp = ps.apply(state);
-            for (size_t j = 0; j < state.size(); ++j)
-            {
-                res[j] += c * tmp[j];
-            }
-        }
-        return res;
-    }
-
     /**
      * @brief Apply the PauliOp to a batch of states. This function takes a
      * different shape of the states than the other apply functions. Here all the
@@ -358,6 +335,44 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
             }
         }
         return;
+    }
+
+    /**
+     * @brief Apply the PauliOp to a state
+     *
+     * This performs following matrix-matrix multiplication
+     * \f$ \big( \sum_i h_i \mathcal{\hat{P}}_i \big) \hat{\psi} \f$
+     *
+     * @param state_out The output state after applying the PauliOp
+     * @param states THe original state to apply the PauliOp to
+     */
+    void apply(mdspan<std::complex<T>, std::dextents<size_t, 1>> state_out,
+               mdspan<std::complex<T>, std::dextents<size_t, 1>> const state) const
+    {
+        // input check
+        if (state.size() != dim() or state_out.size() != dim())
+            throw std::invalid_argument("state size must match the dimension of the operators");
+
+        size_t const n_threads = omp_get_max_threads();
+        std::vector<std::complex<T>> thread_storage(n_threads * dim());
+        std::mdspan<std::complex<T>, std::dextents<size_t, 2>> span_storage(thread_storage.data(), n_threads, dim());
+
+#pragma omp parallel for schedule(static)
+        for (size_t i = 0; i < pauli_strings.size(); ++i)
+        {
+            size_t const tid = omp_get_thread_num();
+            auto span_local = std::submdspan(span_storage, tid, std::full_extent);
+            PauliString const &ps = pauli_strings[i];
+            ps.apply(span_local, state, coeffs[i]);
+        }
+
+#pragma omp parallel for schedule(static)
+        for (size_t j = 0; j < state.size(); ++j)
+        {
+            auto span_local = std::submdspan(span_storage, std::full_extent, j);
+            for (size_t t = 0; t < n_threads; ++t)
+                state_out[j] += span_local[t];
+        }
     }
 
     /**
@@ -481,26 +496,26 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
     // Helpers (mostly for debugging)
     //
     /**
-     * @brief Get dense representation of PauliOp as a 2D-std::vector
+     * @brief Get dense representation of PauliOp as a 2D-array
      *
-     * @return std::vector<std::vector<std::complex<T>>>
+     * @param output The output tensor to fill with the dense representation
      */
-    std::vector<std::vector<std::complex<T>>> get_dense_repr() const
+    void to_tensor(std::mdspan<std::complex<T>, std::dextents<size_t, 2>> output) const
     {
-        std::vector<std::vector<std::complex<T>>> res(dim(), std::vector<std::complex<T>>(dim(), 0));
-
         for (size_t i = 0; i < pauli_strings.size(); ++i)
         {
             PauliString const &ps = pauli_strings[i];
+            auto [cols, vals] = get_sparse_repr<T>(ps.paulis);
             std::complex<T> c = coeffs[i];
 
-            auto [cols, vals] = get_sparse_repr<T>(ps.paulis);
+            // TODO figure out better way to parallelize this without having to allocate n_strings x n_dim buffer at
+            // once. currently this should be beneficial for higher dims
+            // #pragma omp parallel for schedule(static)
             for (size_t j = 0; j < dim(); ++j)
             {
-                res[j][cols[j]] += c * vals[j];
+                output(j, cols[j]) += c * vals[j];
             }
         }
-        return res;
     }
 
     /**
