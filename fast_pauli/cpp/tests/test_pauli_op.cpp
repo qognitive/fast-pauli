@@ -30,7 +30,9 @@ void __check_apply(PauliOp<double> &pauli_op, size_t n_states)
     //
     // Calculate the expected new states
     //
-    std::vector<std::vector<std::complex<double>>> pop_dense = pauli_op.get_dense_repr();
+    std::vector<std::complex<double>> dense_raw;
+    auto pop_dense = empty(dense_raw, dims, dims);
+    pauli_op.to_tensor(pop_dense);
 
     // pop_dense : d x d
     // states : n x d
@@ -46,7 +48,7 @@ void __check_apply(PauliOp<double> &pauli_op, size_t n_states)
         {
             for (size_t j = 0; j < dims; ++j)
             {
-                expected_span(i, t) += pop_dense[i][j] * states(j, t);
+                expected_span(i, t) += pop_dense(i, j) * states(j, t);
             }
         }
     }
@@ -73,11 +75,13 @@ TEST_CASE("test pauli op")
 {
     std::vector<PauliString> pauli_strings = {"IXYZ", "XIII", "XXYZ"};
     std::vector<std::complex<double>> coeffs = {1i, 2., -1i};
-
     PauliOp<double> pauli_op(coeffs, pauli_strings);
-    auto pop_dense = pauli_op.get_dense_repr();
 
-    fmt::print("pop_dense: \n{}\n", fmt::join(pop_dense, "\n"));
+    std::vector<std::complex<double>> dense_raw;
+    auto pop_dense = empty(dense_raw, pauli_op.dim(), pauli_op.dim());
+    pauli_op.to_tensor(pop_dense);
+
+    fmt::print("pop_dense: \n{}\n", fmt::join(dense_raw, "\n"));
 }
 
 TEST_CASE("test bad init")
@@ -91,7 +95,11 @@ TEST_CASE("test bad apply")
     std::vector<std::complex<double>> coeffs = {1i, 2., -1i};
     std::vector<std::complex<double>> state(5, 0);
     PauliOp<double> pauli_op(coeffs, pauli_strings);
-    CHECK_THROWS(pauli_op.apply(state));
+
+    std::vector<std::complex<double>> result;
+    auto span_result = empty(result, state.size());
+
+    CHECK_THROWS(pauli_op.apply(span_result, std::mdspan(state.data(), state.size())));
 }
 
 //
@@ -103,9 +111,11 @@ TEST_CASE("test get_dense_repr")
     std::vector<PauliString> pauli_strings = {"III", "III", "III"};
     std::vector<std::complex<double>> coeffs = {1, 2., 1};
     PauliOp<double> pauli_op(coeffs, pauli_strings);
-    auto pop_dense = pauli_op.get_dense_repr();
-
     size_t const dim = pauli_op.dim();
+
+    std::vector<std::complex<double>> dense_raw;
+    auto pop_dense = empty(dense_raw, dim, dim);
+    pauli_op.to_tensor(pop_dense);
 
     for (size_t i = 0; i < dim; ++i)
     {
@@ -113,11 +123,11 @@ TEST_CASE("test get_dense_repr")
         {
             if (i == j)
             {
-                CHECK(abs(pop_dense[i][j] - std::complex<double>(4)) < 1e-6);
+                CHECK(abs(pop_dense(i, j) - std::complex<double>(4)) < 1e-6);
             }
             else
             {
-                CHECK(abs(pop_dense[i][j]) < 1e-6);
+                CHECK(abs(pop_dense(i, j)) < 1e-6);
             }
         }
     }
@@ -140,8 +150,12 @@ TEST_CASE("test apply simple")
     fmt::print("state: \n[{}]\n", fmt::join(state, ",\n "));
 
     // Apply the PauliOp and the PauliString
-    std::vector<std::complex<double>> res = pauli_op.apply(state);
-    std::vector<std::complex<double>> expected = pauli_strings[0].apply(state);
+    std::vector<std::complex<double>> res, expected;
+    auto span_result = empty(res, state.size());
+    auto span_expected = empty(expected, state.size());
+
+    pauli_op.apply(span_result, std::mdspan(state.data(), state.size()));
+    pauli_strings[0].apply(span_expected, std::mdspan(state.data(), state.size()));
 
     fmt::print("res: \n[{}]\n", fmt::join(res, ",\n "));
     fmt::print("expected: \n[{}]\n", fmt::join(expected, ",\n "));
