@@ -10,6 +10,7 @@ import fast_pauli.pypauli as pp
 from tests.conftest import resolve_parameter_repr
 
 QUBITS_TO_BENCHMARK = [1, 2, 4, 10]
+# QUBITS_TO_BENCHMARK = [10, 12]
 
 
 def benchmark_sparse_composer(paulis: list, composer: Callable) -> None:

@@ -81,7 +81,7 @@ NB_MODULE(_fast_pauli, m)
                     auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(states);
                     auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
                     auto new_states_mdspan = std::mdspan(new_states.data(), new_states.size());
-                    self.apply(new_states_mdspan, states_mdspan);
+                    self.apply(std::execution::par, new_states_mdspan, states_mdspan);
                     return new_states;
                 }
                 else if (states.ndim() == 2)
@@ -89,7 +89,7 @@ NB_MODULE(_fast_pauli, m)
                     auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
                     auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
                     auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
-                    self.apply_batch(new_states_mdspan, states_mdspan, c);
+                    self.apply_batch(std::execution::par, new_states_mdspan, states_mdspan, c);
                     return new_states;
                 }
                 else
@@ -111,7 +111,7 @@ NB_MODULE(_fast_pauli, m)
                     std::array<size_t, 1> out_shape = {1};
                     auto expected_vals_out = fp::__detail::owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
                     auto expected_vals_out_mdspan = std::mdspan(expected_vals_out.data(), 1);
-                    self.expectation_value(expected_vals_out_mdspan, states_mdspan_2d, c);
+                    self.expectation_value(std::execution::par, expected_vals_out_mdspan, states_mdspan_2d, c);
 
                     return expected_vals_out;
                 }
@@ -121,7 +121,7 @@ NB_MODULE(_fast_pauli, m)
                     std::array<size_t, 1> out_shape = {states_mdspan.extent(1)};
                     auto expected_vals_out = fp::__detail::owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
                     auto expected_vals_out_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(expected_vals_out);
-                    self.expectation_value(expected_vals_out_mdspan, states_mdspan, c);
+                    self.expectation_value(std::execution::par, expected_vals_out_mdspan, states_mdspan, c);
                     return expected_vals_out;
                 }
                 else
