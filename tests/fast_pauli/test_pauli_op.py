@@ -5,7 +5,7 @@ from typing import Callable
 import numpy as np
 import pytest
 
-import fast_pauli._fast_pauli as fp
+import fast_pauli as fp
 import fast_pauli.pypauli as pp
 from fast_pauli.pypauli.helpers import naive_pauli_converter, naive_pauli_operator
 from tests.conftest import resolve_parameter_repr
@@ -529,12 +529,12 @@ def test_add_sub_with_string(
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        (pauli_string("I") + ixyz_op + pauli_string("I")).to_tensor(),
+        (pauli_string("I") + ixyz_op + pauli_string("I")).to_tensor(),  # type: ignore[operator]
         naive_pauli_operator([3, 1, 1, 1], ["I", "X", "Y", "Z"]),
         atol=1e-15,
     )
     np.testing.assert_allclose(
-        (pauli_string("Z") + ixyz_op - pauli_string("Z")).to_tensor(),
+        (pauli_string("Z") + ixyz_op - pauli_string("Z")).to_tensor(),  # type: ignore[operator]
         naive_pauli_operator([1, 1, 1, 1], ["I", "X", "Y", "Z"]),
         atol=1e-15,
     )
@@ -590,18 +590,18 @@ def test_add_sub_with_string(
                 atol=1e-15,
             )
             np.testing.assert_allclose(
-                (pauli_string(p_str) + p_op).to_tensor(),
+                (pauli_string(p_str) + p_op).to_tensor(),  # type: ignore[operator]
                 p_str_dense + expected_dense_op,
                 atol=1e-15,
             )
 
             np.testing.assert_allclose(
-                (pauli_string(p_str) - p_op).to_tensor(),
+                (pauli_string(p_str) - p_op).to_tensor(),  # type: ignore[operator]
                 p_str_dense - expected_dense_op,
                 atol=1e-15,
             )
             np.testing.assert_allclose(
-                (pauli_string(p_str) + p_op - pauli_string(p_str)).to_tensor(),
+                (pauli_string(p_str) + p_op - pauli_string(p_str)).to_tensor(),  # type: ignore[operator]
                 expected_dense_op,
                 atol=1e-15,
             )

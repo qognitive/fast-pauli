@@ -22,7 +22,7 @@ LARGE_QUBITS = [14, 17, 20]
 @pytest.fixture
 def paulis() -> dict[str | int, np.ndarray]:
     """Fixture to provide dict with Pauli matrices."""
-    return pauli_matrices()  # type: ignore
+    return pauli_matrices()
 
 
 @pytest.fixture

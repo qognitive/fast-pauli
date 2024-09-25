@@ -6,7 +6,7 @@ from typing import Callable
 import numpy as np
 import pytest
 
-import fast_pauli._fast_pauli as fp
+import fast_pauli as fp
 import fast_pauli.pypauli as pp
 from tests.conftest import (
     QUBITS_TO_BENCHMARK,
