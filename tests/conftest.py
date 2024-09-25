@@ -58,7 +58,7 @@ def pauli_strings_shuffled() -> Callable:
 
     def generate_paulis(size: int, limit: int = 1_000) -> list[str]:
         # pretty sloppy implementation that uses global RNG for now
-        all_strings = list(map(lambda s: "".join(s), it.product("IXYZ", repeat=size)))
+        all_strings = ["".join(s) for s in it.product("IXYZ", repeat=size)]
         n_choices = limit if limit and limit <= len(all_strings) else len(all_strings)
         strings: list[str] = np.random.choice(
             all_strings, size=n_choices, replace=False
