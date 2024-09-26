@@ -409,8 +409,11 @@ struct PauliString
         if (output.extent(0) != dim() or output.extent(1) != dim())
             throw std::invalid_argument("Output tensor must have the same dimensions as the PauliString");
 
-        // Convert to dense representation
-        auto [k, m] = get_sparse_repr<T>(paulis);
+        // WARNING: can't use structugred bindings here because of a bug in LLVM
+        // https://github.com/llvm/llvm-project/issues/63152
+        std::vector<size_t> k;
+        std::vector<std::complex<T>> m;
+        std::tie(k, m) = get_sparse_repr<T>(paulis);
 
         // TODO on the calling side: based on the output shape and num of cores we should decide if we invoke parallel
         // or serial version

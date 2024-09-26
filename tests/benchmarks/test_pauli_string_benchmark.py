@@ -288,11 +288,9 @@ def test_string_sparse_composer_n_qubits(
     Parametrized test case to run the benchmark across
     all Pauli strings of given length for given PauliString class.
     """
-    prepared_paulis = pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT)
+    prepared_paulis: list = pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT)
     if "pypauli" not in composer_func.__module__:  # check if it's c++ wrapper
-        prepared_paulis = list(
-            map(lambda pstr: [fp.Pauli(c) for c in pstr], prepared_paulis)
-        )
+        prepared_paulis = [[fp.Pauli(c) for c in s] for s in prepared_paulis]
 
     benchmark(benchmark_sparse_composer, paulis=prepared_paulis, composer=composer_func)
 
