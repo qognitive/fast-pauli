@@ -347,6 +347,15 @@ struct PauliString
         }
     }
 
+    /**
+     * @brief \copydoc PauliString::apply(std::mdspan<std::complex<T>, std::dextents<size_t, 1>>,
+     * std::mdspan<std::complex<T>, std::dextents<size_t, 1>>) const
+     *
+     * @tparam T
+     * @tparam ExecutionPolicy
+     * @param new_states
+     * @param states
+     */
     template <std::floating_point T, execution_policy ExecutionPolicy>
     void apply(ExecutionPolicy &&, std::mdspan<std::complex<T>, std::dextents<size_t, 1>> new_states,
                std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states) const
@@ -434,6 +443,16 @@ struct PauliString
         }
     }
 
+    /**
+     * @brief \copydoc PauliString::apply_batch(std::mdspan<std::complex<T>, std::dextents<size_t, 2>>,
+     * std::mdspan<std::complex<T>, std::dextents<size_t, 2>>, std::complex<T> const) const
+     *
+     * @tparam T
+     * @tparam ExecutionPolicy
+     * @param new_states_T
+     * @param states_T
+     * @param c
+     */
     template <std::floating_point T, execution_policy ExecutionPolicy>
     void apply_batch(ExecutionPolicy &&, std::mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states_T,
                      std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const states_T,
@@ -518,6 +537,16 @@ struct PauliString
         }
     }
 
+    /**
+     * @brief \copydoc PauliString::expectation_value(std::mdspan<std::complex<T>, std::dextents<size_t, 1>>,
+     * std::mdspan<std::complex<T>, std::dextents<size_t, 2>>, std::complex<T> const) const
+     *
+     * @tparam T
+     * @tparam ExecutionPolicy
+     * @param expectation_vals_out
+     * @param states
+     * @param c
+     */
     template <std::floating_point T, execution_policy ExecutionPolicy>
     void expectation_value(ExecutionPolicy &&,
                            std::mdspan<std::complex<T>, std::dextents<size_t, 1>> expectation_vals_out,
