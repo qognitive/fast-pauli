@@ -31,7 +31,6 @@ endif()
 
 # Dependencies
 cpmaddpackage("gh:doctest/doctest@2.4.11")
-cpmaddpackage("gh:pybind/pybind11@2.11.1")
 cpmaddpackage("gh:fmtlib/fmt#10.2.1")
 cpmaddpackage("gh:kokkos/mdspan#b885a2c60ad42f9e1aaa0d317a38105b950cbed0")
 cpmaddpackage("gh:wjakob/nanobind#v2.0.0")
@@ -69,15 +68,22 @@ find_package(OpenMP REQUIRED)
 find_package(Python 3.10 # This is a minimum version
              COMPONENTS Interpreter Development REQUIRED)
 
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address
-# -fno-omit-frame-pointer")
-
 # Our primary target
 add_library(fast_pauli INTERFACE)
 target_include_directories(
   fast_pauli INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/fast_pauli/cpp/include/)
 target_link_libraries(fast_pauli INTERFACE fmt::fmt mdspan OpenMP::OpenMP_CXX)
 target_compile_options(fast_pauli INTERFACE -g3 -Wall -Wextra -Werror)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  message(
+    STATUS
+      "[FAST_PAULI] Detected Clang compiler, need to add libc++ and experimental library flags"
+  )
+  # TODO this is a crude solution, we should prefer the target_compile_options
+  # route set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++
+  # -fexperimental-library") target_compile_options(fast_pauli INTERFACE)
+endif()
 
 # Testing
 include(CTest)

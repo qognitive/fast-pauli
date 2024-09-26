@@ -360,6 +360,19 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
         return;
     }
 
+    void __check_apply_inputs(mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
+                              mdspan<std::complex<T>, std::dextents<size_t, 2>> states) const
+    {
+        if (states.extent(0) != this->dim())
+        {
+            throw std::invalid_argument("[PauliOp] state size must match the dimension of the operators");
+        }
+        if (states.extent(0) != new_states.extent(0) || states.extent(1) != new_states.extent(1))
+        {
+            throw std::invalid_argument("[PauliOp] new_states must have the same dimensions as states");
+        }
+    }
+
     /**
      * @brief Apply the PauliOp to a batch of states. Here all the
      * states (new and old) are transposed so their shape is (n_dims x n_states).
@@ -377,15 +390,7 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
     void apply(mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
                mdspan<std::complex<T>, std::dextents<size_t, 2>> const states) const
     {
-        // input check
-        if (states.extent(0) != this->dim())
-        {
-            throw std::invalid_argument("[PauliOp] state size must match the dimension of the operators");
-        }
-        if (states.extent(0) != new_states.extent(0) || states.extent(1) != new_states.extent(1))
-        {
-            throw std::invalid_argument("[PauliOp] new_states must have the same dimensions as states");
-        }
+        __check_apply_inputs(new_states, states);
 
         // Create tmp obj for reduction
         size_t const n_threads = omp_get_max_threads();
