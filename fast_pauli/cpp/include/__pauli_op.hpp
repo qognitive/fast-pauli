@@ -508,12 +508,8 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
             auto [cols, vals] = get_sparse_repr<T>(ps.paulis);
             std::complex<T> c = coeffs[i];
 
-            // TODO figure out better way to parallelize this without having to allocate n_strings x n_dim buffer
-            // #pragma omp parallel for schedule(static)
             for (size_t j = 0; j < dim(); ++j)
-            {
                 output(j, cols[j]) += c * vals[j];
-            }
         }
     }
 
