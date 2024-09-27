@@ -1,46 +1,43 @@
 """Benchmark fast_pauli operations with qiskit operations."""
 
 import itertools as it
-from typing import List, Callable
+from typing import Callable, List
 
 import pytest
+from qiskit.quantum_info import Pauli, SparsePauliOp
 
 import fast_pauli._fast_pauli as fp
 import fast_pauli.pypauli as pp
 from tests.conftest import resolve_parameter_repr
 
-from qiskit.quantum_info import Pauli
-from qiskit.quantum_info import SparsePauliOp
-
 QUBITS_TO_BENCHMARK = [1, 2, 4, 10]
 
 
 def benchmark_sum(paulis: List) -> None:
-    """Benchmark addition"""
+    """Benchmark addition."""
     for p0, p1 in zip(paulis, reversed(paulis)):
         _ = p0 + p1  # noqa: F841
 
 
 def benchmark_dot(paulis: List) -> None:
-    """Benchmark multiplication"""
+    """Benchmark multiplication."""
     for p0, p1 in zip(paulis, reversed(paulis)):
         _ = p0 @ p1  # noqa: F841
 
 
 def benchmark_to_dense(paulis: List) -> None:
-    """Benchmark conversion to Dense Matrix"""
+    """Benchmark conversion to Dense Matrix."""
     for p in paulis:
         if isinstance(p, (Pauli, SparsePauliOp)):
             _ = p.to_matrix()  # noqa: F841
-        elif isinstance(p, (fp.PauliString, pp.PauliString,
-                            fp.PauliOp, pp.PauliOp)):
+        elif isinstance(p, (fp.PauliString, pp.PauliString, fp.PauliOp, pp.PauliOp)):
             _ = p.to_tensor()  # noqa: F841
         else:
             raise ValueError(f"Unsupported Pauli type: {type(p)}")
 
 
 def benchmark_squared(paulis: List) -> None:
-    """Benchmark squaring"""
+    """Benchmark squaring."""
     for p in paulis:
         _ = p @ p  # noqa: F841
 
@@ -60,21 +57,16 @@ operation_funcs = {
         ["sum", "dot", "to_dense", "square"],
         QUBITS_TO_BENCHMARK,
     ),
-    ids=resolve_parameter_repr
+    ids=resolve_parameter_repr,
 )
-def test_PauliOp_SparsePauliOp(
+def test_pauliop_sparsepauliop(
     benchmark: Callable,
-    pauli_class:
-        type[fp.PauliOp] | type[pp.PauliOp] |
-        type[SparsePauliOp],
+    pauli_class: type[fp.PauliOp] | type[pp.PauliOp] | type[SparsePauliOp],
     operation_name: str,
     qubits: int,
     pauli_strings_with_size: Callable,
 ) -> None:
-    """
-    Benchmark FastPauli PauliOp vs Qiskit PauliOp operations
-    on addition, multiplication, conversion to dense matrix, and squaring.
-    """
+    """Benchmark FastPauli PauliOp vs Qiskit PauliOp operations."""
     n_strings_limit = 128 if qubits > 4 else None
     if pauli_class in [fp.PauliOp, pp.PauliOp]:
         strings = pauli_strings_with_size(qubits, n_strings_limit)
@@ -82,11 +74,13 @@ def test_PauliOp_SparsePauliOp(
         paulis = [pauli_class(coeffs, strings)]
     else:
         paulis = list(
-            map(lambda s: pauli_class(s),
-                pauli_strings_with_size(qubits, n_strings_limit))
+            map(
+                lambda s: pauli_class(s),
+                pauli_strings_with_size(qubits, n_strings_limit),
+            )
         )
     benchmark_func = operation_funcs[operation_name]
-    if operation_name == 'power':
+    if operation_name == "power":
         benchmark(benchmark_func, paulis=paulis, exponent=2)
     else:
         benchmark(benchmark_func, paulis=paulis)
@@ -99,28 +93,22 @@ def test_PauliOp_SparsePauliOp(
         ["sum", "dot", "to_dense", "square"],
         QUBITS_TO_BENCHMARK,
     ),
-    ids=resolve_parameter_repr
+    ids=resolve_parameter_repr,
 )
-def test_PauliString_Pauli(
+def test_paulistring_pauli(
     benchmark: Callable,
-    pauli_class:
-        type[fp.PauliString] | type[pp.PauliString] |
-        type[Pauli],
+    pauli_class: type[fp.PauliString] | type[pp.PauliString] | type[Pauli],
     operation_name: str,
     qubits: int,
     pauli_strings_with_size: Callable,
 ) -> None:
-    """
-    Benchmark FastPauli PauliString vs Qiskit Pauli operations
-    on addition, multiplication, conversion to dense matrix, and squaring.
-    """
+    """Benchmark FastPauli PauliString vs Qiskit Pauli operations."""
     n_strings_limit = 128 if qubits > 4 else None
     paulis = list(
-        map(lambda s: pauli_class(s),
-            pauli_strings_with_size(qubits, n_strings_limit))
+        map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
     )
     benchmark_func = operation_funcs[operation_name]
-    if operation_name == 'power':
+    if operation_name == "power":
         benchmark(benchmark_func, paulis=paulis, exponent=2)
     else:
         if pauli_class == Pauli and operation_name == "sum":
@@ -128,19 +116,13 @@ def test_PauliString_Pauli(
         benchmark(benchmark_func, paulis=paulis)
 
 
-def benchmark_pauliop_pauli_mult(
-    pauli_ops: List,
-    pauli_strings: List
-) -> None:
+def benchmark_pauliop_pauli_mult(pauli_ops: List, pauli_strings: List) -> None:
     """Benchmark fast_pauli.PauliOp @ fast_pauli.PauliString."""
     for pOp, ps in zip(pauli_ops, pauli_strings):
         _ = pOp @ ps  # noqa: F841
 
 
-def benchmark_qiskit_pauliop_pauli_mult(
-    pauli_ops: List,
-    pauli_strings: List
-) -> None:
+def benchmark_qiskit_pauliop_pauli_mult(pauli_ops: List, pauli_strings: List) -> None:
     """Benchmark Qiskit SparsePauliOp @ Qiskit Pauli."""
     for pOp, ps in zip(pauli_ops, pauli_strings):
         _ = pOp.dot(ps)  # noqa: F841
@@ -150,8 +132,7 @@ def benchmark_qiskit_pauliop_pauli_mult(
     "benchmark_func, pauli_op_class, pauli_string_class, qubits",
     [
         (benchmark_func, pauli_op_class, pauli_string_class, qubits)
-        for (benchmark_func, pauli_op_class, pauli_string_class), qubits
-        in it.product(
+        for (benchmark_func, pauli_op_class, pauli_string_class), qubits in it.product(
             [
                 (benchmark_pauliop_pauli_mult, fp.PauliOp, fp.PauliString),
                 (benchmark_qiskit_pauliop_pauli_mult, SparsePauliOp, Pauli),
@@ -169,10 +150,7 @@ def test_pauliop_pauli_mult(
     qubits: int,
     pauli_strings_with_size: Callable,
 ) -> None:
-    """
-    Benchmark fast_pauli.PauliOp @ fast_pauli.PauliString
-    vs Qiskit SparsePauliOp @ Qiskit Pauli.
-    """
+    """Benchmark PauliOp @ PauliString vs Qiskit SparsePauliOp @ Pauli."""
     n_strings_limit = 128 if qubits > 4 else None
     strings = pauli_strings_with_size(qubits, n_strings_limit)
 
