@@ -26,7 +26,7 @@ def prepared_paulis(
     """Fixture to provide initialized Pauli strings for testing."""
     return list(
         map(
-            lambda s: pauli_class(s),
+            lambda s: pauli_class(s),  # type: ignore
             pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
         )
     )
