@@ -22,11 +22,11 @@ def prepared_paulis(
     pauli_strings_with_size: Callable,
     pauli_class: type[fp.PauliString] | type[pp.PauliString],
     qubits: int,
-) -> list[str]:
+) -> list:
     """Fixture to provide initialized Pauli strings for testing."""
     return list(
         map(
-            lambda s: pauli_class(s),  # type: ignore
+            lambda s: pauli_class(s),
             pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT),
         )
     )
