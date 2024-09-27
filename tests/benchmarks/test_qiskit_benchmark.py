@@ -75,7 +75,7 @@ def test_pauliop_sparsepauliop(
     else:
         paulis = list(
             map(
-                lambda s: pauli_class(s),
+                lambda s: pauli_class(s),  # type: ignore
                 pauli_strings_with_size(qubits, n_strings_limit),
             )
         )
@@ -105,7 +105,10 @@ def test_paulistring_pauli(
     """Benchmark FastPauli PauliString vs Qiskit Pauli operations."""
     n_strings_limit = 128 if qubits > 4 else None
     paulis = list(
-        map(lambda s: pauli_class(s), pauli_strings_with_size(qubits, n_strings_limit))
+        map(
+            lambda s: pauli_class(s),
+            pauli_strings_with_size(qubits, n_strings_limit),
+        )
     )
     benchmark_func = operation_funcs[operation_name]
     if operation_name == "power":
