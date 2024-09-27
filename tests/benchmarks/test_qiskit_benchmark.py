@@ -16,16 +16,19 @@ QUBITS_TO_BENCHMARK = [1, 2, 4, 10]
 
 
 def benchmark_sum(paulis: List) -> None:
+    """Benchmark addition"""
     for p0, p1 in zip(paulis, reversed(paulis)):
         _ = p0 + p1  # noqa: F841
 
 
 def benchmark_dot(paulis: List) -> None:
+    """Benchmark multiplication"""
     for p0, p1 in zip(paulis, reversed(paulis)):
         _ = p0 @ p1  # noqa: F841
 
 
 def benchmark_to_dense(paulis: List) -> None:
+    """Benchmark conversion to Dense Matrix"""
     for p in paulis:
         if isinstance(p, (Pauli, SparsePauliOp)):
             _ = p.to_matrix()  # noqa: F841
@@ -37,6 +40,7 @@ def benchmark_to_dense(paulis: List) -> None:
 
 
 def benchmark_squared(paulis: List) -> None:
+    """Benchmark squaring"""
     for p in paulis:
         _ = p @ p  # noqa: F841
 
@@ -67,6 +71,10 @@ def test_PauliOp_SparsePauliOp(
     qubits: int,
     pauli_strings_with_size: Callable,
 ) -> None:
+    """
+    Benchmark FastPauli PauliOp vs Qiskit PauliOp operations
+    on addition, multiplication, conversion to dense matrix, and squaring.
+    """
     n_strings_limit = 128 if qubits > 4 else None
     if pauli_class in [fp.PauliOp, pp.PauliOp]:
         strings = pauli_strings_with_size(qubits, n_strings_limit)
@@ -102,6 +110,10 @@ def test_PauliString_Pauli(
     qubits: int,
     pauli_strings_with_size: Callable,
 ) -> None:
+    """
+    Benchmark FastPauli PauliString vs Qiskit Pauli operations
+    on addition, multiplication, conversion to dense matrix, and squaring.
+    """
     n_strings_limit = 128 if qubits > 4 else None
     paulis = list(
         map(lambda s: pauli_class(s),
@@ -157,6 +169,10 @@ def test_pauliop_pauli_mult(
     qubits: int,
     pauli_strings_with_size: Callable,
 ) -> None:
+    """
+    Benchmark fast_pauli.PauliOp @ fast_pauli.PauliString
+    vs Qiskit SparsePauliOp @ Qiskit Pauli.
+    """
     n_strings_limit = 128 if qubits > 4 else None
     strings = pauli_strings_with_size(qubits, n_strings_limit)
 
