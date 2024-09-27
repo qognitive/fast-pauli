@@ -6,7 +6,7 @@ from typing import Callable
 import numpy as np
 import pytest
 
-import fast_pauli._fast_pauli as fp
+import fast_pauli as fp
 import fast_pauli.pypauli as pp
 from fast_pauli.pypauli.helpers import naive_pauli_converter
 from tests.conftest import resolve_parameter_repr
@@ -83,7 +83,7 @@ def test_string_basics(
         if isinstance(pauli_string, fp.PauliString)
         else [],
     ):
-        p = pauli_string(s)
+        p = pauli_string(s)  # type: ignore[arg-type]
         assert p.weight == 1 or str(p) == "I"
         assert p.dim == 2
         assert p.n_qubits == 1
@@ -96,7 +96,7 @@ def test_string_basics(
             )
 
     for s in pauli_strings_with_size(3):
-        p = pauli_string(s)
+        p = pauli_string(s)  # type: ignore[arg-type]
         assert p.weight == len(s) - s.count("I")
         assert p.dim == 8
         assert p.n_qubits == 3
