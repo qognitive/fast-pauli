@@ -41,9 +41,7 @@ def test_string_sparse_composer_n_qubits(
     prepared_paulis = pauli_strings_with_size(qubits, n_strings_limit)
 
     if "pypauli" not in composer_func.__module__:  # check if it's c++ wrapper
-        prepared_paulis = list(
-            map(lambda pstr: [fp.Pauli(c) for c in pstr], prepared_paulis)
-        )
+        prepared_paulis = [[fp.Pauli(c) for c in pstr] for pstr in prepared_paulis]
 
     benchmark(benchmark_sparse_composer, paulis=prepared_paulis, composer=composer_func)
 

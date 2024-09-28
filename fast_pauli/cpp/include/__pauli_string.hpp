@@ -332,18 +332,7 @@ struct PauliString
     void apply(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> new_states,
                std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states) const
     {
-        __input_checks_apply_1d(new_states, states);
-
-        // WARNING: can't use structured bindings here because of a bug in LLVM
-        // https://github.com/llvm/llvm-project/issues/63152
-        std::vector<size_t> k;
-        std::vector<std::complex<T>> m;
-        std::tie(k, m) = get_sparse_repr<T>(paulis);
-
-        for (size_t i = 0; i < k.size(); ++i)
-        {
-            new_states[i] += m[i] * states[k[i]];
-        }
+        apply(std::execution::seq, new_states, states);
     }
 
     /**
@@ -360,15 +349,16 @@ struct PauliString
                std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states) const
     {
 
+        __input_checks_apply_1d(new_states, states);
+
+        // WARNING: can't use structured bindings here because of a bug in LLVM
+        // https://github.com/llvm/llvm-project/issues/63152
+        std::vector<size_t> k;
+        std::vector<std::complex<T>> m;
+        std::tie(k, m) = get_sparse_repr<T>(paulis);
+
         if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
         {
-            __input_checks_apply_1d(new_states, states);
-
-            // WARNING: can't use structured bindings here because of a bug in LLVM
-            // https://github.com/llvm/llvm-project/issues/63152
-            std::vector<size_t> k;
-            std::vector<std::complex<T>> m;
-            std::tie(k, m) = get_sparse_repr<T>(paulis);
 
 #pragma omp parallel for schedule(static)
             for (size_t i = 0; i < k.size(); ++i)
@@ -378,7 +368,10 @@ struct PauliString
         }
         else
         {
-            apply(new_states, states);
+            for (size_t i = 0; i < k.size(); ++i)
+            {
+                new_states[i] += m[i] * states[k[i]];
+            }
         }
     }
 
@@ -422,24 +415,7 @@ struct PauliString
         std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const states_T, // extent(0) = dims, extent(1) = n_states
         std::complex<T> const c) const
     {
-        __input_checks_apply_batch(new_states_T, states_T);
-        // WARNING: can't use structugred bindings here because of a bug in LLVM
-        // https://github.com/llvm/llvm-project/issues/63152
-        std::vector<size_t> k;
-        std::vector<std::complex<T>> m;
-        std::tie(k, m) = get_sparse_repr<T>(paulis);
-
-        // #pragma omp parallel for schedule(static)
-        for (size_t i = 0; i < states_T.extent(0); ++i)
-        {
-            std::complex<T> const c_m_i = c * m[i];
-            std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states_row =
-                std::submdspan(states_T, k[i], std::full_extent);
-            for (size_t t = 0; t < states_T.extent(1); ++t)
-            {
-                new_states_T(i, t) += c_m_i * states_row[t];
-            }
-        }
+        apply_batch(std::execution::seq, new_states_T, states_T, c);
     }
 
     /**
@@ -457,17 +433,30 @@ struct PauliString
                      std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const states_T,
                      std::complex<T> const c) const
     {
+
+        __input_checks_apply_batch(new_states_T, states_T);
+
+        // WARNING: can't use structugred bindings here because of a bug in LLVM
+        // https://github.com/llvm/llvm-project/issues/63152
+        std::vector<size_t> k;
+        std::vector<std::complex<T>> m;
+        std::tie(k, m) = get_sparse_repr<T>(paulis);
+
         if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
         {
-            __input_checks_apply_batch(new_states_T, states_T);
 
-            // WARNING: can't use structugred bindings here because of a bug in LLVM
-            // https://github.com/llvm/llvm-project/issues/63152
-            std::vector<size_t> k;
-            std::vector<std::complex<T>> m;
-            std::tie(k, m) = get_sparse_repr<T>(paulis);
-
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static) collapse(2)
+            for (size_t i = 0; i < states_T.extent(0); ++i)
+            {
+                for (size_t t = 0; t < states_T.extent(1); ++t)
+                {
+                    std::complex<T> const c_m_i = c * m[i];
+                    new_states_T(i, t) += c_m_i * states_T(k[i], t);
+                }
+            }
+        }
+        else
+        {
             for (size_t i = 0; i < states_T.extent(0); ++i)
             {
                 std::complex<T> const c_m_i = c * m[i];
@@ -478,10 +467,6 @@ struct PauliString
                     new_states_T(i, t) += c_m_i * states_row[t];
                 }
             }
-        }
-        else
-        {
-            apply_batch(new_states_T, states_T, c);
         }
     }
 
@@ -522,21 +507,7 @@ struct PauliString
                            std::mdspan<std::complex<T>, std::dextents<size_t, 2>> states,
                            std::complex<T> const c = 1.0) const
     {
-        __input_checks_expectation_value(expectation_vals_out, states);
-
-        std::vector<size_t> k;
-        std::vector<std::complex<T>> m;
-        std::tie(k, m) = get_sparse_repr<T>(paulis);
-        // auto [k, m] = get_sparse_repr<T>(paulis);
-
-        for (size_t i = 0; i < states.extent(0); ++i)
-        {
-            const std::complex<T> c_m_i = c * m[i];
-            for (size_t t = 0; t < states.extent(1); ++t)
-            {
-                expectation_vals_out[t] += std::conj(states(i, t)) * c_m_i * states(k[i], t);
-            }
-        }
+        expectation_value(std::execution::seq, expectation_vals_out, states, c);
     }
 
     /**
@@ -555,26 +526,36 @@ struct PauliString
                            std::mdspan<std::complex<T>, std::dextents<size_t, 2>> states,
                            std::complex<T> const c = 1.0) const
     {
+
+        __input_checks_expectation_value(expectation_vals_out, states);
+
+        std::vector<size_t> k;
+        std::vector<std::complex<T>> m;
+        std::tie(k, m) = get_sparse_repr<T>(paulis);
+
         if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
         {
-            __input_checks_expectation_value(expectation_vals_out, states);
 
-            std::vector<size_t> k;
-            std::vector<std::complex<T>> m;
-            std::tie(k, m) = get_sparse_repr<T>(paulis);
 #pragma omp parallel for schedule(static)
             for (size_t t = 0; t < states.extent(1); ++t)
             {
                 for (size_t i = 0; i < states.extent(0); ++i)
                 {
-                    const std::complex<T> c_m_i = c * m[i];
+                    std::complex<T> const c_m_i = c * m[i];
                     expectation_vals_out[t] += std::conj(states(i, t)) * c_m_i * states(k[i], t);
                 }
             }
         }
         else
         {
-            expectation_value(expectation_vals_out, states, c);
+            for (size_t i = 0; i < states.extent(0); ++i)
+            {
+                std::complex<T> const c_m_i = c * m[i];
+                for (size_t t = 0; t < states.extent(1); ++t)
+                {
+                    expectation_vals_out[t] += std::conj(states(i, t)) * c_m_i * states(k[i], t);
+                }
+            }
         }
     }
 
