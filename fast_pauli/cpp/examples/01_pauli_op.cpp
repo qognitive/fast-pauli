@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <random>
 
+#include "__factory.hpp"
 #include "fast_pauli.hpp"
 
 using namespace fast_pauli;
@@ -22,7 +23,10 @@ int main()
     std::generate(state.begin(), state.end(), [&]() { return std::complex<double>(dis(gen), dis(gen)); });
 
     // Apply the PauliOp
-    std::vector<std::complex<double>> res = pauli_op.apply(state);
+    std::vector<std::complex<double>> result;
+    auto span_result = empty(result, state.size());
+    auto span_state = std::mdspan(state.data(), state.size());
+    pauli_op.apply(span_result, span_state);
 
     return 0;
 }

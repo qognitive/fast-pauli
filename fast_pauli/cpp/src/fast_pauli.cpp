@@ -31,8 +31,12 @@ NB_MODULE(_fast_pauli, m)
         // Methods
         .def(
             "__matmul__", [](fp::Pauli const &self, fp::Pauli const &rhs) { return self * rhs; }, nb::is_operator())
-        // TODO have this return numpy
-        .def("to_tensor", &fp::Pauli::to_tensor<float_type>)
+        .def("to_tensor",
+             [](fp::Pauli const &self) {
+                 auto dense_pauli = fp::__detail::owning_ndarray_from_shape<cfloat_t, 2>({2, 2});
+                 self.to_tensor(fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(dense_pauli));
+                 return dense_pauli;
+             })
         .def("multiply", [](fp::Pauli const &self, fp::Pauli const &rhs) { return self * rhs; })
         .def("__str__", [](fp::Pauli const &self) { return fmt::format("{}", self); });
 
@@ -131,9 +135,12 @@ NB_MODULE(_fast_pauli, m)
                 }
             },
             "states"_a, "coeff"_a = cfloat_t{1.0})
-        // TODO return numpy array
-        .def("to_tensor", [](fp::PauliString const &self) { return self.get_dense_repr<float_type>(); })
-
+        .def("to_tensor",
+             [](fp::PauliString const &self) {
+                 auto dense_pauli_str = fp::__detail::owning_ndarray_from_shape<cfloat_t, 2>({self.dim(), self.dim()});
+                 self.to_tensor(fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(dense_pauli_str));
+                 return dense_pauli_str;
+             })
         //
         ;
 
@@ -314,12 +321,9 @@ NB_MODULE(_fast_pauli, m)
                  if (states.ndim() == 1)
                  {
                      auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(states);
-                     auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(), states_mdspan.extent(0), 1);
-                     auto new_states = fp::__detail ::owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
-                     std::mdspan new_states_mdspan = std::mdspan(new_states.data(), new_states.size(), 1);
-                     //  auto new_states_mdspan =
-                     //      fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
-                     self.apply(new_states_mdspan, states_mdspan_2d);
+                     auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
+                     auto new_states_mdspan = std::mdspan(new_states.data(), new_states.size());
+                     self.apply(new_states_mdspan, states_mdspan);
                      return new_states;
                  }
                  else if (states.ndim() == 2)
@@ -367,7 +371,12 @@ NB_MODULE(_fast_pauli, m)
                          fmt::format("expectation_value: expected 1 or 2 dimensions, got {}", states.ndim()));
                  }
              })
-        .def("to_tensor", [](fp::PauliOp<float_type> const &self) { return self.get_dense_repr(); })
+        .def("to_tensor",
+             [](fp::PauliOp<float_type> const &self) {
+                 auto dense_op = fp::__detail::owning_ndarray_from_shape<cfloat_t, 2>({self.dim(), self.dim()});
+                 self.to_tensor(fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(dense_op));
+                 return dense_op;
+             })
         //
         ;
 
