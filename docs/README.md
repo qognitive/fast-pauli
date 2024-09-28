@@ -1,12 +1,20 @@
 # Docs
 
+## Requirements
+
+```bash
+sudo apt install doxygen
+```
+
+All other dependencies are installed in the setup below when you call `make docs`.
+
 ## Setup
 ```bash
 # From the root project dir
 make docs
 ```
 
-Look at the locally served docs at http://127.0.0.1:8000 (URL may be different, check the console output).
+Look at the locally served docs at http://0.0.0.0:1900.
 
 ## Benchmark Results
 

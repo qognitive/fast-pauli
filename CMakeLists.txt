@@ -16,12 +16,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Need to enforce -fPIC across whole project to build shared libraries
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# TODO different compilation flags for Debug/Release modes; also pull in
-# target_compile_options for fast_pauli target defined below
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
-
 # TODO adding a package lock to help with SBOM
 # cpmusepackagelock(package-lock.cmake)
 

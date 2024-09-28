@@ -17,9 +17,9 @@ build: build-cpp build-py
 .PHONY: docs
 docs:
 	cmake -B build -DENABLE_DOCS=ON
-	cmake --build build --target docs
+	cmake --build build --target Doxygen
 	python -m pip install ".[docs]"
-	sphinx-autobuild -b html docs/ docs/html
+	sphinx-autobuild -b html docs/ docs/html --host 0.0.0.0 --port 1900
 
 
 test-cpp:

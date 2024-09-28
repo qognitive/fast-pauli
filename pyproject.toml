@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64", "build", "setuptools_scm[toml]>=8"]
+requires = ["setuptools>=64", "build", "setuptools_scm[toml]>=8","cmake>=3.25"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -22,13 +22,14 @@ dev = [
   "setuptools_scm[toml]>=8",
 ]
 docs = [
-
+  "cmake>=3.25",
   "sphinx",
   "sphinx-rtd-theme",
   "sphinx-autobuild",
   "sphinx-copybutton",
   "breathe",
   "sphinx-autobuild",
+  "furo",
 ]
 
 examples = [

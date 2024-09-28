@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "fast_pauli"
-copyright = "2024, James E. T. Smith"
+copyright = "2024, Qognitive, Inc."
 author = "James E. T. Smith"
 
 # -- General configuration ---------------------------------------------------
