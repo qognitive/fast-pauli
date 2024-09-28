@@ -45,11 +45,11 @@ void __check_apply(std::vector<PauliString> &pauli_strings,
     // Apply the summed operator
     if (serial)
     {
-        summed_op.apply(new_states, states, data);
+        summed_op.apply_weighted(new_states, states, data);
     }
     else
     {
-        summed_op.apply_parallel(new_states, states, data);
+        summed_op.apply_weighted(new_states, states, data);
     }
 
     // Check the check

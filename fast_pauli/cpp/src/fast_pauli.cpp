@@ -413,7 +413,7 @@ NB_MODULE(_fast_pauli, m)
                  auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
                  auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
 
-                 self.apply_parallel<float_type>(new_states_mdspan, states_mdspan, data_mdspan);
+                 self.apply_weighted<float_type>(std::execution::par, new_states_mdspan, states_mdspan, data_mdspan);
 
                  return new_states;
              })
