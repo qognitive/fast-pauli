@@ -121,6 +121,29 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
     }
 
     /**
+     * @brief Scale each individual term by a factor.
+     *
+     * @param factors a factor to scale each term with
+     */
+    void scale(std::complex<T> factor)
+    {
+        std::transform(coeffs.begin(), coeffs.end(), coeffs.begin(), [factor](auto const &c) { return c * factor; });
+    }
+
+    /**
+     * @brief Scale each individual term by a factor.
+     *
+     * @param factors n_pauli_strings length array of factors to scale each term
+     */
+    void scale(mdspan<std::complex<T>, std::dextents<size_t, 1>> factors)
+    {
+        if (factors.size() != n_pauli_strings())
+            throw std::invalid_argument("factors must have the same length as the number of PauliStrings");
+
+        std::transform(coeffs.begin(), coeffs.end(), factors.data_handle(), coeffs.begin(), std::multiplies<>());
+    }
+
+    /**
      * @brief Return the copy of PauliOp with the coefficients negated.
      *
      * @return PauliOp<T, H>

@@ -54,6 +54,20 @@ class PauliOp:
         # TODO proper interface for deep&shallow copying of PauliOp and PauliString
         return PauliOp(self.coeffs, self.pauli_strings_as_str)
 
+    def scale(self, factors: complex | np.ndarray) -> None:
+        """Scale each individual term by a factor.
+
+        Args:
+        ----
+            factors: The factors to scale Pauli operator's coefficients by.
+        """
+        if isinstance(factors, (complex, float, int)):
+            self.coeffs *= factors
+        else:
+            if factors.shape != self.coeffs.shape:
+                raise ValueError("Invalid shape for the scaling factors.")
+            self.coeffs *= factors
+
     def to_tensor(self) -> np.ndarray:
         """Return the dense matrix representation of the Pauli operator."""
         matrix = np.zeros((self.dim, self.dim), dtype=np.complex128)
@@ -175,6 +189,42 @@ class PauliOp:
             raise ValueError("Invalid type for the operand.")
 
         return PauliOp(new_coeffs, new_strings)
+
+    def __mul__(self, rhs: complex) -> PauliOp:
+        """Multiply the PauliOp with a scalar.
+
+        Args:
+        ----
+            rhs: The scalar to multiply with.
+
+        Returns
+        -------
+            PauliOp: Pauli Op holding the product of the PauliOp and the scalar.
+        """
+        return PauliOp(self.coeffs * rhs, self.pauli_strings_as_str)
+
+    def __rmul__(self, lhs: complex) -> PauliOp:
+        """Multiply the PauliOp with a scalar.
+
+        Args:
+        ----
+            lhs: The scalar to multiply with.
+
+        Returns
+        -------
+            PauliOp: Pauli Op holding the product of the PauliOp and the scalar.
+        """
+        return self * lhs
+
+    def __imul__(self, other: complex) -> PauliOp:
+        """Multiply the PauliOp with a scalar.
+
+        Args:
+        ----
+            other: The scalar to multiply with.
+        """
+        self.scale(other)
+        return self
 
     def __add__(self, rhs: PauliOp | PauliString) -> PauliOp:
         """Add two PauliOp objects together.
