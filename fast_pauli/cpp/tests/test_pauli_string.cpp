@@ -13,7 +13,50 @@ using namespace fast_pauli;
 // Helpers
 //
 
-template <std::floating_point T> using ComplexMatrix = std::vector<std::vector<std::complex<T>>>;
+template <std::floating_point T> struct ComplexMatrix
+{
+    size_t n_rows;
+    size_t n_cols;
+    std::vector<std::complex<T>> data;
+
+    ComplexMatrix(size_t n_rows, size_t n_cols) : n_rows(n_rows), n_cols(n_cols), data(n_rows * n_cols)
+    {
+    }
+
+    ComplexMatrix(std::vector<std::vector<std::complex<T>>> const &matrix)
+        : n_rows(matrix.size()), n_cols(matrix.at(0).size()), data(n_rows * n_cols)
+    {
+        for (size_t i = 0; i < n_rows; ++i)
+            for (size_t j = 0; j < n_cols; ++j)
+                data[i * n_cols + j] = matrix[i][j];
+    }
+
+    friend auto operator<=>(ComplexMatrix const &, ComplexMatrix const &) = default;
+
+    std::complex<T> &operator()(size_t i, size_t j)
+    {
+        return data.at(i * n_cols + j);
+    }
+
+    std::span<std::complex<T>> operator[](size_t i)
+    {
+        return std::span(data.data() + i * n_cols, n_cols);
+    }
+    std::span<std::complex<T> const> operator[](size_t i) const
+    {
+        return std::span(data.data() + i * n_cols, n_cols);
+    }
+
+    size_t size() const
+    {
+        return n_rows;
+    }
+
+    auto mdspan()
+    {
+        return std::mdspan(data.data(), n_rows, n_cols);
+    }
+};
 
 template <std::floating_point T> ComplexMatrix<T> tensor_prod(ComplexMatrix<T> const &A, ComplexMatrix<T> const &B)
 {
@@ -22,7 +65,7 @@ template <std::floating_point T> ComplexMatrix<T> tensor_prod(ComplexMatrix<T> c
     size_t const p = B.size();
     size_t const q = B[0].size();
 
-    ComplexMatrix<T> C(n * p, std::vector<std::complex<T>>(m * q));
+    ComplexMatrix<T> C(n * p, (m * q));
 
     for (size_t i = 0; i < n; ++i)
     {
@@ -43,12 +86,13 @@ template <std::floating_point T> ComplexMatrix<T> tensor_prod(ComplexMatrix<T> c
 
 template <std::floating_point T> ComplexMatrix<T> paulistring_to_dense(PauliString const &ps)
 {
-    ComplexMatrix<double> res, tmp;
-    res = {{1.}};
+    ComplexMatrix<double> res(1, 1);
+    res(0, 0) = 1.0;
 
     for (auto const &p : ps.paulis | std::views::reverse)
     {
-        tmp = p.to_tensor<double>();
+        ComplexMatrix<double> tmp(2, 2);
+        p.to_tensor(tmp.mdspan());
         res = tensor_prod(tmp, res);
     }
     return res;
@@ -70,13 +114,13 @@ std::vector<std::complex<double>> dense_apply(PauliString const &ps, std::vector
 
 TEST_CASE("check tensor_prod helper")
 {
-    ComplexMatrix<double> A{{1, 2}, {3, 4}};
-    ComplexMatrix<double> B{{5, 6}, {7, 8}};
+    ComplexMatrix<double> A({{1, 2}, {3, 4}});
+    ComplexMatrix<double> B({{5, 6}, {7, 8}});
     ComplexMatrix<double> C = tensor_prod(A, B);
 
-    fmt::print("C: \n{}\n", fmt::join(C, "\n"));
+    // fmt::print("C: \n{}\n", fmt::join(C, "\n"));
 
-    CHECK(C == ComplexMatrix<double>{{5, 6, 10, 12}, {7, 8, 14, 16}, {15, 18, 20, 24}, {21, 24, 28, 32}});
+    CHECK(C == ComplexMatrix<double>({{5, 6, 10, 12}, {7, 8, 14, 16}, {15, 18, 20, 24}, {21, 24, 28, 32}}));
 }
 
 //
@@ -138,7 +182,8 @@ TEST_CASE("test sparse repr")
     for (PauliString ps : {"IXYZ", "IX", "XXYIYZI"})
     {
         ComplexMatrix<double> res = paulistring_to_dense<double>(ps);
-        ComplexMatrix<double> myres = ps.get_dense_repr<double>();
+        ComplexMatrix<double> myres(ps.dim(), ps.dim());
+        ps.to_tensor(myres.mdspan());
 
         // fmt::print("res: \n{}\n", fmt::join(res, "\n"));
         // fmt::print("myres: \n{}\n", fmt::join(myres, "\n"));
@@ -161,7 +206,10 @@ TEST_CASE("test apply trivial")
 
     std::vector<std::complex<double>> state(1 << ps.paulis.size(), 1.);
 
-    auto new_state = ps.apply(state);
+    std::vector<std::complex<double>> new_state;
+    auto span_result = empty(new_state, state.size());
+    ps.apply(span_result, std::mdspan(state.data(), state.size()));
+
     fmt::print("New state: \n[{}]\n", fmt::join(new_state, ",\n "));
     CHECK(new_state == state);
 }
@@ -173,7 +221,11 @@ TEST_CASE("test apply simple")
     std::vector<std::complex<double>> state(1 << ps.paulis.size(), 0);
     state[6] = 1.;
     state[7] = 1.;
-    auto new_state = ps.apply(state);
+
+    std::vector<std::complex<double>> new_state;
+    auto span_result = empty(new_state, state.size());
+    ps.apply(span_result, std::mdspan(state.data(), state.size()));
+
     fmt::print("New state: \n[{}]\n", fmt::join(new_state, ",\n "));
 
     auto expected = dense_apply(ps, state);
@@ -191,7 +243,10 @@ TEST_CASE("test apply")
         std::vector<std::complex<double>> state(1 << ps.paulis.size());
         std::generate(state.begin(), state.end(), [&]() { return std::complex<double>(dis(gen), dis(gen)); });
 
-        auto new_state = ps.apply(state);
+        std::vector<std::complex<double>> new_state;
+        auto span_result = empty(new_state, state.size());
+        ps.apply(span_result, std::mdspan(state.data(), state.size()));
+
         auto expected = dense_apply(ps, state);
 
         // fmt::print("New state: \n[{}]\n", fmt::join(new_state, ",\n "));
@@ -230,7 +285,8 @@ TEST_CASE("test apply batch")
         ps.apply_batch(new_states_T, states_T, std::complex<double>(1.));
 
         // Calculate expected
-        auto ps_dense = ps.get_dense_repr<double>(); // d x d
+        ComplexMatrix<double> ps_dense(ps.dim(), ps.dim());
+        ps.to_tensor(ps_dense.mdspan()); // d x d
         std::vector<std::complex<double>> expected_raw(dims * n_states, 0);
         std::mdspan<std::complex<double>, std::dextents<size_t, 2>> expected(expected_raw.data(), dims, n_states);
 
