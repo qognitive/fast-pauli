@@ -425,7 +425,7 @@ NB_MODULE(_fast_pauli, m)
                  auto expected_vals_out = fp::__detail::owning_ndarray_from_shape<cfloat_t, 2>(out_shape);
                  auto expected_vals_out_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(expected_vals_out);
 
-                 self.expectation_value(expected_vals_out_mdspan, states_mdspan);
+                 self.expectation_value(std::execution::par, expected_vals_out_mdspan, states_mdspan);
 
                  return expected_vals_out;
              })

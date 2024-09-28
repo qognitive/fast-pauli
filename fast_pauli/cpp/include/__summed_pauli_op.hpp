@@ -192,8 +192,6 @@ template <std::floating_point T> struct SummedPauliOp
                         std::mdspan<data_dtype, std::dextents<size_t, 2>> data) const
     {
         // TODO MAKE IT CLEAR THAT THE NEW_STATES NEED TO BE ZEROED
-        fmt::println("[WARNING] SummedPauliOp::apply_parallel MAY OVERSUBSCRIBE\n");
-
         // input checking
         if (states.extent(0) != new_states.extent(0) || states.extent(1) != new_states.extent(1))
         {
