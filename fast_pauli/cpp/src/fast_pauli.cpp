@@ -181,6 +181,29 @@ NB_MODULE(_fast_pauli, m)
             "__rmatmul__", [](fp::PauliOp<float_type> const &self, fp::PauliString const &lhs) { return lhs * self; },
             nb::is_operator())
         .def(
+            "__mul__",
+            [](fp::PauliOp<float_type> const &self, cfloat_t rhs) {
+                fp::PauliOp<float_type> res_op(self);
+                res_op.scale(rhs);
+                return res_op;
+            },
+            nb::is_operator())
+        .def(
+            "__rmul__",
+            [](fp::PauliOp<float_type> const &self, cfloat_t lhs) {
+                fp::PauliOp<float_type> res_op(self);
+                res_op.scale(lhs);
+                return res_op;
+            },
+            nb::is_operator())
+        .def(
+            "__imul__",
+            [](fp::PauliOp<float_type> &self, cfloat_t factor) {
+                self.scale(factor);
+                return self;
+            },
+            nb::is_operator())
+        .def(
             "__add__",
             [](fp::PauliOp<float_type> const &lhs_op, fp::PauliOp<float_type> const &rhs_op) {
                 fp::PauliOp<float_type> res_op(lhs_op);
@@ -284,6 +307,15 @@ NB_MODULE(_fast_pauli, m)
                      })
 
         // Methods
+        .def(
+            "scale", [](fp::PauliOp<float_type> &self, cfloat_t factor) { self.scale(factor); }, "factor"_a)
+        .def(
+            "scale",
+            [](fp::PauliOp<float_type> &self, nb::ndarray<cfloat_t> factors) {
+                auto factors_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(factors);
+                self.scale(factors_mdspan);
+            },
+            "factors"_a)
         .def("apply",
              [](fp::PauliOp<float_type> const &self, nb::ndarray<cfloat_t> states) {
                  if (states.ndim() == 1)
