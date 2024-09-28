@@ -211,10 +211,8 @@ TEST_CASE("test apply multistate multistring")
     __check_apply(pauli_op, 10);
 }
 
-TEST_CASE("test apply multistate multistring identity")
+template <execution_policy ExecutionPolicy> void __test_apply_impl(ExecutionPolicy &&policy)
 {
-    fmt::println("test apply multistate multistring identity");
-
     // Set up PauliOp
     std::vector<PauliString> pauli_strings(16, "IIII");
     std::vector<std::complex<double>> coeffs(pauli_strings.size(), 1. / pauli_strings.size());
@@ -229,7 +227,7 @@ TEST_CASE("test apply multistate multistring identity")
     // Apply the PauliOp to a batch of states
     std::vector<std::complex<double>> new_states_raw(dims * n_states, 0);
     std::mdspan<std::complex<double>, std::dextents<size_t, 2>> new_states(new_states_raw.data(), dims, n_states);
-    pauli_op.apply(new_states, states);
+    pauli_op.apply(policy, new_states, states);
 
     // States should be unchanged
     // Check
@@ -245,4 +243,71 @@ TEST_CASE("test apply multistate multistring identity")
             }
         }
     }
+}
+
+TEST_CASE("test apply multistate multistring identity")
+{
+    fmt::println("test apply multistate multistring identity");
+    __test_apply_impl(std::execution::seq);
+    __test_apply_impl(std::execution::par);
+}
+
+template <execution_policy ExecutionPolicy>
+void __check_exp_vals_batch(ExecutionPolicy &&policy, size_t const n_qubits, size_t const n_states)
+{
+    std::vector<PauliString> pauli_strings = fast_pauli::calculate_pauli_strings_max_weight(n_qubits, 2);
+
+    std::vector<std::complex<double>> coeff_raw;
+    fast_pauli::rand<std::complex<double>, 1>(coeff_raw, {pauli_strings.size()});
+
+    PauliOp<double> op(coeff_raw, pauli_strings);
+
+    std::vector<std::complex<double>> states_raw;
+    std::mdspan states = fast_pauli::rand<std::complex<double>, 2>(states_raw, {1UL << n_qubits, n_states});
+
+    std::vector<std::complex<double>> expected_vals_raw;
+    std::mdspan expected_vals = fast_pauli::zeros<std::complex<double>, 1>(expected_vals_raw, {n_states});
+
+    op.expectation_value(policy, expected_vals, states);
+
+    //
+    // Construct "trusted answer"
+    //
+
+    std::vector<std::complex<double>> op_dense_raw;
+    std::mdspan op_dense = fast_pauli::zeros<std::complex<double>, 2>(op_dense_raw, {1UL << n_qubits, 1UL << n_qubits});
+    op.to_tensor(op_dense);
+
+    std::vector<std::complex<double>> expected_vals_check_raw;
+
+    std::mdspan expected_vals_check = fast_pauli::zeros<std::complex<double>, 1>(expected_vals_check_raw, {n_states});
+
+    for (size_t t = 0; t < n_states; ++t)
+    {
+        for (size_t i = 0; i < (1UL << n_qubits); ++i)
+        {
+            for (size_t j = 0; j < (1UL << n_qubits); ++j)
+            {
+                expected_vals_check(t) += std::conj(states(i, t)) * op_dense(i, j) * states(j, t);
+            }
+        }
+    }
+
+    // Check
+    for (size_t t = 0; t < n_states; ++t)
+    {
+        CHECK(abs(expected_vals(t) - expected_vals_check(t)) < 1e-6);
+    }
+}
+
+TEST_CASE("Test expectation values 1 qubit")
+{
+    __check_exp_vals_batch(std::execution::seq, 1, 10);
+    __check_exp_vals_batch(std::execution::par, 1, 10);
+}
+
+TEST_CASE("Test expectation values 10 qubits")
+{
+    __check_exp_vals_batch(std::execution::seq, 10, 10);
+    __check_exp_vals_batch(std::execution::par, 10, 10);
 }

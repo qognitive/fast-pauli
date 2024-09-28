@@ -14,17 +14,18 @@ using namespace std::literals;
 using namespace fast_pauli;
 
 /**
- * @brief Helper function to check the apply function on a set of states for a
- * given set of pauli strings and coefficients.
+ * @brief Check the apply function on a set of states for a given set of pauli
+ * strings and coefficients.
  *
+ * @tparam ExecutionPolicy
+ * @param policy
  * @param pauli_strings
  * @param coeff
  * @param n_states
- * @param serial
  */
-void __check_apply(std::vector<PauliString> &pauli_strings,
-                   std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff, size_t const n_states = 10,
-                   bool serial = true)
+template <execution_policy ExecutionPolicy>
+void __check_apply(ExecutionPolicy &&policy, std::vector<PauliString> &pauli_strings,
+                   std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff, size_t const n_states = 10)
 {
     SummedPauliOp<double> summed_op{pauli_strings, coeff};
 
@@ -43,14 +44,7 @@ void __check_apply(std::vector<PauliString> &pauli_strings,
     std::mdspan data = fast_pauli::rand<double, 2>(data_raw, {n_ops, n_states});
 
     // Apply the summed operator
-    if (serial)
-    {
-        summed_op.apply_weighted(new_states, states, data);
-    }
-    else
-    {
-        summed_op.apply_weighted(new_states, states, data);
-    }
+    summed_op.apply_weighted(policy, new_states, states, data);
 
     // Check the check
     std::vector<std::complex<double>> expected_raw;
@@ -64,7 +58,7 @@ void __check_apply(std::vector<PauliString> &pauli_strings,
         std::vector<std::complex<double>> tmp_raw;
         std::mdspan tmp = fast_pauli::zeros<std::complex<double>, 2>(tmp_raw, {dim, n_states});
 
-        pop.apply(tmp, states);
+        pop.apply(policy, tmp, states);
 
         // Manually calculate the sum over the different pauli operators
         // This is specific to the coefficients we've chosen above
@@ -153,8 +147,8 @@ TEST_CASE("apply 1 operator 1 PauliString")
     std::vector<std::complex<double>> coeff_raw = {1i};
     std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff(coeff_raw.data(), 1, 1);
 
-    __check_apply(pauli_strings, coeff, 1, true);
-    __check_apply(pauli_strings, coeff, 1, false);
+    __check_apply(std::execution::seq, pauli_strings, coeff, 1);
+    __check_apply(std::execution::par, pauli_strings, coeff, 1);
 }
 
 TEST_CASE("apply 2 operators 1 PauliString")
@@ -165,8 +159,8 @@ TEST_CASE("apply 2 operators 1 PauliString")
     std::vector<PauliString> pauli_strings = {"XYZ"};
     std::vector<std::complex<double>> coeff_raw = {1i, 1};
     std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff(coeff_raw.data(), 1, 2);
-    __check_apply(pauli_strings, coeff, 10, true);
-    __check_apply(pauli_strings, coeff, 10, false);
+    __check_apply(std::execution::seq, pauli_strings, coeff, 10);
+    __check_apply(std::execution::par, pauli_strings, coeff, 10);
 }
 
 TEST_CASE("apply 2 operators 2 PauliString")
@@ -176,8 +170,8 @@ TEST_CASE("apply 2 operators 2 PauliString")
     std::vector<std::complex<double>> coeff_raw = {1i, 1, 0.5i, -0.99};
     std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff(coeff_raw.data(), 2, 2);
     std::vector<PauliString> pauli_strings = {"XYZ", "YYZ"};
-    __check_apply(pauli_strings, coeff, 100, true);
-    __check_apply(pauli_strings, coeff, 100, false);
+    __check_apply(std::execution::seq, pauli_strings, coeff, 100);
+    __check_apply(std::execution::par, pauli_strings, coeff, 100);
 }
 
 TEST_CASE("apply many operators many PauliString")
@@ -189,8 +183,8 @@ TEST_CASE("apply many operators many PauliString")
     std::vector<std::complex<double>> coeff_raw;
     std::mdspan coeff = fast_pauli::rand<std::complex<double>, 2>(coeff_raw, {pauli_strings.size(), 100});
 
-    __check_apply(pauli_strings, coeff, 100, true);
-    __check_apply(pauli_strings, coeff, 100, false);
+    __check_apply(std::execution::seq, pauli_strings, coeff, 100);
+    __check_apply(std::execution::par, pauli_strings, coeff, 100);
 }
 
 TEST_CASE("apply many operators many PauliString")
@@ -202,13 +196,13 @@ TEST_CASE("apply many operators many PauliString")
     std::vector<std::complex<double>> coeff_raw;
     std::mdspan coeff = fast_pauli::rand<std::complex<double>, 2>(coeff_raw, {pauli_strings.size(), 100});
 
-    __check_apply(pauli_strings, coeff, 1000, true);
-    __check_apply(pauli_strings, coeff, 1000, false);
+    __check_apply(std::execution::seq, pauli_strings, coeff, 1000);
+    __check_apply(std::execution::par, pauli_strings, coeff, 1000);
 }
 
 //
-
-void __check_exp_vals(size_t const n_operators, size_t const n_qubits, size_t const n_states)
+template <execution_policy ExecutionPolicy>
+void __check_exp_vals(ExecutionPolicy &&policy, size_t const n_operators, size_t const n_qubits, size_t const n_states)
 {
     std::vector<PauliString> pauli_strings = fast_pauli::calculate_pauli_strings_max_weight(n_qubits, 2);
 
@@ -223,7 +217,7 @@ void __check_exp_vals(size_t const n_operators, size_t const n_qubits, size_t co
     std::vector<std::complex<double>> expected_vals_raw;
     std::mdspan expected_vals = fast_pauli::zeros<std::complex<double>, 2>(expected_vals_raw, {n_operators, n_states});
 
-    op.expectation_value(expected_vals, states);
+    op.expectation_value(policy, expected_vals, states);
 
     //
     // Construct "trusted answer"
@@ -266,7 +260,8 @@ TEST_CASE("expectation values simple")
     size_t const n_operators = 1;
     size_t const n_qubits = 5;
     size_t const n_states = 1;
-    __check_exp_vals(n_operators, n_qubits, n_states);
+    __check_exp_vals(std::execution::seq, n_operators, n_qubits, n_states);
+    __check_exp_vals(std::execution::par, n_operators, n_qubits, n_states);
 }
 
 TEST_CASE("expectation values multiple operators")
@@ -274,7 +269,8 @@ TEST_CASE("expectation values multiple operators")
     size_t const n_operators = 100;
     size_t const n_qubits = 5;
     size_t const n_states = 1;
-    __check_exp_vals(n_operators, n_qubits, n_states);
+    __check_exp_vals(std::execution::seq, n_operators, n_qubits, n_states);
+    __check_exp_vals(std::execution::par, n_operators, n_qubits, n_states);
 }
 
 TEST_CASE("expectation values multiple states")
@@ -282,7 +278,8 @@ TEST_CASE("expectation values multiple states")
     size_t const n_operators = 1;
     size_t const n_qubits = 5;
     size_t const n_states = 100;
-    __check_exp_vals(n_operators, n_qubits, n_states);
+    __check_exp_vals(std::execution::seq, n_operators, n_qubits, n_states);
+    __check_exp_vals(std::execution::par, n_operators, n_qubits, n_states);
 }
 
 TEST_CASE("expectation values multiple operators and states")
@@ -290,5 +287,6 @@ TEST_CASE("expectation values multiple operators and states")
     size_t const n_operators = 100;
     size_t const n_qubits = 5;
     size_t const n_states = 100;
-    __check_exp_vals(n_operators, n_qubits, n_states);
+    __check_exp_vals(std::execution::seq, n_operators, n_qubits, n_states);
+    __check_exp_vals(std::execution::par, n_operators, n_qubits, n_states);
 }
