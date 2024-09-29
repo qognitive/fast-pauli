@@ -1,3 +1,7 @@
+###############################################################################
+# BUILD
+###############################################################################
+
 build-cpp:
 	cmake -B build
 	cmake --build build --parallel
@@ -14,6 +18,10 @@ build-py:
 .PHONY: build
 build: build-cpp build-py
 
+###############################################################################
+# DOCS
+###############################################################################
+
 .PHONY: docs
 docs:
 	python -m pip install ".[docs]"
@@ -24,6 +32,10 @@ docs:
 docs-clean:
 	rm -rf  docs/_build/  docs/html/  docs/latex/  dosc/_static/  docs/_templates/  docs/xml/
 
+###############################################################################
+# TEST
+###############################################################################
+
 test-cpp:
 	ctest --test-dir build --verbose
 
@@ -33,14 +45,18 @@ test-py:
 .PHONY: test
 test: test-cpp test-py
 
-.PHONY: benchmark
+###############################################################################
+# BENCHMARK
+###############################################################################
+
 benchmark:
 	python -m pytest -v tests/benchmarks --benchmark-group-by=func --benchmark-sort=fullname \
 	--benchmark-columns='mean,median,min,max,stddev,iqr,outliers,ops,rounds,iterations'
 
-.PHONY: clean
-clean:
-	rm -rf build dist
+
+###############################################################################
+# STATIC ANALYSIS
+###############################################################################
 
 lint:
 	pre-commit run --all-files -- ruff
@@ -54,6 +70,16 @@ format:
 	pre-commit run --all-files -- ruff-format
 	pre-commit run --all-files -- yamlfmt
 	pre-commit run --all-files -- trailing-whitespace
+
+
+
+###############################################################################
+# UTILITY
+###############################################################################
+
+.PHONY: clean
+clean:
+	rm -rf build dist
 
 .PHONY: pre-commit-setup
 pre-commit-setup:
