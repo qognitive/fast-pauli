@@ -26,10 +26,10 @@ The ``PauliOp`` class represents a linear combination of PauliStrings.
 .. autoclass:: fast_pauli.PauliOp
    :members:
 
-SummedPauliOp
--------------
+.. SummedPauliOp
+.. -------------
 
-The ``SummedPauliOp`` class represents a linear combination of PauliOps.
+.. The ``SummedPauliOp`` class represents a linear combination of PauliOps.
 
-.. autoclass:: fast_pauli.SummedPauliOp
-   :members:
+.. .. autoclass:: fast_pauli.SummedPauliOp
+..    :members:
