@@ -1,17 +1,7 @@
 # `fast_pauli`
-[![All push](https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml/badge.svg)](https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml)
+[![Build](https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml/badge.svg)](https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml) | [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 
-- [`fast_pauli`](#fast_pauli)
-  - [Installation](#installation)
-    - [Pre-built Binaries](#pre-built-binaries)
-    - [From Source](#from-source)
-      - [Requirements](#requirements)
-      - [Quick Start](#quick-start)
-      - [Configurable Build](#configurable-build)
-  - [Developer Setup](#developer-setup)
-    - [Dev Requirements](#dev-requirements)
-    - [Pre-commit Hooks](#pre-commit-hooks)
-    - [Design Choices](#design-choices)
+[Installation](#installation) | [Contributing](CONTRIBUTING.md)
 
 ---
 ## Installation
@@ -44,32 +34,8 @@ cmake -B build # + other cmake flags
 cmake --build build --target install --parallel
 ctest --test-dir build
 
-python -m pip install -e .
+python -m pip install -e ".[dev]"
 pytest -v tests/fast_pauli # + other pytest flags
 ```
 Compiled `_fast_pauli` python module gets installed into `fast_pauli` directory.
-
-
----
-## Developer Setup
-
-### Dev Requirements
-
-```bash
-python -m pip install -e ".[dev]"
-```
-
-### Pre-commit Hooks
-> **You need to install the `pre-commit` hooks to ensure they run before you commit code.**
-
-```shell
-# From root project dir
-pre-commit install # installs the checks as pre-commit hooks
-```
-
-### Design Choices
-
-The C++ portion of this library relies heavily on spans and views.
-These lightweight accessors are helpful and performant, but can lead to dangling spans or accessing bad memory if used improperly.
-Developers should familiarize themselves with these dangers by reviewing [this post](https://hackingcpp.com/cpp/std/span.html).
 
