@@ -24,11 +24,11 @@ int main()
     std::uniform_real_distribution<> dis(0, 1.0);
     std::vector<std::complex<mytype>> states_raw(dims * n_states, 0);
     std::generate(states_raw.begin(), states_raw.end(), [&]() { return std::complex<mytype>(dis(gen), dis(gen)); });
-    std::mdspan<std::complex<mytype>, std::dextents<size_t, 2>> states(states_raw.data(), n_states, dims);
+    std::mdspan<std::complex<mytype>, std::dextents<size_t, 2>> states(states_raw.data(), dims, n_states);
 
     // Apply the PauliOp
     std::vector<std::complex<mytype>> new_states_raw(dims * n_states, 0);
-    std::mdspan<std::complex<mytype>, std::dextents<size_t, 2>> new_states(new_states_raw.data(), n_states, dims);
+    std::mdspan<std::complex<mytype>, std::dextents<size_t, 2>> new_states(new_states_raw.data(), dims, n_states);
 
     // pauli_op.apply_naive(new_states, states);
     pauli_op.apply(new_states, states);

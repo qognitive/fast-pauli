@@ -47,7 +47,25 @@ constexpr auto empty(std::vector<T> &blob, std::array<size_t, n_dim> extents)
     {
         total_size *= ei;
     }
-    blob.reserve(total_size);
+    blob.resize(total_size);
+
+    return std::mdspan<T, std::dextents<size_t, n_dim>>(blob.data(), extents);
+}
+
+template <typename T, typename... Is>
+    requires(is_complex<T>::value || std::floating_point<T>) && (std::integral<Is> && ...)
+constexpr auto empty(std::vector<T> &blob, Is... dims)
+{
+    constexpr size_t n_dim = sizeof...(Is);
+    std::array<size_t, n_dim> extents = {dims...};
+
+    // Calculate the total size and reserve the memory
+    size_t total_size = 1;
+    for (auto ei : extents)
+    {
+        total_size *= ei;
+    }
+    blob.resize(total_size);
 
     return std::mdspan<T, std::dextents<size_t, n_dim>>(blob.data(), extents);
 }

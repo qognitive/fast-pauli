@@ -314,6 +314,100 @@ def test_expectation_value(
 
 @pytest.mark.consistency
 @pytest.mark.parametrize(
+    "pauli_op,",
+    [fp.PauliOp, pp.PauliOp],
+    ids=resolve_parameter_repr,
+)
+def test_scaling_by_factor(
+    pauli_strings_with_size: Callable,
+    generate_random_complex: Callable,
+    pauli_op: type[fp.PauliOp] | type[pp.PauliOp],
+) -> None:
+    """Test Pauli Operator scaling by a factor."""
+    ixyz_op = pauli_op([1, 1, 1, 1], ["I", "X", "Y", "Z"])
+    ixyz_expected = naive_pauli_operator([1, 1, 1, 1], ["I", "X", "Y", "Z"])
+
+    np.testing.assert_allclose(
+        (2 * ixyz_op * 2).to_tensor(),
+        4 * ixyz_expected,
+        atol=1e-15,
+    )
+
+    ixyz_op *= 4
+    ixyz_op *= 0.25
+    np.testing.assert_allclose(
+        ixyz_op.to_tensor(),
+        ixyz_expected,
+        atol=1e-15,
+    )
+
+    ixyz_op.scale(-1)
+    np.testing.assert_allclose(
+        ixyz_op.to_tensor(),
+        -ixyz_expected,
+        atol=1e-15,
+    )
+
+    ixyz_op.scale(0)
+    np.testing.assert_allclose(
+        ixyz_op.to_tensor(),
+        np.zeros((2, 2)),
+        atol=1e-15,
+    )
+
+    n_runs = 5
+    for strings in [
+        pauli_strings_with_size(2),
+        pauli_strings_with_size(3),
+        pauli_strings_with_size(4),
+        pauli_strings_with_size(7, limit=128),
+        pauli_strings_with_size(8, limit=200)[:100],
+        pauli_strings_with_size(8, limit=200)[100:],
+    ]:
+        for _ in range(n_runs):
+            coeffs = generate_random_complex(len(strings))
+            p_op = pauli_op(coeffs, strings)
+            expected_op = naive_pauli_operator(coeffs, strings)
+
+            factor = generate_random_complex(1)[0]
+            np.testing.assert_allclose(
+                (factor * p_op).to_tensor(),
+                factor * expected_op,
+                atol=1e-15,
+            )
+            np.testing.assert_allclose(
+                (p_op * factor).to_tensor(),
+                factor * expected_op,
+                atol=1e-15,
+            )
+
+            factor = generate_random_complex(1)[0]
+            p_op *= factor
+            np.testing.assert_allclose(
+                p_op.to_tensor(),
+                factor * expected_op,
+                atol=1e-15,
+            )
+
+            p_op.scale(1.0 / factor)
+            np.testing.assert_allclose(
+                p_op.to_tensor(),
+                expected_op,
+                atol=1e-15,
+            )
+
+            factors = generate_random_complex(len(strings))
+            p_op.scale(factors)
+            expected_op = naive_pauli_operator(factors * coeffs, strings)
+            np.testing.assert_allclose(
+                p_op.to_tensor(),
+                expected_op,
+                atol=1e-15,
+            )
+
+
+@pytest.mark.consistency
+@pytest.mark.parametrize(
     "pauli_op,pauli_string,",
     [(fp.PauliOp, fp.PauliString), (pp.PauliOp, pp.PauliString)],
     ids=resolve_parameter_repr,
