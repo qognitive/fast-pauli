@@ -1,20 +1,32 @@
 [build-system]
 requires = [
-  "setuptools>=64",
-  "build",
-  "setuptools_scm[toml]>=8",
+  # scikit-build-core uses cmake as needed (do not list it here)
+  "scikit-build-core",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "scikit_build_core.build"
+
 
 [project]
 name = "fast_pauli"
 readme = "README.md"
 description = "fast pauli"
+authors = [
+  { name="James. E. T. Smith", email="james.smith@qognitive.io" },
+  { name="Eugene Rublenko", email="eugene.rublenko@qognitive.io" },
+]
 dependencies = [
   "numpy",
   "scipy",
 ]
-dynamic = ["version"]
+# dynamic = ["version"]
+version = "0.0.1"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
 
 [project.optional-dependencies]
 dev = [
@@ -131,3 +143,11 @@ convention = "numpy"
 [tool.ruff.format]
 quote-style = "double"
 docstring-code-format = true
+
+
+# https://scikit-build-core.readthedocs.io/en/latest/#configuration
+# Example: use LLVM
+#  pip install -e . --verbose -C cmake.args="-DCMAKE_CXX_COMPILER=clang++-18"
+[tool.scikit-build]
+cmake.build-type = "Release"
+# TODO add more options here
