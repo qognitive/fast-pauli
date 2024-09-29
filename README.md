@@ -1,26 +1,18 @@
 # Summary
 
-# TODOs
-- [ ] Add docstrings
-  - [X] Pauli
-  - [X] PauliString
-  - [ ] PauliOp
-  - [ ] SummedPauliOp
-- [ ] Figure out the transpose non-sense or support both (some functions take the transpose of the states and others don't)
-- [ ] Clean up `apply_batch` we shouldn't need to pass a coeff
-- [ ] Clean up tests
-- [ ] Add apply method to SummedPauliOp that takes precomputed weighted data
-- [ ] Add pybind11 interface and python examples
-- [ ] Change functions that may run in parallel to take [`std::execution_policy`](https://en.cppreference.com/w/cpp/algorithm/execution_policy_tag_t)
-- [ ] Possibly add levels to methods like BLAS to group methods by scaling
-- [ ] Migrate `PauliOp` and `SummedPauliOp` to only store mdspans rather than copies of the data itself
-
 ## Requirements
 
 - CMake >= 3.25
 - C++ compiler with OpenMP and C++20 support (LLVM recommended)
   - Tested Compilers GCC@12, LLVM@17, LLVM@18
 - Python >= 3.10
+
+## Tested Configurations
+
+| OS      | Compiler | Python |
+| ------- | -------- | ------ |
+| Ubuntu 22.04 | GCC 12   | 3.10   |
+| Ubuntu 22.04 | LLVM 17  | 3.10   |
 
 ## Developer Setup
 

@@ -1,11 +1,13 @@
 #ifndef __PAULI_HPP
 #define __PAULI_HPP
 
+#include <array>
 #include <fmt/format.h>
 
 #include <cinttypes>
 #include <complex>
 #include <concepts>
+#include <experimental/mdspan>
 #include <span>
 #include <utility>
 #include <vector>
@@ -165,30 +167,33 @@ struct Pauli
      * @brief Returns the pauli matrix as a 2D vector of complex numbers.
      *
      * @tparam T floating point type
-     * @return  std::vector<std::vector<std::complex<T>>>
+     * @param output 2D mdspan to write the 2x2 pauli matrix
      */
-    template <std::floating_point T> std::vector<std::vector<std::complex<T>>> to_tensor() const
+    template <std::floating_point T> void to_tensor(std::mdspan<std::complex<T>, std::dextents<size_t, 2>> output) const
     {
-        std::vector<std::vector<std::complex<T>>> result;
+        if (output.extent(0) != 2 or output.extent(1) != 2)
+            throw std::invalid_argument("Output tensor must have (2, 2) shape");
+
+        std::array<std::complex<T>, 4> result;
         switch (code)
         {
         case 0:
-            result = {{1, 0}, {0, 1}};
+            result = {1, 0, 0, 1};
             break;
         case 1:
-            result = {{0, 1}, {1, 0}};
+            result = {0, 1, 1, 0};
             break;
         case 2:
-            result = {{0, -1i}, {1i, 0}};
+            result = {0, -1i, 1i, 0};
             break;
         case 3:
-            result = {{1, 0}, {0, -1}};
+            result = {1, 0, 0, -1};
             break;
         default:
             throw std::runtime_error("Unexpected Pauli code");
             break;
         }
-        return result;
+        std::copy(result.begin(), result.end(), output.data_handle());
     }
 };
 

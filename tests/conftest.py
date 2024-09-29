@@ -8,11 +8,21 @@ import pytest
 
 from fast_pauli.pypauli.helpers import pauli_matrices
 
+### TEST CONSTANTS ###
+
+SAMPLE_STRINGS_LIMIT = 256
+QUBITS_TO_BENCHMARK = [2, 4, 6, 9]
+
+LARGE_QUBITS = [14, 17, 20]
+
+
+### TEST FIXTURES ###
+
 
 @pytest.fixture
 def paulis() -> dict[str | int, np.ndarray]:
     """Fixture to provide dict with Pauli matrices."""
-    return pauli_matrices()  # type: ignore
+    return pauli_matrices()
 
 
 @pytest.fixture
@@ -29,7 +39,7 @@ def sample_pauli_strings() -> list[str]:
 
 @pytest.fixture
 def pauli_strings_with_size() -> Callable:
-    """Fixture to provide Pauli strings of desired size for testing."""
+    """Fixture to provide ordered Pauli strings of desired size for testing."""
 
     def generate_paulis(size: int, limit: int = 1_000) -> list[str]:
         strings: list[str] = []
@@ -37,6 +47,22 @@ def pauli_strings_with_size() -> Callable:
             if limit and len(strings) >= limit:
                 break
             strings.append("".join(s))
+        return strings
+
+    return generate_paulis
+
+
+@pytest.fixture
+def pauli_strings_shuffled() -> Callable:
+    """Fixture to provide shuffled Pauli strings of desired size for testing."""
+
+    def generate_paulis(size: int, limit: int = 1_000) -> list[str]:
+        # pretty sloppy implementation that uses global RNG for now
+        all_strings = ["".join(s) for s in it.product("IXYZ", repeat=size)]
+        n_choices = limit if limit and limit <= len(all_strings) else len(all_strings)
+        strings: list[str] = np.random.choice(
+            all_strings, size=n_choices, replace=False
+        ).tolist()
         return strings
 
     return generate_paulis

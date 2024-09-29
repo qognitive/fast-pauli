@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-import fast_pauli._fast_pauli as fp
+import fast_pauli as fp
 import fast_pauli.pypauli as pp
 from tests.conftest import resolve_parameter_repr
 
