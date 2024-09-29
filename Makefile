@@ -16,11 +16,13 @@ build: build-cpp build-py
 
 .PHONY: docs
 docs:
-	cmake -B build -DENABLE_DOCS=ON
-	cmake --build build --target Doxygen
 	python -m pip install ".[docs]"
+	cd docs && doxygen Doxyfile
 	sphinx-autobuild -b html docs/ docs/html --host 0.0.0.0 --port 1900
 
+.PHONY: docs-clean
+docs-clean:
+	rm -rf  docs/_build/  docs/html/  docs/latex/  dosc/_static/  docs/_templates/  docs/xml/
 
 test-cpp:
 	ctest --test-dir build --verbose

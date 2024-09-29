@@ -2,7 +2,7 @@ Installation
 ============
 
 Build From Source
-----------------
+-----------------
 
 .. code-block:: bash
 

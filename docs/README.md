@@ -2,6 +2,8 @@
 
 ## Requirements
 
+> NOTE: `The requirements.txt` is only for Read the Docs.
+
 ```bash
 sudo apt install doxygen
 ```
