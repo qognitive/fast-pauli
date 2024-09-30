@@ -112,7 +112,7 @@ ignore = [
   # Allow non-lowercase variable names to help the code match the math better
   "N806",
   # mypy doesn't support PEP695 (upgrading to `type` python keyword)
-  # "UP040",
+  "UP040",
 ]
 
 [tool.ruff.lint.pydocstyle]

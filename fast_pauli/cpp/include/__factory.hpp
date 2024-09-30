@@ -8,24 +8,10 @@
 #include <random>
 #include <vector>
 
+#include "__type_traits.hpp"
+
 namespace fast_pauli
 {
-
-//
-// Types traits and concepts
-//
-template <typename T> struct is_complex : std::false_type
-{
-};
-
-template <std::floating_point T> struct is_complex<std::complex<T>> : std::true_type
-{
-};
-
-template <typename T> struct type_identity
-{
-    typedef T type;
-};
 
 //
 // Factory functions

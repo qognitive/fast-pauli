@@ -232,7 +232,7 @@ TEST_CASE("test apply simple")
     CHECK(new_state == expected);
 }
 
-TEST_CASE("test apply")
+template <execution_policy ExecutionPolicy> void __test_apply_impl(ExecutionPolicy &&policy)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -245,12 +245,9 @@ TEST_CASE("test apply")
 
         std::vector<std::complex<double>> new_state;
         auto span_result = empty(new_state, state.size());
-        ps.apply(span_result, std::mdspan(state.data(), state.size()));
+        ps.apply(policy, span_result, std::mdspan(state.data(), state.size()));
 
         auto expected = dense_apply(ps, state);
-
-        // fmt::print("New state: \n[{}]\n", fmt::join(new_state, ",\n "));
-        // fmt::print("Expected: \n[{}]\n", fmt::join(expected, ",\n "));
 
         //
         for (size_t i = 0; i < new_state.size(); ++i)
@@ -260,7 +257,13 @@ TEST_CASE("test apply")
     }
 }
 
-TEST_CASE("test apply batch")
+TEST_CASE("test apply")
+{
+    __test_apply_impl(std::execution::seq);
+    __test_apply_impl(std::execution::par);
+}
+
+template <execution_policy ExecutionPolicy> void __test_apply_batch_impl(ExecutionPolicy &&policy)
 {
     // For random states
     std::random_device rd;
@@ -275,20 +278,19 @@ TEST_CASE("test apply batch")
     {
         size_t const dims = ps.dim();
 
-        std::vector<std::complex<double>> states_raw(dims * n_states);
-        std::generate(states_raw.begin(), states_raw.end(), [&]() { return std::complex<double>(dis(gen), dis(gen)); });
-        std::mdspan<std::complex<double>, std::dextents<size_t, 2>> states_T(states_raw.data(), dims, n_states);
+        std::vector<std::complex<double>> states_raw;
+        std::mdspan states_T = rand<std::complex<double>, 2>(states_raw, {dims, n_states});
 
-        std::vector<std::complex<double>> new_states_raw(dims * n_states);
-        std::mdspan<std::complex<double>, std::dextents<size_t, 2>> new_states_T(new_states_raw.data(), dims, n_states);
+        std::vector<std::complex<double>> new_states_raw;
+        std::mdspan new_states_T = zeros<std::complex<double>, 2>(new_states_raw, {dims, n_states});
 
-        ps.apply_batch(new_states_T, states_T, std::complex<double>(1.));
+        ps.apply_batch(policy, new_states_T, states_T, std::complex<double>(1.));
 
         // Calculate expected
         ComplexMatrix<double> ps_dense(ps.dim(), ps.dim());
         ps.to_tensor(ps_dense.mdspan()); // d x d
-        std::vector<std::complex<double>> expected_raw(dims * n_states, 0);
-        std::mdspan<std::complex<double>, std::dextents<size_t, 2>> expected(expected_raw.data(), dims, n_states);
+        std::vector<std::complex<double>> expected_raw;
+        std::mdspan expected = zeros<std::complex<double>, 2>(expected_raw, {dims, n_states});
 
         for (size_t i = 0; i < (dims); ++i)
         {
@@ -312,146 +314,60 @@ TEST_CASE("test apply batch")
     }
 }
 
-TEST_CASE("get nontrivial paulis")
+TEST_CASE("test apply batch")
 {
-    {
-        auto res = get_nontrivial_paulis(0);
-        CHECK(res.size() == 0);
-    }
+    __test_apply_batch_impl(std::execution::seq);
+    __test_apply_batch_impl(std::execution::par);
+}
 
-    {
-        auto res = get_nontrivial_paulis(1);
-        CHECK(res.size() == 3);
-        CHECK(res[0] == "X");
-        CHECK(res[1] == "Y");
-        CHECK(res[2] == "Z");
-    }
+template <execution_policy ExecutionPolicy> void _test_expectation_value_impl(ExecutionPolicy &&policy)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(1.0, 2.0);
 
-    {
-        auto res = get_nontrivial_paulis(2);
-        CHECK(res.size() == 9);
-        CHECK(res[0] == "XX");
-        CHECK(res[1] == "XY");
-        CHECK(res[2] == "XZ");
-        CHECK(res[3] == "YX");
-        CHECK(res[4] == "YY");
-        CHECK(res[5] == "YZ");
-        CHECK(res[6] == "ZX");
-        CHECK(res[7] == "ZY");
-        CHECK(res[8] == "ZZ");
-    }
+    size_t const n_states = 10;
 
+    for (PauliString ps : {"IXYZ", "YYIX", "XXYIYZ", "IZIXYYZ"})
     {
-        auto res = get_nontrivial_paulis(3);
-        CHECK(res.size() == 27);
-        CHECK(res[0] == "XXX");
-        CHECK(res[1] == "XXY");
-        CHECK(res[2] == "XXZ");
-        CHECK(res[3] == "XYX");
-        CHECK(res[4] == "XYY");
-        CHECK(res[5] == "XYZ");
-        CHECK(res[6] == "XZX");
-        CHECK(res[7] == "XZY");
-        CHECK(res[8] == "XZZ");
-        CHECK(res[9] == "YXX");
-        CHECK(res[10] == "YXY");
-        CHECK(res[11] == "YXZ");
-        CHECK(res[12] == "YYX");
-        CHECK(res[13] == "YYY");
-        CHECK(res[14] == "YYZ");
-        CHECK(res[15] == "YZX");
-        CHECK(res[16] == "YZY");
-        CHECK(res[17] == "YZZ");
-        CHECK(res[18] == "ZXX");
-        CHECK(res[19] == "ZXY");
-        CHECK(res[20] == "ZXZ");
-        CHECK(res[21] == "ZYX");
-        CHECK(res[22] == "ZYY");
-        CHECK(res[23] == "ZYZ");
-        CHECK(res[24] == "ZZX");
-        CHECK(res[25] == "ZZY");
-        CHECK(res[26] == "ZZZ");
+        size_t const dims = ps.dim();
+
+        std::vector<std::complex<double>> states_raw;
+        std::mdspan states_T = rand<std::complex<double>, 2>(states_raw, {dims, n_states});
+
+        std::vector<std::complex<double>> expectation_vals_raw;
+        std::mdspan expectation_vals = zeros<std::complex<double>, 1>(expectation_vals_raw, {n_states});
+
+        ps.expectation_value(policy, expectation_vals, states_T);
+
+        // Calculate true expectation values
+        ComplexMatrix<double> ps_dense(ps.dim(), ps.dim());
+        ps.to_tensor(ps_dense.mdspan()); // d x d
+        std::vector<std::complex<double>> expected_vals_true_raw;
+        std::mdspan expected_vals_true = zeros<std::complex<double>, 1>(expected_vals_true_raw, {n_states});
+
+        for (size_t t = 0; t < n_states; ++t)
+        {
+            //
+            for (size_t i = 0; i < dims; ++i)
+            {
+                for (size_t j = 0; j < dims; ++j)
+                {
+                    expected_vals_true(t) += std::conj(states_T(i, t)) * ps_dense(i, j) * states_T(j, t);
+                }
+            }
+        }
+
+        // Check
+        for (size_t t = 0; t < n_states; ++t)
+        {
+            CHECK(abs(expectation_vals(t) - expected_vals_true(t)) < 1e-6);
+        }
     }
 }
 
-TEST_CASE("idx combinations")
+TEST_CASE("test expectation value")
 {
-    {
-        auto res = idx_combinations(4, 1);
-        CHECK(res.size() == 4);
-        CHECK(res[0] == std::vector<size_t>{0});
-        CHECK(res[1] == std::vector<size_t>{1});
-        CHECK(res[2] == std::vector<size_t>{2});
-        CHECK(res[3] == std::vector<size_t>{3});
-    }
-
-    {
-        auto res = idx_combinations(4, 2);
-        CHECK(res.size() == 6);
-        CHECK(res[0] == std::vector<size_t>{0, 1});
-        CHECK(res[1] == std::vector<size_t>{0, 2});
-        CHECK(res[2] == std::vector<size_t>{0, 3});
-        CHECK(res[3] == std::vector<size_t>{1, 2});
-        CHECK(res[4] == std::vector<size_t>{1, 3});
-        CHECK(res[5] == std::vector<size_t>{2, 3});
-    }
-}
-
-TEST_CASE("calculate pauli strings")
-{
-    {
-        auto res = calcutate_pauli_strings(4, 0);
-        CHECK(res.size() == 1);
-        CHECK(res[0] == PauliString("IIII"));
-    }
-
-    {
-        auto res = calcutate_pauli_strings(2, 1);
-        CHECK(res.size() == 6);
-        CHECK(res[0] == PauliString("XI"));
-        CHECK(res[1] == PauliString("IX"));
-        CHECK(res[2] == PauliString("YI"));
-        CHECK(res[3] == PauliString("IY"));
-        CHECK(res[4] == PauliString("ZI"));
-        CHECK(res[5] == PauliString("IZ"));
-    }
-
-    {
-        auto res = calcutate_pauli_strings(4, 2);
-        CHECK(res.size() == 54);
-        CHECK(res[0] == PauliString("XXII"));
-        CHECK(res[1] == PauliString("XIXI"));
-        CHECK(res[53] == PauliString("IIZZ"));
-    }
-}
-
-TEST_CASE("calculate pauli string max weight")
-{
-    {
-        auto res = calculate_pauli_strings_max_weight(4, 0);
-        CHECK(res.size() == 1);
-        CHECK(res[0] == PauliString("IIII"));
-    }
-
-    {
-        auto res = calculate_pauli_strings_max_weight(2, 1);
-        CHECK(res.size() == 7);
-        CHECK(res[0] == PauliString("II"));
-        CHECK(res[1] == PauliString("XI"));
-        CHECK(res[2] == PauliString("IX"));
-        CHECK(res[3] == PauliString("YI"));
-        CHECK(res[4] == PauliString("IY"));
-        CHECK(res[5] == PauliString("ZI"));
-        CHECK(res[6] == PauliString("IZ"));
-    }
-
-    {
-        auto res = calculate_pauli_strings_max_weight(4, 2);
-        CHECK(res.size() == 67);
-    }
-
-    {
-        auto res = calculate_pauli_strings_max_weight(12, 2);
-        CHECK(res.size() == 631);
-    }
+    _test_expectation_value_impl(std::execution::seq);
+    _test_expectation_value_impl(std::execution::par);
 }

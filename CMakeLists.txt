@@ -31,7 +31,6 @@ endif()
 
 # Dependencies
 cpmaddpackage("gh:doctest/doctest@2.4.11")
-cpmaddpackage("gh:pybind/pybind11@2.11.1")
 cpmaddpackage("gh:fmtlib/fmt#10.2.1")
 cpmaddpackage("gh:kokkos/mdspan#b885a2c60ad42f9e1aaa0d317a38105b950cbed0")
 cpmaddpackage("gh:wjakob/nanobind#v2.0.0")
@@ -68,9 +67,6 @@ find_package(OpenMP REQUIRED)
 # Setup Python
 find_package(Python 3.10 # This is a minimum version
              COMPONENTS Interpreter Development REQUIRED)
-
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address
-# -fno-omit-frame-pointer")
 
 # Our primary target
 add_library(fast_pauli INTERFACE)

@@ -11,6 +11,7 @@
 #include <string>
 
 #include "__pauli.hpp"
+#include "__type_traits.hpp"
 
 namespace fast_pauli
 {
@@ -257,8 +258,22 @@ struct PauliString
         return paulis.size() ? 1UL << paulis.size() : 0;
     }
 
+    template <std::floating_point T>
+    void __input_checks_apply_1d(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> new_states,
+                                 std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states) const
+    {
+        if (states.size() != dim())
+        {
+            throw std::invalid_argument("Input vector size must match the number of qubits");
+        }
+        if (states.size() != new_states.size())
+        {
+            throw std::invalid_argument("new_states must have the same dimensions as states");
+        }
+    }
+
     /**
-     * @brief Apply the PauliString (using the sparse representation) to a vector.
+     * @brief Apply a pauli string (using the sparse representation) to a vector.
      * This performs following matrix-vector multiplication \f$ \mathcal{\hat{P}}
      * \ket{\psi} \f$
      *
@@ -272,15 +287,24 @@ struct PauliString
     void apply(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> new_states,
                std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states, std::complex<T> const c = 1.0) const
     {
-        // Input check
-        if (states.size() != dim())
-        {
-            throw std::invalid_argument("Input vector size must match the number of qubits");
-        }
-        if (states.size() != new_states.size())
-        {
-            throw std::invalid_argument("new_states must have the same dimensions as states");
-        }
+        apply(std::execution::seq, new_states, states, c);
+    }
+
+    /**
+     * @brief \copydoc PauliString::apply(std::mdspan<std::complex<T>, std::dextents<size_t, 1>>,
+     * std::mdspan<std::complex<T>, std::dextents<size_t, 1>>) const
+     *
+     * @tparam T
+     * @tparam ExecutionPolicy
+     * @param new_states
+     * @param states
+     */
+    template <std::floating_point T, execution_policy ExecutionPolicy>
+    void apply(ExecutionPolicy &&, std::mdspan<std::complex<T>, std::dextents<size_t, 1>> new_states,
+               std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states, std::complex<T> const c = 1.0) const
+    {
+
+        __input_checks_apply_1d(new_states, states);
 
         // WARNING: can't use structured bindings here because of a bug in LLVM
         // https://github.com/llvm/llvm-project/issues/63152
@@ -288,13 +312,41 @@ struct PauliString
         std::vector<std::complex<T>> m;
         std::tie(k, m) = get_sparse_repr<T>(paulis);
 
-        // #pragma omp parallel for schedule(static)
-        for (size_t i = 0; i < k.size(); ++i)
+        if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
         {
-            new_states[i] += c * m[i] * states[k[i]];
+
+#pragma omp parallel for schedule(static)
+            for (size_t i = 0; i < k.size(); ++i)
+            {
+                new_states[i] += c * m[i] * states[k[i]];
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < k.size(); ++i)
+            {
+                new_states[i] += c * m[i] * states[k[i]];
+            }
         }
     }
 
+    template <std::floating_point T>
+    void __input_checks_apply_batch(std::mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states_T,
+                                    std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const states_T) const
+    {
+        if (states_T.extent(0) != dim())
+        {
+            auto error_msg = fmt::format("[PauliString] states shape ({}) must match the "
+                                         "dimension of the operators ({})",
+                                         states_T.extent(0), dim());
+            throw std::invalid_argument(error_msg);
+        }
+
+        if ((states_T.extent(0) != new_states_T.extent(0)) || states_T.extent(1) != new_states_T.extent(1))
+        {
+            throw std::invalid_argument("[PauliString] new_states must have the same dimensions as states");
+        }
+    }
     /**
      * @brief Apply the PauliString to a batch of states. This function takes a
      * different shape of the states than the other apply functions. here all the
@@ -318,19 +370,26 @@ struct PauliString
         std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const states_T, // extent(0) = dims, extent(1) = n_states
         std::complex<T> const c) const
     {
-        // Input check
-        if (states_T.extent(0) != dim())
-        {
-            auto error_msg = fmt::format("[PauliString] states shape ({}) must match the "
-                                         "dimension of the operators ({})",
-                                         states_T.extent(0), dim());
-            throw std::invalid_argument(error_msg);
-        }
+        apply_batch(std::execution::seq, new_states_T, states_T, c);
+    }
 
-        if ((states_T.extent(0) != new_states_T.extent(0)) || states_T.extent(1) != new_states_T.extent(1))
-        {
-            throw std::invalid_argument("[PauliString] new_states must have the same dimensions as states");
-        }
+    /**
+     * @brief \copydoc PauliString::apply_batch(std::mdspan<std::complex<T>, std::dextents<size_t, 2>>,
+     * std::mdspan<std::complex<T>, std::dextents<size_t, 2>>, std::complex<T> const) const
+     *
+     * @tparam T
+     * @tparam ExecutionPolicy
+     * @param new_states_T
+     * @param states_T
+     * @param c
+     */
+    template <std::floating_point T, execution_policy ExecutionPolicy>
+    void apply_batch(ExecutionPolicy &&, std::mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states_T,
+                     std::mdspan<std::complex<T>, std::dextents<size_t, 2>> const states_T,
+                     std::complex<T> const c) const
+    {
+
+        __input_checks_apply_batch(new_states_T, states_T);
 
         // WARNING: can't use structugred bindings here because of a bug in LLVM
         // https://github.com/llvm/llvm-project/issues/63152
@@ -338,17 +397,46 @@ struct PauliString
         std::vector<std::complex<T>> m;
         std::tie(k, m) = get_sparse_repr<T>(paulis);
 
-        // #pragma omp parallel for schedule(static)
-        for (size_t i = 0; i < states_T.extent(0); ++i)
+        if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
         {
-            std::complex<T> const c_m_i = c * m[i];
-            std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states_row =
-                std::submdspan(states_T, k[i], std::full_extent);
-            for (size_t t = 0; t < states_T.extent(1); ++t)
+
+#pragma omp parallel for schedule(static) collapse(2)
+            for (size_t i = 0; i < states_T.extent(0); ++i)
             {
-                new_states_T(i, t) += c_m_i * states_row[t];
+                for (size_t t = 0; t < states_T.extent(1); ++t)
+                {
+                    std::complex<T> const c_m_i = c * m[i];
+                    new_states_T(i, t) += c_m_i * states_T(k[i], t);
+                }
             }
         }
+        else
+        {
+            for (size_t i = 0; i < states_T.extent(0); ++i)
+            {
+                std::complex<T> const c_m_i = c * m[i];
+                std::mdspan<std::complex<T>, std::dextents<size_t, 1>> states_row =
+                    std::submdspan(states_T, k[i], std::full_extent);
+                for (size_t t = 0; t < states_T.extent(1); ++t)
+                {
+                    new_states_T(i, t) += c_m_i * states_row[t];
+                }
+            }
+        }
+    }
+
+    template <std::floating_point T>
+    void __input_checks_expectation_value(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> expectation_vals_out,
+                                          std::mdspan<std::complex<T>, std::dextents<size_t, 2>> states) const
+    {
+        // Input check
+        if (states.extent(0) != dim())
+            throw std::invalid_argument(fmt::format("[PauliString] states shape ({}) must match the dimension"
+                                                    " of the operators ({})",
+                                                    states.extent(0), dim()));
+        if (expectation_vals_out.extent(0) != states.extent(1))
+            throw std::invalid_argument("[PauliString] expectation_vals_out shape must "
+                                        "match the number of states");
     }
 
     /**
@@ -374,23 +462,54 @@ struct PauliString
                            std::mdspan<std::complex<T>, std::dextents<size_t, 2>> states,
                            std::complex<T> const c = 1.0) const
     {
-        // Input check
-        if (states.extent(0) != dim())
-            throw std::invalid_argument(fmt::format("[PauliString] states shape ({}) must match the dimension"
-                                                    " of the operators ({})",
-                                                    states.extent(0), dim()));
-        if (expectation_vals_out.extent(0) != states.extent(1))
-            throw std::invalid_argument("[PauliString] expectation_vals_out shape must "
-                                        "match the number of states");
+        expectation_value(std::execution::seq, expectation_vals_out, states, c);
+    }
 
-        auto [k, m] = get_sparse_repr<T>(paulis);
+    /**
+     * @brief \copydoc PauliString::expectation_value(std::mdspan<std::complex<T>, std::dextents<size_t, 1>>,
+     * std::mdspan<std::complex<T>, std::dextents<size_t, 2>>, std::complex<T> const) const
+     *
+     * @tparam T
+     * @tparam ExecutionPolicy
+     * @param expectation_vals_out
+     * @param states
+     * @param c
+     */
+    template <std::floating_point T, execution_policy ExecutionPolicy>
+    void expectation_value(ExecutionPolicy &&,
+                           std::mdspan<std::complex<T>, std::dextents<size_t, 1>> expectation_vals_out,
+                           std::mdspan<std::complex<T>, std::dextents<size_t, 2>> states,
+                           std::complex<T> const c = 1.0) const
+    {
 
-        for (size_t i = 0; i < states.extent(0); ++i)
+        __input_checks_expectation_value(expectation_vals_out, states);
+
+        std::vector<size_t> k;
+        std::vector<std::complex<T>> m;
+        std::tie(k, m) = get_sparse_repr<T>(paulis);
+
+        if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
         {
-            const std::complex<T> c_m_i = c * m[i];
+
+#pragma omp parallel for schedule(static)
             for (size_t t = 0; t < states.extent(1); ++t)
             {
-                expectation_vals_out[t] += std::conj(states(i, t)) * c_m_i * states(k[i], t);
+                for (size_t i = 0; i < states.extent(0); ++i)
+                {
+                    std::complex<T> const c_m_i = c * m[i];
+                    expectation_vals_out[t] += std::conj(states(i, t)) * c_m_i * states(k[i], t);
+                }
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < states.extent(0); ++i)
+            {
+                std::complex<T> const c_m_i = c * m[i];
+                for (size_t t = 0; t < states.extent(1); ++t)
+                {
+                    expectation_vals_out[t] += std::conj(states(i, t)) * c_m_i * states(k[i], t);
+                }
             }
         }
     }
