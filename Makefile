@@ -23,7 +23,7 @@ build: build-cpp build-py
 ###############################################################################
 
 .PHONY: docs
-docs:
+docs: build-cpp
 	python -m pip install ".[docs]"
 	cd docs && doxygen Doxyfile
 	sphinx-autobuild -b html docs/ docs/html --host 0.0.0.0 --port 1900

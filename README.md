@@ -1,7 +1,30 @@
 # `fast_pauli`
-[![Build](https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml/badge.svg)](https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml) | [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 
-[Installation](#installation) | [Contributing](CONTRIBUTING.md)
+
+<table>
+  <tr>
+    <td>Build Status</td>
+    <td><a href="https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml"><img src="https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml/badge.svg" alt="Build Status"></a></td>
+  </tr>
+  <tr>
+    <td>Usage</td>
+    <td>TODO RTD INFO
+    <a href="https://github.com/qognitive/fast-pauli/tree/develop?tab=readme-ov-file#installation"><img src="https://img.shields.io/badge/Docs-Installation-blue" alt="Installation"></a>
+     </td>
+  </tr>
+  <tr>
+    <td>Package</td>
+    <td>TODO PyPI INFO</td>
+  </tr>
+  <tr>
+    <td>Legal</td>
+    <td>
+    <a href="https://opensource.org/licenses/BSD-2-Clause"><img src="https://img.shields.io/badge/License-BSD_2--Clause-orange.svg" alt="License"></a>
+    <a href="https://github.com/qognitive/fast-pauli/blob/develop/CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Contributor Covenant"></a>
+    </td>
+  </tr>
+</table>
+
 
 ---
 ## Installation
