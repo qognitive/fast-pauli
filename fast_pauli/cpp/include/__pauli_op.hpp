@@ -314,50 +314,17 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
         std::copy(other_op.coeffs.begin(), other_op.coeffs.end(), std::back_inserter(coeffs));
     }
 
-    /**
-     * @brief Apply the PauliOp to a batch of states. This function takes a
-     * different shape of the states than the other apply functions. Here all the
-     * states (new and old) have shape of (n_states x n_dim).
-     *
-     * @note: the states are expected to be in row-major order for this method
-     *
-     * @param new_states The output states after applying the PauliOp
-     * (n_states x n_dim)
-     * @param states The original states to apply the PauliOp to
-     * (n_states x n_dim)
-     */
-    void apply_naive(mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
-                     mdspan<std::complex<T>, std::dextents<size_t, 2>> const states) const
+    void __check_apply_inputs(mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
+                              mdspan<std::complex<T>, std::dextents<size_t, 2>> states) const
     {
-        // input check
-        if (states.extent(1) != dim())
+        if (states.extent(0) != this->dim())
         {
-            throw std::invalid_argument("state size must match the dimension of the operators");
+            throw std::invalid_argument("[PauliOp] state size must match the dimension of the operators");
         }
         if (states.extent(0) != new_states.extent(0) || states.extent(1) != new_states.extent(1))
         {
-            throw std::invalid_argument("new_states must have the same dimensions as states");
+            throw std::invalid_argument("[PauliOp] new_states must have the same dimensions as states");
         }
-
-        size_t const n_states = states.extent(0);
-#pragma omp parallel for schedule(static)
-        for (size_t t = 0; t < n_states; ++t)
-        {
-            for (size_t i = 0; i < pauli_strings.size(); ++i)
-            {
-                PauliString const &ps = pauli_strings[i];
-                std::complex<T> c = coeffs[i];
-
-                std::mdspan state_t = std::submdspan(states, t, std::full_extent);
-                std::vector<std::complex<T>> tmp = ps.apply(state_t);
-                // we intentionally do T*N sparse decompositions here instead of just N
-                for (size_t j = 0; j < states.extent(1); ++j)
-                {
-                    new_states(t, j) += c * tmp[j];
-                }
-            }
-        }
-        return;
     }
 
     /**
@@ -372,32 +339,25 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
     void apply(mdspan<std::complex<T>, std::dextents<size_t, 1>> state_out,
                mdspan<std::complex<T>, std::dextents<size_t, 1>> const state) const
     {
-        // input check
-        if (state.size() != dim() or state_out.size() != dim())
-            throw std::invalid_argument("state size must match the dimension of the operators");
-
-        size_t const n_threads = omp_get_max_threads();
-        std::vector<std::complex<T>> thread_storage(n_threads * dim());
-        std::mdspan<std::complex<T>, std::dextents<size_t, 2>> span_storage(thread_storage.data(), n_threads, dim());
-
-#pragma omp parallel for schedule(static)
-        for (size_t i = 0; i < pauli_strings.size(); ++i)
-        {
-            size_t const tid = omp_get_thread_num();
-            auto span_local = std::submdspan(span_storage, tid, std::full_extent);
-            PauliString const &ps = pauli_strings[i];
-            ps.apply(span_local, state, coeffs[i]);
-        }
-
-#pragma omp parallel for schedule(static)
-        for (size_t j = 0; j < state.size(); ++j)
-        {
-            auto span_local = std::submdspan(span_storage, std::full_extent, j);
-            for (size_t t = 0; t < n_threads; ++t)
-                state_out[j] += span_local[t];
-        }
+        apply(std::execution::seq, state_out, state);
     }
 
+    /**
+     * @brief \copydoc PauliOp::apply(mdspan<std::complex<T>, std::dextents<size_t, 1>>, mdspan<std::complex<T>,
+     * std::dextents<size_t, 1>>) const
+     *
+     * @tparam ExecutionPolicy
+     * @param state_out
+     * @param state
+     */
+    template <execution_policy ExecutionPolicy>
+    void apply(ExecutionPolicy &&policy, mdspan<std::complex<T>, std::dextents<size_t, 1>> state_out,
+               mdspan<std::complex<T>, std::dextents<size_t, 1>> const state) const
+    {
+        std::mdspan<std::complex<T>, std::dextents<size_t, 2>> states(state.data_handle(), state.size(), 1);
+        std::mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states(state_out.data_handle(), state.size(), 1);
+        apply(policy, new_states, states);
+    }
     /**
      * @brief Apply the PauliOp to a batch of states. Here all the
      * states (new and old) are transposed so their shape is (n_dims x n_states).
@@ -412,53 +372,74 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
      * @param states THe original states to apply the PauliOp to
      * (n_dim x n_states)
      */
+
     void apply(mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
                mdspan<std::complex<T>, std::dextents<size_t, 2>> const states) const
     {
-        // input check
-        if (states.extent(0) != this->dim())
-        {
-            throw std::invalid_argument("[PauliOp] state size must match the dimension of the operators");
-        }
-        if (states.extent(0) != new_states.extent(0) || states.extent(1) != new_states.extent(1))
-        {
-            throw std::invalid_argument("[PauliOp] new_states must have the same dimensions as states");
-        }
+        apply(std::execution::seq, new_states, states);
+    }
+
+    /**
+     * @brief \copydoc PauliOp::apply(mdspan<std::complex<T>, std::dextents<size_t, 2>>, mdspan<std::complex<T>,
+     * std::dextents<size_t, 2>>) const
+     *
+     * @tparam ExecutionPolicy
+     * @param new_states
+     * @param states
+     */
+    template <execution_policy ExecutionPolicy>
+    void apply(ExecutionPolicy &&, mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states,
+               mdspan<std::complex<T>, std::dextents<size_t, 2>> const states) const
+    {
+        __check_apply_inputs(new_states, states);
 
         // Create tmp obj for reduction
         size_t const n_threads = omp_get_max_threads();
         size_t const n_data = states.extent(1);
         size_t const n_dim = states.extent(0);
 
-        std::vector<std::complex<T>> new_states_thr_raw(n_threads * n_dim * n_data);
-        std::mdspan<std::complex<T>, std::dextents<size_t, 3>> new_states_thr(new_states_thr_raw.data(), n_threads,
-                                                                              n_dim, n_data);
+        if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
+        {
+
+            std::vector<std::complex<T>> new_states_thr_raw(n_threads * n_dim * n_data);
+            std::mdspan<std::complex<T>, std::dextents<size_t, 3>> new_states_thr(new_states_thr_raw.data(), n_threads,
+                                                                                  n_dim, n_data);
 
 #pragma omp parallel
-        {
+            {
 #pragma omp for schedule(static)
-            for (size_t i = 0; i < pauli_strings.size(); ++i)
-            {
-                size_t const tid = omp_get_thread_num();
-
-                PauliString const &ps = pauli_strings[i];
-                std::complex<T> c = coeffs[i];
-                std::mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states_local =
-                    std::submdspan(new_states_thr, tid, std::full_extent, std::full_extent);
-                ps.apply_batch(new_states_local, states, c);
-            }
-
-            // Do the reduction
-#pragma omp for schedule(static) collapse(2)
-            for (size_t i = 0; i < new_states.extent(0); ++i)
-            {
-                for (size_t t = 0; t < new_states.extent(1); ++t)
+                for (size_t i = 0; i < pauli_strings.size(); ++i)
                 {
-                    for (size_t th = 0; th < n_threads; ++th)
+                    size_t const tid = omp_get_thread_num();
+
+                    PauliString const &ps = pauli_strings[i];
+                    std::complex<T> c = coeffs[i];
+                    std::mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states_local =
+                        std::submdspan(new_states_thr, tid, std::full_extent, std::full_extent);
+                    ps.apply_batch(new_states_local, states, c);
+                }
+
+                // Do the reduction
+#pragma omp for schedule(static) collapse(2)
+                for (size_t i = 0; i < new_states.extent(0); ++i)
+                {
+                    for (size_t t = 0; t < new_states.extent(1); ++t)
                     {
-                        new_states(i, t) += new_states_thr(th, i, t);
+                        for (size_t th = 0; th < n_threads; ++th)
+                        {
+                            new_states(i, t) += new_states_thr(th, i, t);
+                        }
                     }
                 }
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < pauli_strings.size(); ++i)
+            {
+                PauliString const &ps = pauli_strings[i];
+                std::complex<T> c = coeffs[i];
+                ps.apply_batch(new_states, states, c);
             }
         }
     }
@@ -478,6 +459,22 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
     void expectation_value(std::mdspan<std::complex<T>, std::dextents<size_t, 1>> expectation_vals_out,
                            mdspan<std::complex<T>, std::dextents<size_t, 2>> states) const
     {
+        expectation_value(std::execution::seq, expectation_vals_out, states);
+    }
+
+    /**
+     * @brief \copydoc PauliOp::expectation_value(std::mdspan<std::complex<T>, std::dextents<size_t, 1>>,
+     * std::mdspan<std::complex<T>, std::dextents<size_t, 2>>) const
+     *
+     * @tparam ExecutionPolicy
+     * @param expectation_vals_out
+     * @param states
+     */
+    template <execution_policy ExecutionPolicy>
+    void expectation_value(ExecutionPolicy &&,
+                           std::mdspan<std::complex<T>, std::dextents<size_t, 1>> expectation_vals_out,
+                           mdspan<std::complex<T>, std::dextents<size_t, 2>> states) const
+    {
         // input check
         if (states.extent(0) != this->dim())
         {
@@ -485,36 +482,48 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
         }
 
         size_t const n_data = states.extent(1);
-        size_t const n_threads = omp_get_max_threads();
 
-        // no need to default initialize with 0 since std::complex constructor
-        // handles that
-        std::vector<std::complex<T>> expected_vals_per_thread_storage(n_threads * n_data);
-        std::mdspan<std::complex<T>, std::dextents<size_t, 2>> exp_vals_accum_per_thread(
-            expected_vals_per_thread_storage.data(), n_threads, n_data);
+        if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
+        {
+            size_t const n_threads = omp_get_max_threads();
+
+            // no need to default initialize with 0 since std::complex constructor
+            // handles that
+            std::vector<std::complex<T>> expected_vals_per_thread_storage(n_threads * n_data);
+            std::mdspan<std::complex<T>, std::dextents<size_t, 2>> exp_vals_accum_per_thread(
+                expected_vals_per_thread_storage.data(), n_threads, n_data);
 
 #pragma omp parallel for schedule(static)
-        for (size_t i = 0; i < pauli_strings.size(); ++i)
-        {
-            size_t const tid = omp_get_thread_num();
-
-            PauliString const &ps = pauli_strings[i];
-            std::complex<T> c = coeffs[i];
-            std::mdspan<std::complex<T>, std::dextents<size_t, 1>> exp_vals_accum_local =
-                std::submdspan(exp_vals_accum_per_thread, tid, std::full_extent);
-            ps.expectation_value(exp_vals_accum_local, states, c);
-        }
-
-#pragma omp parallel for schedule(static)
-        for (size_t t = 0; t < states.extent(1); ++t)
-        {
-            for (size_t th = 0; th < n_threads; ++th)
+            for (size_t i = 0; i < pauli_strings.size(); ++i)
             {
-                expectation_vals_out[t] += exp_vals_accum_per_thread(th, t);
+                size_t const tid = omp_get_thread_num();
+
+                PauliString const &ps = pauli_strings[i];
+                std::complex<T> c = coeffs[i];
+                std::mdspan<std::complex<T>, std::dextents<size_t, 1>> exp_vals_accum_local =
+                    std::submdspan(exp_vals_accum_per_thread, tid, std::full_extent);
+                ps.expectation_value(exp_vals_accum_local, states, c);
+            }
+
+#pragma omp parallel for schedule(static)
+            for (size_t t = 0; t < states.extent(1); ++t)
+            {
+                for (size_t th = 0; th < n_threads; ++th)
+                {
+                    expectation_vals_out[t] += exp_vals_accum_per_thread(th, t);
+                }
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < pauli_strings.size(); ++i)
+            {
+                PauliString const &ps = pauli_strings[i];
+                std::complex<T> c = coeffs[i];
+                ps.expectation_value(expectation_vals_out, states, c);
             }
         }
     }
-
     //
     // Helpers (mostly for debugging)
     //

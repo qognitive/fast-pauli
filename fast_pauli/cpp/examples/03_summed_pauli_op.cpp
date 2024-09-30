@@ -54,7 +54,7 @@ int main()
     // Apply the states
     //
     //   summed_op.apply(new_states, states, weights);
-    summed_op.apply_parallel(new_states, states, weights);
+    summed_op.apply_weighted(new_states, states, weights);
 
     return 0;
 }
