@@ -75,16 +75,6 @@ target_include_directories(
 target_link_libraries(fast_pauli INTERFACE fmt::fmt mdspan OpenMP::OpenMP_CXX)
 target_compile_options(fast_pauli INTERFACE -g3 -Wall -Wextra -Werror)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  message(
-    STATUS
-      "[FAST_PAULI] Detected Clang compiler, need to add libc++ and experimental library flags"
-  )
-  # TODO this is a crude solution, we should prefer the target_compile_options
-  # route set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++
-  # -fexperimental-library") target_compile_options(fast_pauli INTERFACE)
-endif()
-
 # Testing
 include(CTest)
 enable_testing()

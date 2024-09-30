@@ -351,12 +351,12 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
      * @param state
      */
     template <execution_policy ExecutionPolicy>
-    void apply(ExecutionPolicy &&, mdspan<std::complex<T>, std::dextents<size_t, 1>> state_out,
+    void apply(ExecutionPolicy &&policy, mdspan<std::complex<T>, std::dextents<size_t, 1>> state_out,
                mdspan<std::complex<T>, std::dextents<size_t, 1>> const state) const
     {
         std::mdspan<std::complex<T>, std::dextents<size_t, 2>> states(state.data_handle(), state.size(), 1);
         std::mdspan<std::complex<T>, std::dextents<size_t, 2>> new_states(state_out.data_handle(), state.size(), 1);
-        apply(new_states, states);
+        apply(policy, new_states, states);
     }
     /**
      * @brief Apply the PauliOp to a batch of states. Here all the

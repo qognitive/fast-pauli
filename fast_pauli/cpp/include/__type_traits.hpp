@@ -17,11 +17,6 @@ template <std::floating_point T> struct is_complex<std::complex<T>> : std::true_
 {
 };
 
-template <typename T> struct type_identity
-{
-    typedef T type;
-};
-
 /**
  * @brief Execution policy concept
  *
@@ -38,9 +33,6 @@ concept execution_policy = std::is_execution_policy_v<std::remove_cvref_t<T>>;
  *
  * @tparam class
  */
-// template <class> inline constexpr bool is_parallel_execution_policy_v = false;
-
-// template <> inline constexpr bool is_parallel_execution_policy_v<std::execution::parallel_policy> = true;
 
 template <typename T>
 inline constexpr bool is_parallel_execution_policy_v =
