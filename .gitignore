@@ -82,3 +82,5 @@ logs
 scratch
 notes
 .cache
+
+fast_pauli/__version__.py
