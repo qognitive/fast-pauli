@@ -11,7 +11,7 @@ from fast_pauli.pypauli.helpers import pauli_matrices
 ### TEST CONSTANTS ###
 
 SAMPLE_STRINGS_LIMIT = 256
-QUBITS_TO_BENCHMARK = [2, 4, 6, 9]
+QUBITS_TO_BENCHMARK = [2, 8]
 
 LARGE_QUBITS = [14, 17, 20]
 

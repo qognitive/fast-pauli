@@ -44,7 +44,7 @@ There are two strategies for building `fast_pauli` from source. One is a quick a
 #### Requirements
 
 - CMake >= 3.25
-- C++ compiler with OpenMP and C++20 support (LLVM recommended)
+- C++ compiler with OpenMP and C++20 support ([LLVM recommended](https://apt.llvm.org/))
 - Python >= 3.10
 
 #### Quick Start

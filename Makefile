@@ -55,17 +55,15 @@ benchmark:
 
 benchmark-for-release:
 	python -m pytest -v tests/benchmarks \
+	    -k "apply_batch_n_qubits_n_states" \
 		--benchmark-group-by=func \
 		--benchmark-sort=fullname \
-		--benchmark-autosave \
-		--benchmark-save=benchmark_results.json
+		--benchmark-json=benchmark_results.json
 	py.test-benchmark compare \
 		./benchmark_results.json \
 		--group-by=func \
 		--csv=benchmark_results.csv
 	python tests/benchmarks/process_benchmark_data.py
-	mv benchmark_html/* docs/benchmark_results/html/.
-	# TODO ^^ sloppy way to do this
 
 ###############################################################################
 # STATIC ANALYSIS

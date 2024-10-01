@@ -6,6 +6,9 @@ import os
 import pandas as pd
 import plotly.express as px
 
+FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_DIR = os.path.join(FILE_DIR, "../../docs/benchmark_results/figs")
+
 df = pd.read_csv("benchmark_results.csv")
 
 functions_to_save = [
@@ -64,18 +67,18 @@ for f, c in itertools.product(functions_to_save, ["PauliString", "PauliOp"]):
         )
 
     fig.update_layout(
-        title=f"Benchmark: {f} for class {c}",
+        # title=f"Benchmark: {f} for class {c}",
         xaxis_title="Number of Qubits",
         yaxis_title="Time (s)",
         template="plotly_white",
         font=dict(size=18),
     )
     fig.update_traces(marker=dict(size=12))
-    fig.show()
+    # fig.show()
 
-    os.makedirs("benchmark_html", exist_ok=True)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     fig.write_html(
-        f"benchmark_html/benchmark_{f}_{c}.html",
+        f"{OUTPUT_DIR}/{f}_{c}.html",
         full_html=False,
         include_plotlyjs="cdn",
     )
