@@ -5,7 +5,7 @@ Getting Started Guide
 
 Welcome to Fast-Pauli, a Python / C++ library for optimized operations on Pauli matrices and Pauli strings. In this guide,
 we'll introduce some of the important operations to help users get started, as well as some conceptual background. For more details,
-see the API documentation **INSERT LINK TO API DOCS**.
+see the API documentation.
 
 
 Installation
@@ -30,7 +30,7 @@ A quick start would be:
     python -m pip install -e ".[dev]"
     pytest -v tests/fast_pauli
 
-Configurable Build operations
+**Configurable Build operations**
 
 .. code-block:: bash
 
@@ -47,7 +47,7 @@ Next, we'll go over some of the important operations, and some of the underlying
 
 Pauli Matrices
 ------------------------
-In math and physics, a Pauli matrix (often denoted by the greek letter sigma) is any one of the special 2 x 2 complex matrices in the set:
+In math and physics, a Pauli matrix (often denoted by the greek letter :math:`\sigma`) is any one of the special 2 x 2 complex matrices in the set:
 
 .. math::
     \sigma_0 = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}
@@ -57,9 +57,11 @@ In math and physics, a Pauli matrix (often denoted by the greek letter sigma) is
 
 All the pauli matrices share the properties that they are:
 
-1. Hermitian (equal to their own conjugate transpose) :math:`\sigma_i = \sigma_i^\dagger` for all :math:`i \in \{0, x, y, z\}`
+1. Hermitian (equal to their own conjugate transpose) :math:`\sigma_i = \sigma_i^\dagger` for all :math:`i \in \{x, y, z\}`
 2. Involutory (they are their own inverse) :math:`\sigma_i^2 = \sigma_0` for all :math:`i \in \{x, y, z\}`
 3. Unitary (their inverse is equal to their conjugate transpose) :math:`\sigma_i^{-1} = \sigma_i^\dagger` for all :math:`i \in \{x, y, z\}`
+
+with the identity matrix :math:`\sigma_0` or :math:`I` being the trivial case.
 
 In ``fast_pauli``, we represent pauli matrices using the ``Pauli`` class. For example, to construct the ``X`` matrix, we can do:
 
@@ -138,7 +140,7 @@ We can also convert ``PauliString`` objects back to dense numpy arrays if we'd l
 
     P_np = P.to_tensor()
 
-For more details on the ``PauliString`` class, see the **INSERT DOCS PAGE**.
+For more details on the ``PauliString`` class, see the Python or C++ API documentation.
 
 PauliOp
 ------------------------
@@ -189,5 +191,5 @@ Qiskit Integration
     qiskit_pauli = fp.to_qiskit(P)
     fp_pauliString = fp.from_qiskit(qiskit_pauli)
 
-For more details on the ``PauliOp`` class, see the **INSERT DOCS PAGE**.
+For more details on the ``PauliOp`` class, see the Python or C++ API documentation.
 
