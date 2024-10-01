@@ -14,6 +14,7 @@ fast_pauli documentation
 
    install
    examples
+   getting_started
    benchmarks
    python_api
    cpp_api
