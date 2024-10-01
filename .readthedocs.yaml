@@ -14,8 +14,11 @@ build:
   jobs:
     # build-customization -> https://docs.readthedocs.io/en/stable/build-customization.html
     pre_build:
+      - echo "installing dev dependencies"
       - python -m pip install -e ".[dev]"
+      - echo "installing doc dependencies"
       - python -m pip install -e ".[docs]"
+      - echo "doxygen build"
       - cd docs && doxygen Doxyfile
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
