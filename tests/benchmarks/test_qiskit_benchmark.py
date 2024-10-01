@@ -263,6 +263,8 @@ def test_pauliop_pauli_mult(
     pauli_string_class: type[fp.PauliString] | type[Pauli],
     qubits: int,
     pauli_strings_with_size: Callable,
+    pauli_strings_shuffled: Callable,
+    generate_random_complex: Callable,
 ) -> None:
     """Benchmark PauliOp @ PauliString vs Qiskit SparsePauliOp @ Pauli."""
     n_strings_limit = 128 if qubits > 4 else None
@@ -270,11 +272,22 @@ def test_pauliop_pauli_mult(
 
     pauli_strings = [pauli_string_class(s) for s in strings]
 
-    if pauli_op_class == fp.PauliOp:
-        pauli_ops = [fp.PauliOp([1.0], [s]) for s in strings]
-    elif pauli_op_class == SparsePauliOp:
-        pauli_ops = [SparsePauliOp(p) for p in pauli_strings]
-    else:
-        raise NotImplementedError(f"Unknown PauliOp class: {pauli_op_class}")
+    operators = []
+    for _ in range(N_OPERATORS_TO_BENCHMARK // 2):
+        paulis = pauli_strings_shuffled(qubits, limit=SAMPLE_STRINGS_LIMIT)
+        coeffs = generate_random_complex(len(paulis))
+        if pauli_op_class == fp.PauliOp:
+            operators.append(fp.PauliOp(coeffs, paulis))
+        elif pauli_op_class == SparsePauliOp:
+            operators.append(SparsePauliOp(paulis, coeffs=coeffs))
+        else:
+            raise ValueError(f"Unknown PauliOp class: {pauli_op_class}")
+    for _ in range(N_OPERATORS_TO_BENCHMARK // 2):
+        paulis = pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT)
+        coeffs = generate_random_complex(len(paulis))
+        if pauli_op_class == fp.PauliOp:
+            operators.append(fp.PauliOp(coeffs, paulis))
+        else:
+            operators.append(SparsePauliOp(paulis, coeffs=coeffs))
 
-    benchmark(benchmark_func, pauli_ops=pauli_ops, pauli_strings=pauli_strings)
+    benchmark(benchmark_func, pauli_ops=operators, pauli_strings=pauli_strings)
