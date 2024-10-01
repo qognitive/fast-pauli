@@ -1,25 +1,52 @@
+################################################################################
+# Build System
+################################################################################
+
 [build-system]
-requires = ["setuptools>=64", "build", "setuptools_scm[toml]>=8","cmake>=3.25"]
-build-backend = "setuptools.build_meta"
+requires = [
+  # scikit-build-core uses cmake as needed (do not list it here)
+  "scikit-build-core",
+]
+build-backend = "scikit_build_core.build"
+
+
+################################################################################
+# Project
+################################################################################
 
 [project]
 name = "fast_pauli"
 readme = "README.md"
 description = "fast pauli"
+authors = [
+  { name="James. E. T. Smith", email="james.smith@qognitive.io" },
+  { name="Eugene Rublenko", email="eugene.rublenko@qognitive.io" },
+  { name="Alex Lerner", email="alex.lerner@qognitive.io" },
+  { name="Sebastien Roy", email="sebastien.roy@qognitive.io" },
+  { name="Jeffrey Berger", email="jeff.berger@qognitive.io" },
+]
 dependencies = ["numpy", "scipy", "qiskit", "qiskit-algorithms"]
-dynamic = ["version"]
+version = "0.0.1"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
 
 [project.optional-dependencies]
 dev = [
   "clang-format",
   "cmake-format",
   "pre-commit",
-  "build",
   "mypy",
   "ruff",
   "pytest",
   "pytest-benchmark",
-  "setuptools_scm[toml]>=8",
+  "sphinx",
+  "sphinx_rtd_theme",
+  "sphinx-autobuild",
 ]
 docs = [
   "cmake>=3.25",
@@ -35,14 +62,10 @@ docs = [
 examples = [
 ]
 
-[tool.setuptools]
-packages = ["fast_pauli"]
 
-[tool.setuptools.package-dir]
-fast_pauli = "fast_pauli"
-
-[tool.setuptools_scm]
-version_file = "fast_pauli/__version__.py"
+################################################################################
+# Linting/Formatting
+################################################################################
 
 [tool.mypy]
 warn_redundant_casts = true
@@ -103,20 +126,18 @@ indent-width = 4
 target-version = "py38"
 
 [tool.ruff.lint]
-
-# Ruff Rules https://docs.astral.sh/ruff/rules/
-# F - PyFlakes (https://docs.astral.sh/ruff/rules/#pyflakes-f)
-# E, W - pycodestyle (https://docs.astral.sh/ruff/rules/#pycodestyle-e-w)
-# I  - Isort (https://docs.astral.sh/ruff/rules/#isort-i)
-# N - PEP-8 Naming (https://docs.astral.sh/ruff/rules/#pep8-naming-n)
-# D - pydocstyle (https://docs.astral.sh/ruff/rules/#pydocstyle-d)
-# YTT - flake8-2020 (https://docs.astral.sh/ruff/rules/#flake8-2020-ytt)
-# ASYNC flake8-async (https://docs.astral.sh/ruff/rules/#flake8-async-async)
-# B flake8-bugbear (https://docs.astral.sh/ruff/rules/#flake8-bugbear-b)
-# UP flake8-bandit (https://docs.astral.sh/ruff/rules/#flake8-bandit-up)
-# SIM flake8-simplify (https://docs.astral.sh/ruff/rules/#flake8-simplify-sim)
-
-select = ["F", "E", "W", "I", "N", "D", "YTT", "ASYNC", "B", "UP", "SIM"]
+select = [
+  "F", # PyFlakes (https://docs.astral.sh/ruff/rules/#pyflakes-f)
+  "E", "W", # pycodestyle (https://docs.astral.sh/ruff/rules/#pycodestyle-e-w)
+  "I", # Isort (https://docs.astral.sh/ruff/rules/#isort-i)
+  "N", # PEP-8 Naming (https://docs.astral.sh/ruff/rules/#pep8-naming-n)
+  "D", # pydocstyle (https://docs.astral.sh/ruff/rules/#pydocstyle-d)
+  "YTT", # flake8-2020 (https://docs.astral.sh/ruff/rules/#flake8-2020-ytt)
+  "ASYNC", # flake8-async (https://docs.astral.sh/ruff/rules/#flake8-async-async)
+  "B", # flake8-bugbear (https://docs.astral.sh/ruff/rules/#flake8-bugbear-b)
+  "UP", # flake8-bandit (https://docs.astral.sh/ruff/rules/#flake8-bandit-up)
+  "SIM", # flake8-simplify (https://docs.astral.sh/ruff/rules/#flake8-simplify-sim)
+]
 
 ignore = [
   # Allow non-lowercase variable names to help the code match the math better
@@ -137,3 +158,15 @@ docstring-code-format = true
 env = [
   "OMP_NUM_THREADS=4",
 ]
+
+################################################################################
+# Packaging
+################################################################################
+
+# https://scikit-build-core.readthedocs.io/en/latest/#configuration
+# Example: use LLVM
+#  pip install -e . --verbose -C cmake.args="-DCMAKE_CXX_COMPILER=clang++-18"
+[tool.scikit-build]
+cmake.build-type = "Release"
+build-dir = "build"
+# TODO add more options here
