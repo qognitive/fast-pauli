@@ -162,4 +162,5 @@ docstring-code-format = true
 #  pip install -e . --verbose -C cmake.args="-DCMAKE_CXX_COMPILER=clang++-18"
 [tool.scikit-build]
 cmake.build-type = "Release"
+build-dir = "build"
 # TODO add more options here

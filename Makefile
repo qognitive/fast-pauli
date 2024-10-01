@@ -2,28 +2,17 @@
 # BUILD
 ###############################################################################
 
-build-cpp:
-	cmake -B build
-	cmake --build build --parallel
-	cmake --install build
-# TODO in general python build should internally trigger cmake, but for now
-# let's keep cmake lines here as we don't have any python build process yet
-
-build-py:
-	python -m pip cache purge
-	python -m pip install --upgrade pip
-	python -m pip install ".[dev]"
-	python -m build .
-
+# Build the C++/Python package will try to reuse existing build directory
 .PHONY: build
-build: build-cpp build-py
+build:
+	python -m pip install -e ".[dev]" --no-build-isolation
 
 ###############################################################################
 # DOCS
 ###############################################################################
 
 .PHONY: docs
-docs: build-cpp
+docs: build
 	python -m pip install ".[docs]"
 	cd docs && doxygen Doxyfile
 	sphinx-autobuild -b html docs/ docs/html --host 0.0.0.0 --port 1900

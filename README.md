@@ -47,19 +47,19 @@ There are two strategies for building `fast_pauli` from source. One is a quick a
 - C++ compiler with OpenMP and C++20 support (LLVM recommended)
 - Python >= 3.10
 
-#### Quick Start
+#### Quick Start (Users)
 ```bash
-make build
-make test
+python -m pip install -e ".[dev]"
+pytest -v tests/fast_pauli
 ```
 
-#### Configurable Build
+#### Configurable Build (Developers)
 ```bash
 cmake -B build # + other cmake flags
 cmake --build build --target install --parallel
 ctest --test-dir build
 
-python -m pip install -e ".[dev]"
+python -m pip install --no-build-isolation -ve.
 pytest -v tests/fast_pauli # + other pytest flags
 ```
 Compiled `_fast_pauli` python module gets installed into `fast_pauli` directory.
