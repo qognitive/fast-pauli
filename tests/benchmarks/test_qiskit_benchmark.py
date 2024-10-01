@@ -84,26 +84,16 @@ def benchmark_fp_to_dense(paulis: List) -> None:
         _ = p.to_tensor()  # noqa: F841
 
 
-def benchmark_squared(paulis: List) -> None:
-    """Benchmark squaring."""
+def benchmark_fp_squared(paulis: List) -> None:
+    """Benchmark squaring for Fast_Pauli."""
     for p in paulis:
         _ = p @ p  # noqa: F841
 
 
-@pytest.mark.parametrize(
-    "pauli_class, qubits",
-    it.product(
-        [fp.PauliString],
-        QUBITS_TO_BENCHMARK,
-    ),
-    ids=resolve_parameter_repr,
-)
-def test_sum_paulis(
-    benchmark: Callable,
-    prepared_paulis: List,
-) -> None:
-    """Benchmark addition for Pauli strings."""
-    benchmark(benchmark_sum, paulis=prepared_paulis)
+def benchmark_qiskit_squared(paulis: List) -> None:
+    """Benchmark squaring for Qiskit."""
+    for p in paulis:
+        _ = p.power(2)
 
 
 @pytest.mark.parametrize(
@@ -211,7 +201,12 @@ def test_square_paulis(
     prepared_paulis: List,
 ) -> None:
     """Benchmark squaring for fp.PauliString and Qiskit Pauli."""
-    benchmark(benchmark_squared, paulis=prepared_paulis)
+    if type(prepared_paulis[0]) is fp.PauliString:
+        benchmark(benchmark_fp_squared, paulis=prepared_paulis)
+    elif type(prepared_paulis[0]) is Pauli:
+        benchmark(benchmark_qiskit_squared, paulis=prepared_paulis)
+    else:
+        raise ValueError(f"Unknown Pauli class: {type(prepared_paulis[0])}")
 
 
 @pytest.mark.parametrize(
@@ -227,7 +222,12 @@ def test_square_pauliops(
     prepared_pauliops: List,
 ) -> None:
     """Benchmark squaring for fp.PauliOp and Qiskit SparsePauliOp."""
-    benchmark(benchmark_squared, paulis=prepared_pauliops)
+    if type(prepared_pauliops[0]) is fp.PauliOp:
+        benchmark(benchmark_fp_squared, paulis=prepared_pauliops)
+    elif type(prepared_pauliops[0]) is SparsePauliOp:
+        benchmark(benchmark_qiskit_squared, paulis=prepared_pauliops)
+    else:
+        raise ValueError(f"Unknown Pauli class: {type(prepared_pauliops[0])}")
 
 
 def benchmark_pauliop_pauli_mult(pauli_ops: List, pauli_strings: List) -> None:
