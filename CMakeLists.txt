@@ -16,12 +16,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Need to enforce -fPIC across whole project to build shared libraries
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# TODO different compilation flags for Debug/Release modes; also pull in
-# target_compile_options for fast_pauli target defined below
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
-
 # TODO adding a package lock to help with SBOM
 # cpmusepackagelock(package-lock.cmake)
 
@@ -31,7 +25,6 @@ endif()
 
 # Dependencies
 cpmaddpackage("gh:doctest/doctest@2.4.11")
-cpmaddpackage("gh:pybind/pybind11@2.11.1")
 cpmaddpackage("gh:fmtlib/fmt#10.2.1")
 cpmaddpackage("gh:kokkos/mdspan#b885a2c60ad42f9e1aaa0d317a38105b950cbed0")
 cpmaddpackage("gh:wjakob/nanobind#v2.0.0")
@@ -69,9 +62,6 @@ find_package(OpenMP REQUIRED)
 find_package(Python 3.10 # This is a minimum version
              COMPONENTS Interpreter Development REQUIRED)
 
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address
-# -fno-omit-frame-pointer")
-
 # Our primary target
 add_library(fast_pauli INTERFACE)
 target_include_directories(
@@ -89,3 +79,8 @@ add_subdirectory(fast_pauli/cpp/examples)
 
 # Python bindings
 add_subdirectory(fast_pauli/cpp/src)
+
+option(ENABLE_DOCS "Enable documentation generation" OFF)
+if(ENABLE_DOCS)
+  add_subdirectory(docs)
+endif()

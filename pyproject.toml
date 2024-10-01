@@ -47,7 +47,19 @@ dev = [
   "sphinx_rtd_theme",
   "sphinx-autobuild",
 ]
-examples = []
+docs = [
+  "cmake>=3.25",
+  "sphinx",
+  "sphinx-rtd-theme",
+  "sphinx-autobuild",
+  "sphinx-copybutton",
+  "breathe",
+  "sphinx-autobuild",
+  "furo",
+]
+
+examples = [
+]
 
 
 ################################################################################
@@ -76,34 +88,35 @@ exclude = []
 
 [tool.ruff]
 exclude = [
-  ".bzr",
-  ".direnv",
-  ".eggs",
-  ".git",
-  ".git-rewrite",
-  ".hg",
-  ".ipynb_checkpoints",
-  ".mypy_cache",
-  ".nox",
-  ".pants.d",
-  ".pyenv",
-  ".pytest_cache",
-  ".pytype",
-  ".ruff_cache",
-  ".svn",
-  ".tox",
-  ".venv",
-  ".vscode",
-  "__pypackages__",
-  "_build",
-  "buck-out",
-  "build",
-  "dist",
-  "node_modules",
-  "site-packages",
-  "venv",
-  ".venv",
-  "fast_pauli/__version__.py",
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    ".venv",
+    "fast_pauli/__version__.py",
+    "docs",
 ]
 
 line-length = 88

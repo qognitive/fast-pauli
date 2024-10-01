@@ -1,0 +1,13 @@
+# Sphinx
+_build
+_html
+_static
+_doctrees
+_templates
+make.bat
+Makefile
+
+# Doxygen
+xml
+latex
+html
