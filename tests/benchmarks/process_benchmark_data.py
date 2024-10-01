@@ -1,10 +1,12 @@
 """Process benchmark data."""
 
+import itertools
+import os
+
 import pandas as pd
 import plotly.express as px
 
-df = pd.read_csv("benchmark_20241001_003605.csv")
-# print(df)
+df = pd.read_csv("benchmark_results.csv")
 
 functions_to_save = [
     # "test_dense_conversion_n_qubits",
@@ -17,16 +19,27 @@ functions_to_save = [
     # "test_string_sparse_composer_n_qubits",
 ]
 
+# Extract what Class is being tested
+# WARNING: This is brittle and assumes the class name is either
+# "PauliString" or "PauliOp"
+df.loc[:, "class"] = [
+    "PauliString" if "PauliString" in name else "PauliOp" for name in df["name"]
+]
 
-for f in functions_to_save:
+
+for f, c in itertools.product(functions_to_save, ["PauliString", "PauliOp"]):
     # General processing
 
     # Simplify the name
-    df_f = df[df["name"].str.contains(f)]
+    df_f = df[df["name"].str.contains(f) & (df["class"] == c)]
+    if df_f.empty:
+        continue
+
     df_f.loc[:, "name"] = df_f["name"].str.split("::").str[-1]
 
     # Extract C++/Python impl details
     df_f.loc[:, "impl"] = ["cpp" if "cpp" in name else "py" for name in df_f["name"]]
+    print(df_f)
 
     # Use n_states as facet_col if it exists
     if df_f["param:states"].isna().any():
@@ -51,7 +64,7 @@ for f in functions_to_save:
         )
 
     fig.update_layout(
-        title=f"Benchmark: {f}",
+        title=f"Benchmark: {f} for class {c}",
         xaxis_title="Number of Qubits",
         yaxis_title="Time (s)",
         template="plotly_white",
@@ -59,3 +72,10 @@ for f in functions_to_save:
     )
     fig.update_traces(marker=dict(size=12))
     fig.show()
+
+    os.makedirs("benchmark_html", exist_ok=True)
+    fig.write_html(
+        f"benchmark_html/benchmark_{f}_{c}.html",
+        full_html=False,
+        include_plotlyjs="cdn",
+    )
