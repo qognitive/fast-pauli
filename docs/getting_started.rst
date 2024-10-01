@@ -63,7 +63,7 @@ All the pauli matrices share the properties that they are:
 
 with the identity matrix :math:`\sigma_0` or :math:`I` being the trivial case.
 
-In ``fast_pauli``, we represent pauli matrices using the ``Pauli`` class. For example, to construct the ``X`` matrix, we can do:
+In ``fast_pauli``, we represent pauli matrices using the ``Pauli`` class. For example, to represent the Pauli matrices, we can do:
 
 .. code-block:: python
 
@@ -83,7 +83,7 @@ From here, we can also convert our ``Pauli`` object back to a dense numpy array 
 PauliString
 ------------------------
 
-Pauli Strings are tensor-product combinations of Pauli matrices. For example, the following is a valid Pauli string:
+Pauli strings are tensor-product combinations of Pauli matrices. For example, the following is a valid Pauli string:
 
 .. math::
 
