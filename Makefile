@@ -2,10 +2,18 @@
 # BUILD
 ###############################################################################
 
-# Build the C++/Python package will try to reuse existing build directory
+# Build the C++/Python package from scratch (ignore existing build dir)
 .PHONY: build
 build:
+	python -m pip install -e ".[dev]"
+
+# Build the C++/Python package will try to reuse existing build directory, will
+# not always work on a fresh checkout bc it requires prereqs to be installed.
+# See https://scikit-build-core.readthedocs.io/en/latest/configuration.html#editable-installs
+.PHONY: rebuild
+rebuild:
 	python -m pip install -e ".[dev]" --no-build-isolation
+
 
 ###############################################################################
 # DOCS
