@@ -6,8 +6,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-13]
-        compiler: [g++-12]
+        os: [macos-14, macos-14-large] # macos-14 is arm64, macos-14-large is x86_64
+        compiler: [g++-12, g++-13]
         python-version: ["3.12"]
     steps:
       - uses: actions/checkout@v2
@@ -21,10 +21,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Python dependencies
         run: python -m pip install cmake scikit-build-core
-      - name: Configure CMake
-        env:
-          CXX: ${{ matrix.compiler }}
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=${CXX}
+      # TODO: improve compiler setup for macos, right now we only use what's already on the github runners
+      # - name: Configure CMake
+      #   env:
+      #     CXX: ${{ matrix.compiler }}
+      #   run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=${CXX}
       - name: Build
         run: |
           cmake --build ${{github.workspace}}/build --verbose --parallel
