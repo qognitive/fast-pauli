@@ -7,7 +7,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-13, macos-14] # macos-14 is arm64, macos-13 is x86_64
-        compiler: [g++-12, g++-13]
+        compiler: [g++-12]
         python-version: ["3.12"]
     steps:
       - uses: actions/checkout@v2
