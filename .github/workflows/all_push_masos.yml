@@ -6,7 +6,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-14-large] # macos-14 is arm64, macos-14-large is x86_64
+        os: [macos-13, macos-14] # macos-14 is arm64, macos-13 is x86_64
         compiler: [g++-12, g++-13]
         python-version: ["3.12"]
     steps:
