@@ -243,51 +243,35 @@ def benchmark_qiskit_pauliop_pauli_mult(pauli_ops: List, pauli_strings: List) ->
 
 
 @pytest.mark.parametrize(
-    "benchmark_func, pauli_op_class, pauli_string_class, qubits",
-    [
-        (benchmark_func, pauli_op_class, pauli_string_class, qubits)
-        for (benchmark_func, pauli_op_class, pauli_string_class), qubits in it.product(
-            [
-                (benchmark_pauliop_pauli_mult, fp.PauliOp, fp.PauliString),
-                (benchmark_qiskit_pauliop_pauli_mult, SparsePauliOp, Pauli),
-            ],
-            QUBITS_TO_BENCHMARK,
-        )
-    ],
+    "qubits,pauli_class,pauli_string_class,",
+    it.chain(
+        [(q, fp.PauliOp, fp.PauliString) for q in QUBITS_TO_BENCHMARK],
+        [(q, SparsePauliOp, Pauli) for q in QUBITS_TO_BENCHMARK],
+    ),
     ids=resolve_parameter_repr,
 )
 def test_pauliop_pauli_mult(
     benchmark: Callable,
-    benchmark_func: Callable,
-    pauli_op_class: type[fp.PauliOp] | type[SparsePauliOp],
+    pauli_class: type[fp.PauliOp] | type[SparsePauliOp],
     pauli_string_class: type[fp.PauliString] | type[Pauli],
+    prepared_pauliops: List,
     qubits: int,
     pauli_strings_with_size: Callable,
-    pauli_strings_shuffled: Callable,
-    generate_random_complex: Callable,
 ) -> None:
     """Benchmark PauliOp @ PauliString vs Qiskit SparsePauliOp @ Pauli."""
-    n_strings_limit = 128 if qubits > 4 else None
-    strings = pauli_strings_with_size(qubits, n_strings_limit)
-
-    pauli_strings = [pauli_string_class(s) for s in strings]
-
-    operators = []
-    for _ in range(N_OPERATORS_TO_BENCHMARK // 2):
-        paulis = pauli_strings_shuffled(qubits, limit=SAMPLE_STRINGS_LIMIT)
-        coeffs = generate_random_complex(len(paulis))
-        if pauli_op_class == fp.PauliOp:
-            operators.append(fp.PauliOp(coeffs, paulis))
-        elif pauli_op_class == SparsePauliOp:
-            operators.append(SparsePauliOp(paulis, coeffs=coeffs))
-        else:
-            raise ValueError(f"Unknown PauliOp class: {pauli_op_class}")
-    for _ in range(N_OPERATORS_TO_BENCHMARK // 2):
-        paulis = pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT)
-        coeffs = generate_random_complex(len(paulis))
-        if pauli_op_class == fp.PauliOp:
-            operators.append(fp.PauliOp(coeffs, paulis))
-        else:
-            operators.append(SparsePauliOp(paulis, coeffs=coeffs))
-
-    benchmark(benchmark_func, pauli_ops=operators, pauli_strings=pauli_strings)
+    prepared_strings = [
+        pauli_string_class(s)
+        for s in pauli_strings_with_size(qubits, limit=SAMPLE_STRINGS_LIMIT)
+    ]
+    if pauli_class == fp.PauliOp:
+        benchmark(
+            benchmark_pauliop_pauli_mult,
+            pauli_ops=prepared_pauliops,
+            pauli_strings=prepared_strings,
+        )
+    else:
+        benchmark(
+            benchmark_qiskit_pauliop_pauli_mult,
+            pauli_ops=prepared_pauliops,
+            pauli_strings=prepared_strings,
+        )
