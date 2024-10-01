@@ -6,7 +6,7 @@ from typing import Callable, List
 import pytest
 from qiskit.quantum_info import Pauli, SparsePauliOp
 
-import fast_pauli._fast_pauli as fp
+import fast_pauli as fp
 from tests.conftest import (
     QUBITS_TO_BENCHMARK,
     SAMPLE_STRINGS_LIMIT,
