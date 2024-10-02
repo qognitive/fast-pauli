@@ -20,8 +20,8 @@ rebuild:
 ###############################################################################
 
 .PHONY: docs
-docs: build
-	python -m pip install ".[docs]"
+docs:
+	python -m pip install -q ".[docs]"
 	cd docs && doxygen Doxyfile
 	sphinx-autobuild -b html docs/ docs/html --host 0.0.0.0 --port 1900
 
