@@ -1,68 +1,19 @@
 
 =====================
-Getting Started Guide
+Getting Started
 =====================
 
-Welcome to Fast-Pauli from `Qognitive <https://www.qognitive.io/>`_, an open-source Python / C++ library for optimized operations on Pauli matrices and Pauli strings. In this guide,
-we'll introduce some of the important operations to help users get started, as well as some conceptual background. For more details,
+Welcome to Fast-Pauli from `Qognitive <https://www.qognitive.io/>`_, an open-source Python / C++ library for optimized operations on Pauli matrices and Pauli strings
+based on `PauliComposer <https://arxiv.org/abs/2301.00560>`_. In this guide,
+we'll introduce some of the important operations to help users get started. For more details,
 see the API documentation.
 
-
-Installation
------------------------
-First, we'll guide through the installation. You'll need to install the library, which you can do by running:
-
-.. code-block:: bash
-
-    pip install fast-pauli
-
-This will install the library. Next you'll want to build ``fast_pauli`` from source.
-Requirements are:
-
-* CMake >= 3.25
-* C++ compiler with OpenMP and C++20 support (LLVM recommended)
-* Python >= 3.10
-
-A quick start would be:
-
-.. code-block:: bash
-
-    python -m pip install -e ".[dev]"
-    pytest -v tests/fast_pauli
-
-**Configurable Build operations**
-
-.. code-block:: bash
-
-    cmake -B build # + other CMake flags
-    cmake --build build --target install --parallel
-    ctest --test-dir build
-
-    python -m pip install --no-build-isolation -ve.
-    pytest -v tests/fast_pauli # + other pytest flags
-
-After this, the compiled ``_fast_pauli`` python module gets installed into the ``fast_pauli`` directory.
-
-Next, we'll go over some of the important operations, and some of the underlying concepts.
+For tips on installing the library, check out the guide: :doc:`install`.
 
 Pauli Matrices
 ------------------------
-In math and physics, a `Pauli matrix <https://en.wikipedia.org/wiki/Pauli_matrices>`_, named after the physicist Wolfgang Pauli, is any one of the special 2 x 2 complex matrices in the set (often denoted by the greek letter :math:`\sigma`) :
 
-.. math::
-
-    \sigma_0 = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}
-    \sigma_x = \begin{bmatrix} 0 & 1 \\ 1 & 0 \end{bmatrix}
-    \sigma_y = \begin{bmatrix} 0 & -i \\ i & 0 \end{bmatrix}
-    \sigma_z = \begin{bmatrix} 1 & 0 \\ 0 & -1 \end{bmatrix}
-
-All the pauli matrices share the properties that they are:
-
-1. Hermitian (equal to their own conjugate transpose) :math:`\sigma_i = \sigma_i^\dagger` for all :math:`i \in \{x, y, z\}`
-2. Involutory (they are their own inverse) :math:`\sigma_i^2 = \sigma_0` for all :math:`i \in \{x, y, z\}`
-3. Unitary (their inverse is equal to their conjugate transpose) :math:`\sigma_i^{-1} = \sigma_i^\dagger` for all :math:`i \in \{x, y, z\}`
-
-with the identity matrix :math:`\sigma_0` or the :math:`2 \times 2` Identity matrix :math:`I` being the trivial case.
+For a conceptual overview of Pauli matrices, see `here <https://en.wikipedia.org/wiki/Pauli_matrices>`_.
 
 In ``fast_pauli``, we represent pauli matrices using the ``Pauli`` class. For example, to represent the Pauli matrices, we can do:
 
@@ -92,21 +43,6 @@ From here, we can also convert our ``Pauli`` object back to a dense numpy array 
 Pauli Strings
 ------------------------
 
-Pauli strings are tensor-product combinations of Pauli matrices. For example, the following is a valid Pauli string:
-
-.. math::
-
-    \mathcal{\hat{P}} = \sigma_x \otimes \sigma_y \otimes \sigma_z
-
-where :math:`\otimes` denotes the tensor product, and we can more simply denote by
-
-.. math::
-
-    \mathcal{\hat{P}} = XYZ
-
-Other valid Pauli strings include ``III``, ``IXYZ``, ``IZYX``, etc. In general, a Pauli string of length ``N`` is a tensor product of ``N``
-Pauli matrices. A ``N``-length Pauli String in dense form is a :math:`2^N \times 2^N` matrix, so ``XYZ`` is a :math:`8 \times 8` matrix.
-
 In ``fast_pauli``, we represent Pauli strings using the ``PauliString`` class. For example, to construct the Pauli string ``X, Y, Z``, we can do:
 
 .. code-block:: python
@@ -133,8 +69,8 @@ Pauli Strings also support operations like addition, multiplication, and more. F
     phase, new_string = P1 @ P2
 
 
-We can also do more complicated things, like compute the action of a Pauli string :math:`P` on a quantum state :math:`| \psi \rangle`, :math:`P| \psi \rangle`, or
-compute the expectation value of a Pauli string with a state :math:`\langle \psi | P | \psi \rangle`:
+We can also do more complicated things, like compute the action of a Pauli string :math:`\mathcal{\hat{P}}` on a quantum state :math:`| \psi \rangle`, :math:`\mathcal{\hat{P}}| \psi \rangle`, or
+compute the expectation value of a Pauli string with a state :math:`\langle \psi | \mathcal{\hat{P}} | \psi \rangle`:
 
 .. code-block:: python
 
