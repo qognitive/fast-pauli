@@ -191,5 +191,5 @@ Qiskit Integration
     qiskit_pauli = fp.to_qiskit(P)
     fp_pauliString = fp.from_qiskit(qiskit_pauli)
 
-For more details on the ``PauliOp`` class, see the Python or C++ API documentation.
+For more details on Qiskit conversions, see the Python or C++ API documentation.
 
