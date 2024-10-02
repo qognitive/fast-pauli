@@ -1,5 +1,14 @@
 name: Build/Test
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull-requests:
+    branches:
+      - main
+  release:
+    types:
+      - published
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -46,3 +55,6 @@ jobs:
         run: make test-cpp
       - name: Test Python
         run: make test-py
+      - name: Publish release distributions to PyPI
+        if: github.event.release
+        uses: pypa/gh-action-pypi-publish@release/v1
