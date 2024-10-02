@@ -102,7 +102,7 @@ where :math:`\otimes` denotes the tensor product, and we can more simply denote 
 
 .. math::
 
-    P = XYZ
+    \mathcal{\hat{P}} = XYZ
 
 Other valid Pauli strings include ``III``, ``IXYZ``, ``IZYX``, etc. In general, a Pauli string of length ``N`` is a tensor product of ``N``
 Pauli matrices. A ``N``-length Pauli String in dense form is a :math:`2^N \times 2^N` matrix, so ``XYZ`` is a :math:`8 \times 8` matrix.
