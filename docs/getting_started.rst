@@ -128,6 +128,19 @@ or get their string representation, in this case a list of strings:
 
 .. code-block:: python
 
+    coeffs = np.array([0.5, 0.5], dtype=complex)
+    pauli_strings = ['XYZ', 'YYZ']
+    A = fp.PauliOp(coeffs, pauli_strings)
+
+    # PauliOp supports addition, subtraction, multiplication,
+    # scaling, as well as have PauliString objects
+    # as the second operand. All valid operations:
+    A1 = 0.5 * A
+    A2 = A + A1
+    A3 = A1 @ A2
+    s = fp.PauliString('XYZ')
+    A4 = A1 + s
+
     # Apply A to a state or set of states
     states = np.random.rand(10, 8) + 1j * np.random.rand(10, 8)
     new_states = A.apply(states)
@@ -143,7 +156,7 @@ or get their string representation, in this case a list of strings:
 
 Qiskit Integration
 ------------------------
-``Fast-Pauli`` also has integration with IBM's Qiskit SDK, allowing for easy interfacing with the entire Qiskit ecosystem. For example, we can convert
+``Fast-Pauli`` also has integration with `IBM's Qiskit SDK <https://www.ibm.com/quantum/qiskit>`_, allowing for easy interfacing with certain Qiskit objects. For example, we can convert
 between ``PauliOp`` objects and ``SparsePauliOp`` objects from Qiskit:
 
 .. code-block:: python
@@ -153,10 +166,9 @@ between ``PauliOp`` objects and ``SparsePauliOp`` objects from Qiskit:
     qiskit_op = fp.to_qiskit(O)
     fast_pauli_op = fp.from_qiskit(qiskit_op)
 
-    # Convert a Fast-Pauli PauliString to a Qiskit Pauli object and back
+    # Convert a Fast-Pauli PauliString to a Qiskit Pauli object
     P = fp.PauliString('XYZ')
     qiskit_pauli = fp.to_qiskit(P)
-    fp_pauliString = fp.from_qiskit(qiskit_pauli)
 
 For more details on Qiskit conversions, see the Python or C++ API documentation.
 
