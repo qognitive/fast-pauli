@@ -21,8 +21,7 @@ jobs:
         with:
           submodules: recursive
       - name: Setup compiler
-        if: ! contains(macos, ${{ matrix.compiler }})
-        run: python3 ./.github/compiler_setup.py ${{ matrix.compiler }}
+        run: python3 ./.github/compiler_setup.py ${{ matrix.compiler }} ${{ matrix.os }}
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
