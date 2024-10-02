@@ -6,10 +6,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-13, macos-14]
+        os: [ubuntu-latest]
         compiler: [g++-12, clang++-17]
         python-version: ["3.10", "3.11", "3.12"]
-    if: ${{ matrix.compiler }} == ubuntu-latest || ( contains(macos, ${{ matrix.compiler }}) && ${{ matrix.python-version }} == 3.12 && ${{ matrix.compiler }} == g++-12 )
+        include:
+          - os: macos-13
+            compiler: g++-12
+            python-version: 3.12
+          - os: macos-14
+            compiler: g++-12
+            python-version: 3.12
     steps:
       - uses: actions/checkout@v2
         with:
