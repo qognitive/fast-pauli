@@ -9,7 +9,6 @@ if __name__ == "__main__":
     os_type = sys.argv[2]
 
     if "macos" not in os_type:
-
         os.system("sudo apt-get update")
 
         if "g++" in compiler and "clang" not in compiler:
