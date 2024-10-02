@@ -5,7 +5,6 @@
   <tr>
     <td>Status</td>
     <td><a href="https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml"><img src="https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml/badge.svg" alt="Linux Build Status"></a>
-    <a href="https://github.com/qognitive/fast-pauli/actions/workflows/all_push_macos.yml"><img src="https://github.com/qognitive/fast-pauli/actions/workflows/all_push_macos.yml/badge.svg" alt="MacOS Build Status"></a>
     <a href="https://github.com/qognitive/fast-pauli/actions/workflows/pre-commit.yml"><img src="https://github.com/qognitive/fast-pauli/actions/workflows/pre-commit.yml/badge.svg" alt="Linting"></a>
     </td>
   </tr>

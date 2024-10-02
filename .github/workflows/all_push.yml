@@ -1,4 +1,4 @@
-name: Linux Build/Test
+name: Build/Test
 on: [push]
 jobs:
   build:
@@ -9,12 +9,19 @@ jobs:
         os: [ubuntu-latest]
         compiler: [g++-12, clang++-17]
         python-version: ["3.10", "3.11", "3.12"]
+        include:
+          - os: macos-13
+            compiler: g++-12
+            python-version: 3.12
+          - os: macos-14
+            compiler: g++-12
+            python-version: 3.12
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
       - name: Setup compiler
-        run: python3 ./.github/compiler_setup.py ${{ matrix.compiler }}
+        run: python3 ./.github/compiler_setup.py ${{ matrix.compiler }} ${{ matrix.os }}
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
