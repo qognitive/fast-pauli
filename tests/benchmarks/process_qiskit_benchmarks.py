@@ -19,7 +19,7 @@ def format_fix(fig: Any) -> None:
     """Add consistent formatting to a plotly figure."""
     fig.update_layout(
         yaxis_title="Time (s)",
-        template="plotly_white",
+        template="seaborn",
         font=dict(size=18),
     )
     fig.update_traces(marker=dict(size=12))
@@ -28,7 +28,7 @@ def format_fix(fig: Any) -> None:
 
 
 COLOR_MAP = {
-    "qiskit": "#3c436e",  # blue
+    "qiskit": "#0530AD",  # IBM blue
     "fast_pauli": "#f64135",  # red
 }
 
@@ -42,10 +42,11 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 df = pd.read_csv(sys.argv[1])
+print(df)
 df.rename(
     columns={
         "param:n_qubits": "N<sub>qubits</sub>",
-        "param:n_strings": "N<sub>pauli strings</sub>",
+        "param:n_pauli_strings": "N<sub>pauli strings</sub>",
         "param:method": "Library",
         "param:n_states": "N<sub>states</sub>",
     },
@@ -55,8 +56,10 @@ sorted_unique_n_pauli_strings = (
     df["N<sub>pauli strings</sub>"].dropna().unique().tolist()
 )
 sorted_unique_n_pauli_strings.sort()
-sorted_unique_n_states = df["N<sub>states</sub>"].dropna().unique().tolist()
-sorted_unique_n_states.sort()
+
+if "N<sub>states</sub>" in df.columns:
+    sorted_unique_n_states = df["N<sub>states</sub>"].dropna().unique().tolist()
+    sorted_unique_n_states.sort()
 
 #
 # Pauli string apply
@@ -72,6 +75,7 @@ fig = px.scatter(
     color_discrete_map=COLOR_MAP,
     # facet_col="N<sub>pauli strings</sub>",
     log_y=True,
+    title="Pauli String Apply",
 )
 format_fix(fig)
 
@@ -103,6 +107,34 @@ fig.write_html(
 #     include_plotlyjs="cdn",
 # )
 
+
+#
+# Pauli Op to dense
+#
+df_op_dense = df[df["name"].str.contains("test_pauli_op_to_dense")]
+
+fig = px.scatter(
+    df_op_dense,
+    x="N<sub>qubits</sub>",
+    y="mean",
+    error_y="stddev",
+    color="Library",
+    color_discrete_map=COLOR_MAP,
+    facet_col="N<sub>pauli strings</sub>",
+    log_y=True,
+    category_orders={
+        "N<sub>pauli strings</sub>": sorted_unique_n_pauli_strings,
+    },
+    title="Pauli Op to Dense",
+)
+
+format_fix(fig)
+fig.write_html(
+    f"{OUTPUT_DIR}/qiskit_pauli_op_to_dense.html",
+    full_html=False,
+    include_plotlyjs="cdn",
+)
+
 #
 # Pauli Op applied to a statevector
 #
@@ -129,30 +161,30 @@ fig.write_html(
     include_plotlyjs="cdn",
 )
 
-#
-# Pauli Op Expectation Value
-#
-df_op_exp = df[df["name"].str.contains("test_pauli_op_expectation_value")]
+# #
+# # Pauli Op Expectation Value
+# #
+# df_op_exp = df[df["name"].str.contains("test_pauli_op_expectation_value")]
 
-fig = px.scatter(
-    df_op_exp,
-    x="N<sub>qubits</sub>",
-    y="mean",
-    error_y="stddev",
-    color="Library",
-    color_discrete_map=COLOR_MAP,
-    facet_col="N<sub>pauli strings</sub>",
-    log_y=True,
-    category_orders={
-        "N<sub>pauli strings</sub>": sorted_unique_n_pauli_strings,
-    },
-)
-format_fix(fig)
-fig.write_html(
-    f"{OUTPUT_DIR}/qiskit_pauli_op_expectation_value.html",
-    full_html=False,
-    include_plotlyjs="cdn",
-)
+# fig = px.scatter(
+#     df_op_exp,
+#     x="N<sub>qubits</sub>",
+#     y="mean",
+#     error_y="stddev",
+#     color="Library",
+#     color_discrete_map=COLOR_MAP,
+#     facet_col="N<sub>pauli strings</sub>",
+#     log_y=True,
+#     category_orders={
+#         "N<sub>pauli strings</sub>": sorted_unique_n_pauli_strings,
+#     },
+# )
+# format_fix(fig)
+# fig.write_html(
+#     f"{OUTPUT_DIR}/qiskit_pauli_op_expectation_value.html",
+#     full_html=False,
+#     include_plotlyjs="cdn",
+# )
 
 
 #

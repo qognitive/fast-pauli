@@ -546,6 +546,8 @@ struct PauliString
         // TODO on the calling side: based on the output shape and num of cores we should decide if we invoke parallel
         // or serial version
         auto [k, m] = get_sparse_repr<T>(paulis);
+
+#pragma unroll(16)
         for (size_t i = 0; i < k.size(); ++i)
             output(i, k[i]) = m[i];
     }
