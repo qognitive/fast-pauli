@@ -3,10 +3,13 @@ runs:
   using: "composite"
   steps:
     - name: Setup compiler
+      shell: bash
       run: python3 ./.github/compiler_setup.py ${CXX} ${BUILD_OS}
     - name: Install Python dependencies
+      shell: bash
       run: python -m pip install cmake scikit-build-core
     - name: Configure CMake
+      shell: bash
       run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=${CXX}
     - name: Build
       shell: bash
@@ -18,9 +21,11 @@ runs:
         cmake --install ${{github.workspace}}/build
         python -m pip install ".[dev]" --no-build-isolation
     - name: Test C++
+      shell: bash
       env:
         OMP_NUM_THREADS: 2
         CPP_TEST_DIR: build/fast_pauli/cpp/tests
       run: make test-cpp
     - name: Test Python
+      shell: bash
       run: make test-py
