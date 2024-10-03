@@ -30,32 +30,15 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Setup compiler
-        run: python3 ./.github/compiler_setup.py ${{ matrix.compiler }} ${{ matrix.os }}
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Python dependencies
-        run: python -m pip install cmake scikit-build-core
-      - name: Configure CMake
-        env:
-          CXX: ${{ matrix.compiler }}
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=${CXX}
       - name: Build
-        run: |
-          cmake --build ${{github.workspace}}/build --verbose --parallel
-      - name: Install
-        run: |
-          cmake --install ${{github.workspace}}/build
-          python -m pip install ".[dev]" --no-build-isolation
-      - name: Test C++
+        uses: ./.github/actions/build
         env:
-          OMP_NUM_THREADS: 2
-          CPP_TEST_DIR: build/fast_pauli/cpp/tests
-        run: make test-cpp
-      - name: Test Python
-        run: make test-py
+          BUILD_OS: ${{ matrix.os }}
+          CXX: ${{ matrix.compiler }}
       - name: Publish release distributions to PyPI
         if: github.event.release
         uses: pypa/gh-action-pypi-publish@release/v1
