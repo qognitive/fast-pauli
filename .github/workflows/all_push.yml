@@ -22,6 +22,3 @@ jobs:
         env:
           BUILD_OS: ${{ matrix.os }}
           CXX: ${{ matrix.compiler }}
-      - name: Publish release distributions to PyPI
-        if: github.event.release
-        uses: pypa/gh-action-pypi-publish@release/v1
