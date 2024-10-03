@@ -23,6 +23,8 @@ build:
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: docs/conf.py
+  # fail on warning is disabled because sphinx does not support "requires" from cpp20 see: https://github.com/sphinx-doc/sphinx/issues/7296
+  # we should reenable when/if sphinx fixes that
   # fail_on_warning: true
 # Optionally build your docs in additional formats such as PDF and ePub
 formats:
