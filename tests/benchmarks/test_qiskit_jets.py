@@ -68,6 +68,14 @@ def test_pauli_string_apply(benchmark: Callable, n_qubits: int, method: str) -> 
 ################################################################################
 # Pauli String Expectation Value
 ################################################################################
+# qiskit_params_sm = [
+#     pytest.param(nq, m)
+#     for nq, m in it.product([2, 8, 10, 12, 14, 16, 18, 20, 22, 24], ["qiskit"])
+# ]
+# fast_pauli_params_sm = [
+#     pytest.param(nq, m)
+#     for nq, m in it.product([2, 8, 10, 12, 14, 16, 18, 20, 22, 24], ["fast_pauli"])
+# ]
 
 
 # NOTE: uses same settings as above
@@ -163,6 +171,53 @@ def test_sparse_pauli_op_apply(
     benchmark(f)
 
 
-#
-# Small and big benchmark params
-#
+################################################################################
+# Pauli Op Expectation Value
+################################################################################
+qiskit_params_sm = [
+    pytest.param(nq, ns, m)
+    for nq, ns, m in it.product([2, 8, 12, 14, 16, 18, 20], [10, 100, 1000], ["qiskit"])
+]
+fast_pauli_params_sm = [
+    pytest.param(nq, ns, m)
+    for nq, ns, m in it.product(
+        [2, 8, 12, 14, 16, 18, 20], [10, 100, 1000], ["fast_pauli"]
+    )
+]
+
+
+# NOTE: uses same settings as above
+@pytest.mark.parametrize(
+    "n_qubits, n_strings, method",
+    qiskit_params_sm + qiskit_params_big + fast_pauli_params_sm + fast_pauli_params_big,
+)
+def test_pauli_op_expectation_value(
+    benchmark: Callable, n_qubits: int, n_strings: int, method: str
+) -> None:
+    """Benchmark applying a Pauli String to a state."""
+    np.random.seed(18)
+    all_pauli_strings = [
+        "".join(s) for s in it.combinations_with_replacement("IXYZ", n_qubits)
+    ]
+    pauli_strings = np.random.choice(all_pauli_strings, size=n_strings, replace=True)
+    print(
+        f"n_qubits: {n_qubits}, n_strings: {n_strings}, method: {method}, "
+        + f"len(pauli_strings): {len(pauli_strings)}"
+    )
+
+    v_np = np.random.random(2**n_qubits).astype(np.complex128)
+
+    if method == "qiskit":
+        v = Statevector(v_np)
+        op = SparsePauliOp(pauli_strings, coeffs=np.ones(len(pauli_strings)))
+
+        def f() -> None:
+            v.expectation_value(op)
+
+    else:
+        op = fp.PauliOp(np.ones(len(pauli_strings)), pauli_strings)
+
+        def f() -> None:
+            op.expectation_value(v_np)
+
+    benchmark(f)

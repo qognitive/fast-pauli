@@ -231,8 +231,12 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
         coefficients.reserve(init_capacity);
         strings.reserve(init_capacity);
 
-        std::unordered_map<PauliString, size_t> dedupe_strings;
+        size_t const n_threads = omp_get_max_threads();
+        std::vector<std::unordered_map<PauliString, H>> dedupe_strings(n_threads);
+        fmt::print("n_threads: {} lhs.size: {} rhs.size: {}\n", n_threads, lhs.n_pauli_strings(),
+                   rhs.n_pauli_strings());
 
+#pragma omp parallel for schedule(static)
         for (size_t i = 0; i < lhs.n_pauli_strings(); ++i)
         {
             for (size_t j = 0; j < rhs.n_pauli_strings(); ++j)
@@ -240,19 +244,48 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
                 auto [phase, pauli_str] = lhs.pauli_strings[i] * rhs.pauli_strings[j];
                 auto coeff_ij = phase * lhs.coeffs[i] * rhs.coeffs[j];
 
-                if (dedupe_strings.contains(pauli_str))
+                size_t const tid = omp_get_thread_num();
+                if (dedupe_strings[tid].contains(pauli_str))
                 {
-                    size_t idx = dedupe_strings[pauli_str];
-                    coefficients[idx] += coeff_ij;
+                    dedupe_strings[tid][pauli_str] += coeff_ij;
                 }
                 else
                 {
-                    dedupe_strings[pauli_str] = coefficients.size();
-                    coefficients.push_back(coeff_ij);
-                    strings.push_back(std::move(pauli_str));
+                    dedupe_strings[tid][pauli_str] = coeff_ij;
                 }
             }
         }
+
+        for (size_t i = 0; i < n_threads; ++i)
+        {
+            for (auto const &[pauli_str, coeff] : dedupe_strings[i])
+            {
+                coefficients.push_back(coeff);
+                strings.push_back(pauli_str);
+            }
+        }
+
+        // std::unordered_map<PauliString, size_t> dedupe_strings;
+        // for (size_t i = 0; i < lhs.n_pauli_strings(); ++i)
+        // {
+        //     for (size_t j = 0; j < rhs.n_pauli_strings(); ++j)
+        //     {
+        //         auto [phase, pauli_str] = lhs.pauli_strings[i] * rhs.pauli_strings[j];
+        //         auto coeff_ij = phase * lhs.coeffs[i] * rhs.coeffs[j];
+
+        //         if (dedupe_strings.contains(pauli_str))
+        //         {
+        //             size_t idx = dedupe_strings[pauli_str];
+        //             coefficients[idx] += coeff_ij;
+        //         }
+        //         else
+        //         {
+        //             dedupe_strings[pauli_str] = coefficients.size();
+        //             coefficients.push_back(coeff_ij);
+        //             strings.push_back(std::move(pauli_str));
+        //         }
+        //     }
+        // }
 
         return PauliOp<T, H>(std::move(coefficients), std::move(strings));
     }
