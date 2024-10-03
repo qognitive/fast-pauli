@@ -1,6 +1,7 @@
 """Process benchmark data."""
 
 import os
+import sys
 from typing import Any
 
 import pandas as pd
@@ -35,12 +36,18 @@ COLOR_MAP = {
 # Load data
 #
 
-df = pd.read_csv("qiskit_jets.csv")
+# WARNING DANGEROUS CLI (just don't wanna deal with argparse or click)
+if len(sys.argv) != 2:
+    print(f"Usage: {sys.argv[0]} <csv_file>")
+    sys.exit(1)
+
+df = pd.read_csv(sys.argv[1])
 df.rename(
     columns={
         "param:n_qubits": "N<sub>qubits</sub>",
         "param:n_strings": "N<sub>pauli strings</sub>",
         "param:method": "Library",
+        "param:n_states": "N<sub>states</sub>",
     },
     inplace=True,
 )
@@ -48,6 +55,8 @@ sorted_unique_n_pauli_strings = (
     df["N<sub>pauli strings</sub>"].dropna().unique().tolist()
 )
 sorted_unique_n_pauli_strings.sort()
+sorted_unique_n_states = df["N<sub>states</sub>"].dropna().unique().tolist()
+sorted_unique_n_states.sort()
 
 #
 # Pauli string apply
@@ -76,23 +85,23 @@ fig.write_html(
 #
 # Pauli String Expectation Value
 #
-df_ps = df[df["name"].str.contains("test_pauli_string_expectation_value")]
+# df_ps = df[df["name"].str.contains("test_pauli_string_expectation_value")]
 
-fig = px.scatter(
-    df_ps,
-    x="N<sub>qubits</sub>",
-    y="mean",
-    error_y="stddev",
-    color="Library",
-    color_discrete_map=COLOR_MAP,
-    log_y=True,
-)
-format_fix(fig)
-fig.write_html(
-    f"{OUTPUT_DIR}/qiskit_pauli_string_expectation_value.html",
-    full_html=False,
-    include_plotlyjs="cdn",
-)
+# fig = px.scatter(
+#     df_ps,
+#     x="N<sub>qubits</sub>",
+#     y="mean",
+#     error_y="stddev",
+#     color="Library",
+#     color_discrete_map=COLOR_MAP,
+#     log_y=True,
+# )
+# format_fix(fig)
+# fig.write_html(
+#     f"{OUTPUT_DIR}/qiskit_pauli_string_expectation_value.html",
+#     full_html=False,
+#     include_plotlyjs="cdn",
+# )
 
 #
 # Pauli Op applied to a statevector
@@ -141,6 +150,32 @@ fig = px.scatter(
 format_fix(fig)
 fig.write_html(
     f"{OUTPUT_DIR}/qiskit_pauli_op_expectation_value.html",
+    full_html=False,
+    include_plotlyjs="cdn",
+)
+
+
+#
+# Pauli Op Expectation Value Batch
+#
+df_op_exp_batch = df[df["name"].str.contains("test_pauli_op_expectation_value_batch")]
+
+fig = px.scatter(
+    df_op_exp_batch,
+    x="N<sub>qubits</sub>",
+    y="mean",
+    error_y="stddev",
+    color="Library",
+    color_discrete_map=COLOR_MAP,
+    log_y=True,
+    facet_col="N<sub>states</sub>",
+    category_orders={
+        "N<sub>states</sub>": sorted_unique_n_states,
+    },
+)
+format_fix(fig)
+fig.write_html(
+    f"{OUTPUT_DIR}/qiskit_pauli_op_expectation_value_batch.html",
     full_html=False,
     include_plotlyjs="cdn",
 )

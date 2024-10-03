@@ -62,10 +62,10 @@ benchmark-for-release:
 		--csv=benchmark_results.csv
 	python tests/benchmarks/process_benchmark_data.py
 
-benchmark-qiskit-jets:
-	pytest -vs tests/benchmarks/test_qiskit_jets.py --benchmark-columns='mean,stddev,rounds' --benchmark-json=qiskit_jets.json
-	py.test-benchmark compare ./qiskit_jets.json --group-by=func --csv=qiskit_jets.csv
-	python tests/benchmarks/process_qiskit_benchmarks.py
+benchmark-qiskit-adv:
+	pytest -vs tests/benchmarks/test_qiskit_adv.py --benchmark-columns='mean,stddev,rounds' --benchmark-json=qiskit_adv.json
+	py.test-benchmark compare ./qiskit_adv.json --group-by=func --csv=qiskit_adv.csv
+	python tests/benchmarks/process_qiskit_benchmarks.py qiskit_adv.csv
 
 ###############################################################################
 # STATIC ANALYSIS
