@@ -793,7 +793,7 @@ factors : np.ndarray
             R"%(Apply a Pauli Operator to a single dimensional state vector or a batch of states.
 
 .. math::
-    \big( \sum_k h_k \mathcal{\hat{P}}_k \big) \psi_t
+    \big( \sum_k h_k \mathcal{\hat{P}}_k \big) \ket{\psi_t}
 
 .. note::
     For batch mode it applies the PauliOp to each individual state separately.
