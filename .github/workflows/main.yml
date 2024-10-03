@@ -11,7 +11,7 @@ on:
     types:
       - published
 jobs:
-  build:
+  main-build:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

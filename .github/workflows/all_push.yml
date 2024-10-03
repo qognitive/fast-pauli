@@ -4,7 +4,7 @@ on:
     branches-ignore:
       - main
 jobs:
-  build:
+  push-build:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
