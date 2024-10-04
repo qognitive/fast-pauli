@@ -10,7 +10,10 @@
   </tr>
   <tr>
     <td>Usage</td>
-    <td>TODO RTD INFO
+    <td>
+      <a href='https://qognitive-fast-pauli.readthedocs-hosted.com/en/latest/?badge=latest'>
+    <img src='https://readthedocs.com/projects/qognitive-fast-pauli/badge/?version=latest' alt='Documentation Status' />
+</a>
     <a href="https://github.com/qognitive/fast-pauli/tree/develop?tab=readme-ov-file#installation"><img src="https://img.shields.io/badge/Docs-Installation-blue" alt="Installation"></a>
      </td>
   </tr>
