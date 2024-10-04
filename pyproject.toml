@@ -54,8 +54,9 @@ docs = [
   "sphinx-rtd-theme",
   "sphinx-autobuild",
   "sphinx-copybutton",
-  "breathe",
   "sphinx-autobuild",
+  "sphinxcontrib-napoleon",
+  "breathe",
   "furo",
 ]
 

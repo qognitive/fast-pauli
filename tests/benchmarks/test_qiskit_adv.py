@@ -82,7 +82,8 @@ def test_pauli_string_apply(benchmark: Callable, n_qubits: int, method: str) -> 
 # # NOTE: uses same settings as above
 # @pytest.mark.parametrize(
 #     "n_qubits, method",
-#     qiskit_params_sm + qiskit_params_big + fast_pauli_params_sm + fast_pauli_params_big,
+#     qiskit_params_sm + qiskit_params_big + fast_pauli_params_sm +
+#     fast_pauli_params_big,
 # )
 # def test_pauli_string_expectation_value(
 #     benchmark: Callable, n_qubits: int, method: str
@@ -116,56 +117,57 @@ def test_pauli_string_apply(benchmark: Callable, n_qubits: int, method: str) -> 
 ################################################################################
 # Pauli Op to Dense
 ################################################################################
-qiskit_params_sm = [
-    pytest.param(nq, ns, m)
-    for nq, ns, m in it.product([2, 8, 10, 12, 14], [10, 100, 1000], ["qiskit"])
-]
-qiskit_params_big = [
-    pytest.param(nq, ns, m, marks=extra_benchmark_mark)
-    for nq, ns, m in it.product([12, 13, 14, 15], [10, 100, 1000], ["qiskit"])
-]
+# qiskit_params_sm = [
+#     pytest.param(nq, ns, m)
+#     for nq, ns, m in it.product([2, 8, 10, 12, 14], [10, 100, 1000], ["qiskit"])
+# ]
+# qiskit_params_big = [
+#     pytest.param(nq, ns, m, marks=extra_benchmark_mark)
+#     for nq, ns, m in it.product([12, 13, 14, 15], [10, 100, 1000], ["qiskit"])
+# ]
 
-fast_pauli_params_sm = [
-    pytest.param(nq, ns, m)
-    for nq, ns, m in it.product([2, 8, 10, 12, 14], [10, 100, 1000], ["fast_pauli"])
-]
+# fast_pauli_params_sm = [
+#     pytest.param(nq, ns, m)
+#     for nq, ns, m in it.product([2, 8, 10, 12, 14], [10, 100, 1000], ["fast_pauli"])
+# ]
 
-fast_pauli_params_big = [
-    pytest.param(nq, ns, m, marks=extra_benchmark_mark)
-    for nq, ns, m in it.product(
-        [12, 13, 14, 15, 16, 18], [10, 100, 1000], ["fast_pauli"]
-    )
-]
+# fast_pauli_params_big = [
+#     pytest.param(nq, ns, m, marks=extra_benchmark_mark)
+#     for nq, ns, m in it.product(
+#         [12, 13, 14, 15, 16, 18], [10, 100, 1000], ["fast_pauli"]
+#     )
+# ]
 
 
-@pytest.mark.parametrize(
-    "n_qubits, n_pauli_strings, method",
-    qiskit_params_sm + qiskit_params_big + fast_pauli_params_sm + fast_pauli_params_big,
-)
-def test_pauli_op_to_dense(
-    benchmark: Callable, n_qubits: int, n_pauli_strings: int, method: str
-) -> None:
-    """Benchmark converting a Pauli Op to a dense matrix."""
-    np.random.seed(18)
-    all_paulis = [
-        "".join(s) for s in it.combinations_with_replacement("IXYZ", n_qubits)
-    ]
-    paulis = np.random.choice(all_paulis, size=n_pauli_strings, replace=True)
+# @pytest.mark.parametrize(
+#     "n_qubits, n_pauli_strings, method",
+#     qiskit_params_sm + qiskit_params_big + fast_pauli_params_sm +
+#     fast_pauli_params_big,
+# )
+# def test_pauli_op_to_dense(
+#     benchmark: Callable, n_qubits: int, n_pauli_strings: int, method: str
+# ) -> None:
+#     """Benchmark converting a Pauli Op to a dense matrix."""
+#     np.random.seed(18)
+#     all_paulis = [
+#         "".join(s) for s in it.combinations_with_replacement("IXYZ", n_qubits)
+#     ]
+#     paulis = np.random.choice(all_paulis, size=n_pauli_strings, replace=True)
 
-    print(f"n_qubits: {n_qubits}, method: {method}, len(paulis): {len(paulis)}")
+#     print(f"n_qubits: {n_qubits}, method: {method}, len(paulis): {len(paulis)}")
 
-    if method == "qiskit":
-        op = SparsePauliOp(paulis, coeffs=np.ones(len(paulis)))
+#     if method == "qiskit":
+#         op = SparsePauliOp(paulis, coeffs=np.ones(len(paulis)))
 
-        def f() -> None:
-            op.to_matrix()  # noqa: F841
-    else:
-        op = fp.PauliOp(np.ones(len(paulis)), paulis)
+#         def f() -> None:
+#             op.to_matrix()  # noqa: F841
+#     else:
+#         op = fp.PauliOp(np.ones(len(paulis)), paulis)
 
-        def f() -> None:
-            op.to_tensor()  # noqa: F841
+#         def f() -> None:
+#             op.to_tensor()  # noqa: F841
 
-    benchmark(f)
+#     benchmark(f)
 
 
 ################################################################################
@@ -197,7 +199,7 @@ fast_pauli_params_big = [
     "n_qubits, n_pauli_strings, method",
     qiskit_params_sm + qiskit_params_big + fast_pauli_params_sm + fast_pauli_params_big,
 )
-def test_sparse_pauli_op_apply(
+def test_pauli_op_apply(
     benchmark: Callable,
     pauli_strings_with_size: Callable,
     n_qubits: int,
@@ -230,22 +232,10 @@ def test_sparse_pauli_op_apply(
 ################################################################################
 # Pauli Op Expectation Value
 ################################################################################
-# qiskit_params_sm = [
-#     pytest.param(nq, ns, m)
-#     for nq, ns, m in it.product([2, 8, 12, 14, 16, 18, 20], [10, 100, 1000], ["qiskit"])
-# ]
-# fast_pauli_params_sm = [
-#     pytest.param(nq, ns, m)
-#     for nq, ns, m in it.product(
-#         [2, 8, 12, 14, 16, 18, 20], [10, 100, 1000], ["fast_pauli"]
-#     )
-# ]
-
-
-# # NOTE: uses same settings as above
 # @pytest.mark.parametrize(
 #     "n_qubits, n_pauli_strings, method",
-#     qiskit_params_sm + qiskit_params_big + fast_pauli_params_sm + fast_pauli_params_big,
+#     qiskit_params_sm + qiskit_params_big + fast_pauli_params_sm +
+#     fast_pauli_params_big,
 # )
 # def test_pauli_op_expectation_value(
 #     benchmark: Callable, n_qubits: int, n_pauli_strings: int, method: str
@@ -255,9 +245,15 @@ def test_sparse_pauli_op_apply(
 #     all_pauli_strings = [
 #         "".join(s) for s in it.combinations_with_replacement("IXYZ", n_qubits)
 #     ]
-#     pauli_strings = np.random.choice(all_pauli_strings, size=n_pauli_strings, replace=True)
+
+#     pauli_strings = np.random.choice(
+#         all_pauli_strings,
+#         size=n_pauli_strings,
+#         replace=True,
+#     )
 #     print(
-#         f"n_qubits: {n_qubits}, n_pauli_strings: {n_pauli_strings}, method: {method}, "
+#         f"n_qubits: {n_qubits}, n_pauli_strings: "
+#         + f"{n_pauli_strings}, method: {method}, "
 #         + f"len(pauli_strings): {len(pauli_strings)}"
 #     )
 
@@ -324,7 +320,8 @@ def test_pauli_op_expectation_value_batch(
         all_pauli_strings, size=n_pauli_strings, replace=True
     )
     print(
-        f"n_qubits: {n_qubits}, n_pauli_strings: {n_pauli_strings}, n_states: {n_states}, "
+        f"n_qubits: {n_qubits}, n_pauli_strings:"
+        + f" {n_pauli_strings}, n_states: {n_states}, "
         + f"method: {method}, "
         + f"len(pauli_strings): {len(pauli_strings)}"
     )

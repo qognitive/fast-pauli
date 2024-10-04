@@ -13,7 +13,7 @@ author = "James E. T. Smith"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["breathe", "sphinx.ext.autodoc", "sphinx_copybutton"]
+extensions = ["breathe", "sphinx.ext.autodoc", "sphinx_copybutton", "sphinx.ext.napoleon"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]

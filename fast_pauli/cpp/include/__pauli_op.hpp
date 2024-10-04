@@ -567,43 +567,6 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
      */
     void to_tensor(std::mdspan<std::complex<T>, std::dextents<size_t, 2>> output) const
     {
-
-        // store (dim x n_pauli_strings) intermediate results so we don't have race conditions
-        // and then reduce them in the output
-        //         size_t const n_pauli_strings = pauli_strings.size();
-        //         std::vector<size_t> col_idx_raw(dim() * n_pauli_strings);
-        //         std::vector<std::complex<T>> vals_raw(dim() * n_pauli_strings);
-        //         std::mdspan<size_t, std::dextents<size_t, 2>> cols(col_idx_raw.data(), dim(), n_pauli_strings);
-        //         std::mdspan<std::complex<T>, std::dextents<size_t, 2>> vals(vals_raw.data(), dim(), n_pauli_strings);
-
-        // #pragma omp parallel
-        //         {
-        //             // Get the sparse representation of each pauli string and cache it
-        // #pragma omp for schedule(static)
-        //             for (size_t i = 0; i < n_pauli_strings; ++i)
-        //             {
-        //                 PauliString const &ps = pauli_strings[i];
-        //                 auto [cols_i, vals_i] = get_sparse_repr<T>(ps.paulis);
-
-        // #pragma unroll(16)
-        //                 for (size_t a = 0; a < dim(); ++a)
-        //                 {
-        //                     cols(a, i) = cols_i[a];
-        //                     vals(a, i) = coeffs[i] * vals_i[a];
-        //                 }
-        //             }
-
-        // #pragma omp for schedule(static)
-        //             for (size_t a = 0; a < dim(); ++a)
-        //             {
-        //                 for (size_t i = 0; i < pauli_strings.size(); ++i)
-        //                 {
-        //                     output(a, cols(a, i)) += vals(a, i);
-        //                 }
-        //             }
-        //         }
-
-        // #pragma omp parallel for schedule(static)
         for (size_t i = 0; i < pauli_strings.size(); ++i)
         {
             PauliString const &ps = pauli_strings[i];

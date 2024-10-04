@@ -50,22 +50,10 @@ benchmark:
 	python -m pytest -v tests/benchmarks --benchmark-group-by=func --benchmark-sort=fullname \
 	--benchmark-columns='mean,median,min,max,stddev,iqr,outliers,ops,rounds,iterations'
 
-benchmark-for-release:
-	python -m pytest -v tests/benchmarks \
-	    -k "apply_batch_n_qubits_n_states" \
-		--benchmark-group-by=func \
-		--benchmark-sort=fullname \
-		--benchmark-json=benchmark_results.json
-	py.test-benchmark compare \
-		./benchmark_results.json \
-		--group-by=func \
-		--csv=benchmark_results.csv
-	python tests/benchmarks/process_benchmark_data.py
-
 benchmark-qiskit-adv:
-	pytest -vs tests/benchmarks/test_qiskit_adv.py --benchmark-columns='mean,stddev,rounds' --benchmark-json=qiskit_adv.json
-	py.test-benchmark compare ./qiskit_adv.json --group-by=func --csv=qiskit_adv.csv
-	python tests/benchmarks/process_qiskit_benchmarks.py qiskit_adv.csv
+	EXTRA_BENCHMARKS=true pytest -vs tests/benchmarks/test_qiskit_adv.py --benchmark-columns='mean,stddev,rounds' --benchmark-json=qiskit_adv.json
+	py.test-benchmark compare ./qiskit_adv.json --group-by=func --csv=docs/benchmark_results/qiskit_adv.csv
+	python tests/benchmarks/process_qiskit_benchmarks.py docs/benchmark_results/qiskit_adv.csv
 
 ###############################################################################
 # STATIC ANALYSIS
