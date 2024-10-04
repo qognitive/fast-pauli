@@ -33,7 +33,7 @@ NB_MODULE(_fast_pauli, m)
 Parameters
 ----------
 code : int
-    Numerical number for corresponding Pauli matrix :math:`0: I, 1: X, 2: Y, 3: Z`
+    Numerical label of type int for corresponding Pauli matrix :math:`0: I, 1: X, 2: Y, 3: Z`
 )%")
         .def(nb::init<char const>(), "symbol"_a,
              R"%(Constructor given Pauli matrix symbol.
@@ -41,12 +41,12 @@ code : int
 Parameters
 ----------
 symbol : str
-    Pauli matrix symbol :math:`I, X, Y, Z`
+    Character label of type str corresponding to one of the Pauli Matrix symbols :math:`I, X, Y, Z`
 )%")
         // Methods
         .def(
             "__matmul__", [](fp::Pauli const &self, fp::Pauli const &rhs) { return self * rhs; }, nb::is_operator(),
-            R"%(Returns matrix product of two pauli matrices and their phase as a pair.
+            R"%(Returns matrix product of two Paulis as a tuple of phase and new Pauli object.
 
 Parameters
 ----------
@@ -55,8 +55,8 @@ rhs : Pauli
 
 Returns
 -------
-tuple of complex and Pauli
-    Phase and resulting pauli object
+tuple[complex, Pauli]
+    Phase and resulting Pauli object
 )%")
         .def(
             "to_tensor",
@@ -65,7 +65,7 @@ tuple of complex and Pauli
                 self.to_tensor(fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(dense_pauli));
                 return dense_pauli;
             },
-            R"%(Returns a dense representation of Pauli matrix.
+            R"%(Returns a dense representation of Pauli object as a :math:`2 \times 2` matrix.
 
 Returns
 -------
@@ -79,7 +79,7 @@ np.ndarray
 Returns
 -------
 str
-    single character string representing Pauli matrix :math:`I, X, Y, Z`
+    One of :math:`I, X, Y, Z`, a single character string representing a Pauli Matrix
 )%");
 
     //
@@ -135,8 +135,8 @@ rhs : PauliString
 
 Returns
 -------
-tuple of complex and Pauli
-    Phase and resulting pauli object
+tuple[complex, PauliString]
+    Phase and resulting PauliString object
 )%")
         .def(
             "__add__",
@@ -154,7 +154,7 @@ rhs : PauliString
 Returns
 -------
 PauliOp
-    PauliOp instance holding the sum of two Pauli strings.
+    A linear combination of the PauliString objects as a PauliOp.
 )%")
         .def(
             "__sub__",
@@ -172,7 +172,7 @@ rhs : PauliString
 Returns
 -------
 PauliOp
-    PauliOp instance holding the difference of two Pauli strings.
+    A linear combination of the PauliString objects as a PauliOp.
 )%")
 
         // Properties
@@ -225,8 +225,8 @@ PauliOp
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 1D or 2D numpy array with states along the columns for batched application.
-    Outer dimension must match the dimansionality of Pauli string.
+    The original state(s) represented as 1D or 2D numpy array for batched calculation.
+    Outer dimension must match the dimensionality of Pauli string.
 coeff : complex
     Multiplication factor to scale the PauliString before applying to states
 
@@ -277,14 +277,15 @@ np.ndarray
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 1D or 2D numpy array with states along the columns for batched application
+    The original state(s) represented as 1D or 2D numpy array for batched calculation.
+    Outer dimension must match the dimensionality of Pauli string.
 coeff : complex
     Multiplication factor to scale the PauliString before calculating the expectation value
 
 Returns
 -------
 np.ndarray
-    Expectation value(s) in a form of 1D numpy array corresponding to the number of states
+    Expectation value(s) in the form of a 1D numpy array corresponding to the number of states
 )%")
         .def(
             "to_tensor",
@@ -322,7 +323,7 @@ np.ndarray
 Parameters
 ----------
 pauli_strings : List[str]
-    List of Pauli Strings representation. Each string should be composed of characters :math:`I, X, Y, Z`
+    List of Pauli Strings representations
 )%")
         .def(nb::init<std::vector<fp::PauliString>>(),
              R"%(Construct a PauliOp from a list of PauliString objects and default corresponding coefficients to ones.
@@ -382,7 +383,7 @@ Parameters
 coefficients : np.ndarray
     Array of coefficients corresponding to Pauli strings.
 pauli_strings : List[str]
-    List of Pauli Strings representation. Each string should be composed of characters :math:`I, X, Y, Z`
+    List of Pauli Strings representations
 )%")
         // TODO memory efficient implementations for inplace @= operators
         .def(
@@ -399,7 +400,7 @@ rhs : PauliOp
 Returns
 -------
 PauliOp
-    New PauliOp instance containing the result of the multiplication
+    New PauliOp instance containing the product
 )%")
         .def(
             "__matmul__", [](fp::PauliOp<float_type> const &self, fp::PauliString const &rhs) { return self * rhs; },
@@ -414,7 +415,7 @@ rhs : PauliString
 Returns
 -------
 PauliOp
-    New PauliOp instance containing the result of the multiplication
+    New PauliOp instance containing the product
 )%")
         .def(
             "__rmatmul__", [](fp::PauliOp<float_type> const &self, fp::PauliString const &lhs) { return lhs * self; },
@@ -429,7 +430,7 @@ rhs : PauliOp
 Returns
 -------
 PauliOp
-    New PauliOp instance containing the result of the multiplication
+    New PauliOp instance containing the product
 )%")
         .def(
             "__mul__",
@@ -449,7 +450,7 @@ rhs : complex or float
 Returns
 -------
 PauliOp
-    New PauliOp instance containing the result of the multiplication
+    New PauliOp instance containing the product
 )%")
         .def(
             "__rmul__",
@@ -469,7 +470,7 @@ lhs : complex or float
 Returns
 -------
 PauliOp
-    New PauliOp instance containing the result of the multiplication
+    New PauliOp instance containing the product
 )%")
         .def(
             "__imul__",
@@ -702,7 +703,7 @@ other : PauliOp
                 self.extend(other, multiplier, dedupe);
             },
             "other"_a, "multiplier"_a, "dedupe"_a = true,
-            R"%(Add a Pauli String term with appropriate coefficient to the summation inside PauliOp.
+            R"%(Add a Pauli String term with a corresponding coefficient to the summation inside PauliOp.
 
 Parameters
 ----------
@@ -802,8 +803,8 @@ factors : np.ndarray
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 1D or 2D numpy array with states along the columns for batched application.
-    Outer dimension must match the dimansionality of Pauli Operator.
+    The original state(s) represented as 1D or 2D numpy array for batched calculation.
+    Outer dimension must match the dimensionality of Pauli Operator.
 
 Returns
 -------
@@ -853,13 +854,13 @@ np.ndarray
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 1D or 2D numpy array with states along the columns for batched application.
-    Outer dimension must match the dimansionality of Pauli Operator.
+    The original state(s) represented as 1D or 2D numpy array for batched calculation.
+    Outer dimension must match the dimensionality of Pauli Operator.
 
 Returns
 -------
 np.ndarray
-    Expectation value(s) in a form of 1D numpy array corresponding to the number of states
+    Expectation value(s) in the form of a 1D numpy array corresponding to the number of states
 )%")
         .def(
             "to_tensor",
