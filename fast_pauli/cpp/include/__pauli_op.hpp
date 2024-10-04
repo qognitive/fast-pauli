@@ -573,7 +573,6 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
             auto [cols, vals] = get_sparse_repr<T>(ps.paulis);
             std::complex<T> c = coeffs[i];
 
-#pragma unroll(16)
             for (size_t j = 0; j < dim(); ++j)
             {
                 output(j, cols[j]) += c * vals[j];

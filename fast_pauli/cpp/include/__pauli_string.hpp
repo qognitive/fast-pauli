@@ -547,7 +547,6 @@ struct PauliString
         // or serial version
         auto [k, m] = get_sparse_repr<T>(paulis);
 
-#pragma unroll(16)
         for (size_t i = 0; i < k.size(); ++i)
             output(i, k[i]) = m[i];
     }
