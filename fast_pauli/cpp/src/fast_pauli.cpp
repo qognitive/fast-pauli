@@ -285,7 +285,7 @@ coeff : complex
 Returns
 -------
 np.ndarray
-    Expectation value(s) in the form of a 1D numpy array corresponding to the number of states
+    Expectation value(s) in the form of a 1D numpy array with a shape of number of states
 )%")
         .def(
             "to_tensor",
@@ -323,7 +323,7 @@ np.ndarray
 Parameters
 ----------
 pauli_strings : List[str]
-    List of Pauli Strings representations
+    List of Pauli Strings as simple `str`. Each string should be composed of characters :math:`I, X, Y, Z` and should have the same size
 )%")
         .def(nb::init<std::vector<fp::PauliString>>(),
              R"%(Construct a PauliOp from a list of PauliString objects and default corresponding coefficients to ones.
@@ -383,14 +383,14 @@ Parameters
 coefficients : np.ndarray
     Array of coefficients corresponding to Pauli strings.
 pauli_strings : List[str]
-    List of Pauli Strings representations
+    List of Pauli Strings as simple `str`. Each string should be composed of characters :math:`I, X, Y, Z` and should have the same size
 )%")
         // TODO memory efficient implementations for inplace @= operators
         .def(
             "__matmul__",
             [](fp::PauliOp<float_type> const &self, fp::PauliOp<float_type> const &rhs) { return self * rhs; },
             nb::is_operator(),
-            R"%(Matrix multiplication of two Pauli Operators.
+            R"%(Efficient matrix multiplication of two Pauli Operators, leveraging their sparse structure.
 
 Parameters
 ----------
@@ -405,7 +405,7 @@ PauliOp
         .def(
             "__matmul__", [](fp::PauliOp<float_type> const &self, fp::PauliString const &rhs) { return self * rhs; },
             nb::is_operator(),
-            R"%(Matrix multiplication of PauliOp with a PauliString on the right.
+            R"%(Efficient matrix multiplication of PauliOp with a PauliString on the right, leveraging their sparse structure.
 
 Parameters
 ----------
@@ -420,7 +420,7 @@ PauliOp
         .def(
             "__rmatmul__", [](fp::PauliOp<float_type> const &self, fp::PauliString const &lhs) { return lhs * self; },
             nb::is_operator(),
-            R"%(Matrix multiplication of PauliOp with a PauliString on the left.
+            R"%(Efficient matrix multiplication of PauliOp with a PauliString on the left, leveraging their sparse structure.
 
 Parameters
 ----------
@@ -712,7 +712,7 @@ other : PauliString
 multiplier : complex
     Coefficient to apply to the PauliString
 dedupe : bool
-    Whether to deduplicate provided PauliString
+    Whether to deduplicate set of PauliStrings
 )%")
 
         // Getters
@@ -860,7 +860,7 @@ states : np.ndarray
 Returns
 -------
 np.ndarray
-    Expectation value(s) in the form of a 1D numpy array corresponding to the number of states
+    Expectation value(s) in the form of a 1D numpy array with a shape of number of states
 )%")
         .def(
             "to_tensor",
@@ -874,7 +874,7 @@ np.ndarray
 Returns
 -------
 np.ndarray
-    2D numpy array of complex numbers
+    2D numpy array of complex numbers with a shape of :math:`2^n \times 2^n, n` - number of qubits
     )%");
 
     //
