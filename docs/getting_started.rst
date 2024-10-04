@@ -8,7 +8,7 @@ based on `PauliComposer <https://arxiv.org/abs/2301.00560>`_. In this guide,
 we'll introduce some of the important operations to help users get started. For more details,
 see the API documentation.
 
-For tips on installing the library, check out the guide: :doc:`install`.
+For tips on installing the library, check out the guide: :doc:`index`.
 
 Pauli Matrices
 ------------------------
