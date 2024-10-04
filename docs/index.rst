@@ -19,9 +19,6 @@ fast_pauli documentation
    cpp_api
 
 
-Introduction
-============
-
 Installation
 ============
 Welcome to ``fast_pauli``! This package provides fast and efficient implementations of pauli operators and strings,
@@ -65,6 +62,3 @@ Verify / Test Build
 .. code-block:: bash
 
    pytest -v tests/fast_pauli # + other pytest flags
-
-Our Goals
-=========
