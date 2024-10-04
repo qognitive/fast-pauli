@@ -225,7 +225,7 @@ PauliOp
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 1D or 2D numpy array for batched calculation.
+    The original state(s) represented as 1D (n_dims,) or 2D numpy array (n_dims, n_states) for batched calculation.
     Outer dimension must match the dimensionality of Pauli string.
 coeff : complex
     Multiplication factor to scale the PauliString before applying to states
@@ -233,7 +233,7 @@ coeff : complex
 Returns
 -------
 np.ndarray
-    New state(s) in a form of 1D or 2D numpy array corresponding to the shape of input states
+    New state(s) in a form of 1D (n_dims,) or 2D numpy array (n_dims, n_states) according to the shape of input states
 )%")
         .def(
             "expectation_value",
@@ -277,7 +277,7 @@ np.ndarray
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 1D or 2D numpy array for batched calculation.
+    The original state(s) represented as 1D (n_dims,) or 2D numpy array (n_dims, n_states) for batched calculation.
     Outer dimension must match the dimensionality of Pauli string.
 coeff : complex
     Multiplication factor to scale the PauliString before calculating the expectation value
@@ -285,7 +285,7 @@ coeff : complex
 Returns
 -------
 np.ndarray
-    Expectation value(s) in the form of a 1D numpy array with a shape of number of states
+    Expectation value(s) in the form of a 1D numpy array with a shape of (n_states,)
 )%")
         .def(
             "to_tensor",
@@ -311,9 +311,9 @@ np.ndarray
         R"%(A class representation for a Pauli Operator :math:`A` (i.e. a weighted sum of Pauli Strings)
 
 .. math::
-    A = \sum_k h_k \mathcal{\hat{P}}_k
+    A = \sum_j h_j \mathcal{\hat{P}}_j
 
-    \mathcal{\hat{P}} = \bigotimes_i \sigma_i \quad h_k \in \mathbb{C}
+    \mathcal{\hat{P}} = \bigotimes_i \sigma_i \quad h_j \in \mathbb{C}
 )%")
         // Constructors
         .def(nb::init<>(), "Default constructor to initialize strings and coefficients with empty arrays.")
@@ -794,7 +794,7 @@ factors : np.ndarray
             R"%(Apply a Pauli Operator to a single dimensional state vector or a batch of states.
 
 .. math::
-    \big( \sum_k h_k \mathcal{\hat{P}}_k \big) \ket{\psi_t}
+    \big( \sum_j h_j \mathcal{\hat{P}}_j \big) \ket{\psi_t}
 
 .. note::
     For batch mode it applies the PauliOp to each individual state separately.
@@ -803,13 +803,13 @@ factors : np.ndarray
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 1D or 2D numpy array for batched calculation.
+    The original state(s) represented as 1D (n_dims,) or 2D numpy array (n_dims, n_states) for batched calculation.
     Outer dimension must match the dimensionality of Pauli Operator.
 
 Returns
 -------
 np.ndarray
-    New state(s) in a form of 1D or 2D numpy array corresponding to the shape of input states
+    New state(s) in a form of 1D (n_dims,) or 2D numpy array (n_dims, n_states) according to the shape of input states
 )%")
         .def(
             "expectation_value",
@@ -845,7 +845,7 @@ np.ndarray
             R"%(Calculate expectation value(s) for a given single dimensional state vector or a batch of states.
 
 .. math::
-    \bra{\psi_t} \big( \sum_k h_{k} \mathcal{\hat{P}}_k \big) \ket{\psi_t}
+    \bra{\psi_t} \big( \sum_j h_j \mathcal{\hat{P}}_j \big) \ket{\psi_t}
 
 .. note::
     For batch mode it computes the expectation value for each individual state separately.
@@ -854,13 +854,13 @@ np.ndarray
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 1D or 2D numpy array for batched calculation.
+    The original state(s) represented as 1D (n_dims,) or 2D numpy array (n_dims, n_states) for batched calculation.
     Outer dimension must match the dimensionality of Pauli Operator.
 
 Returns
 -------
 np.ndarray
-    Expectation value(s) in the form of a 1D numpy array with a shape of number of states
+    Expectation value(s) in the form of a 1D numpy array with a shape of (n_states,)
 )%")
         .def(
             "to_tensor",
