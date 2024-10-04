@@ -12,7 +12,6 @@
  * that they have been altered from the originals.
  */
 
-
 #include "fast_pauli.hpp"
 
 #include <nanobind/nanobind.h>

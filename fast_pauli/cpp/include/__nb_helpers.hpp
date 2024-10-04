@@ -12,7 +12,6 @@
  * that they have been altered from the originals.
  */
 
-
 #ifndef __NB_HELPERS_HPP
 #define __NB_HELPERS_HPP
 

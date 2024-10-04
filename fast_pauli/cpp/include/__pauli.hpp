@@ -12,7 +12,6 @@
  * that they have been altered from the originals.
  */
 
-
 #ifndef __PAULI_HPP
 #define __PAULI_HPP
 

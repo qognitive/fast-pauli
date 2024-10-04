@@ -12,7 +12,6 @@
  * that they have been altered from the originals.
  */
 
-
 #ifndef FAST_PAULI_HPP
 #define FAST_PAULI_HPP
 

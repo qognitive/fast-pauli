@@ -12,7 +12,6 @@
  * that they have been altered from the originals.
  */
 
-
 #ifndef __FP_TYPE_TRAITS_HPP
 #define __FP_TYPE_TRAITS_HPP
 

@@ -12,7 +12,6 @@
  * that they have been altered from the originals.
  */
 
-
 #include <algorithm>
 #include <experimental/mdspan>
 #include <random>

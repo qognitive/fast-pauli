@@ -12,7 +12,6 @@
  * that they have been altered from the originals.
  */
 
-
 #ifndef __PAULI_STRING_HPP
 #define __PAULI_STRING_HPP
 
