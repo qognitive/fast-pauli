@@ -230,7 +230,7 @@ PauliOp
             R"%(Apply a Pauli string to a single dimensional state vector or a batch of states.
 
 .. math::
-    \mathcal{\hat{P}} \ket{\psi_t}
+    c \mathcal{\hat{P}} \ket{\psi_t}
 
 .. note::
     For batch mode it applies the PauliString to each individual state separately.
@@ -242,7 +242,7 @@ states : np.ndarray
     The original state(s) represented as 1D (n_dims,) or 2D numpy array (n_dims, n_states) for batched calculation.
     Outer dimension must match the dimensionality of Pauli string.
 coeff : complex
-    Multiplication factor to scale the PauliString before applying to states
+    Scalar multiplication factor (:math:`c`) to scale the PauliString before applying to states
 
 Returns
 -------
@@ -726,7 +726,7 @@ other : PauliString
 multiplier : complex
     Coefficient to apply to the PauliString
 dedupe : bool
-    Whether to deduplicate set of PauliStrings
+    Whether to deduplicate the set of PauliStrings
 )%")
 
         // Getters
