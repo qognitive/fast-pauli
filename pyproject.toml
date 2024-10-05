@@ -34,13 +34,13 @@ name = "fast_pauli"
 readme = "README.md"
 description = "fast pauli"
 authors = [
-  { name="James. E. T. Smith", email="james.smith@qognitive.io" },
+  { name="James E. T. Smith", email="james.smith@qognitive.io" },
   { name="Eugene Rublenko", email="eugene.rublenko@qognitive.io" },
   { name="Alex Lerner", email="alex.lerner@qognitive.io" },
   { name="Sebastien Roy", email="sebastien.roy@qognitive.io" },
   { name="Jeffrey Berger", email="jeff.berger@qognitive.io" },
 ]
-dependencies = ["numpy", "scipy", "qiskit", "qiskit-algorithms"]
+dependencies = ["numpy", "qiskit", "qiskit-algorithms"]
 version = "0.0.1"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
@@ -70,7 +70,6 @@ docs = [
   "sphinx-autobuild",
   "sphinx-copybutton",
   "breathe",
-  "sphinx-autobuild",
   "furo",
 ]
 

@@ -13,7 +13,7 @@
 #############################################################################
 
 
-"""Fast Pauli and helpers."""
+""":code:`fast_pauli` is a Python package with C++ backend, optimized for operations on Pauli Matrices and Pauli Strings."""  # noqa: E501
 
 from ._fast_pauli import (  # noqa: F401
     Pauli,

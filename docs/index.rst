@@ -12,7 +12,6 @@ fast_pauli documentation
    :maxdepth: 1
    :caption: Contents
 
-   examples
    getting_started
    benchmarks
    python_api
@@ -26,14 +25,14 @@ with a focus on performance and usability. In order to get started, we'll need t
 
 Here are a few options for installing ``fast_pauli``:
 
-Install using ``pip``
-------------------
+Install the Latest Release
+--------------------------
 .. code-block:: bash
 
    pip install fast_pauli
 
-Install from source with Python
--------------------------------
+Build from Source (Default Config)
+-----------------------------------------
 .. code-block:: bash
 
    git clone git@github.com:qognitive/fast-pauli.git
@@ -41,8 +40,8 @@ Install from source with Python
    python -m pip install -e ".[dev]"
 
 
-Build From Source with CMake
-----------------------------
+Build From Source (Custom Config)
+---------------------------------
 .. code-block:: bash
 
    git clone git@github.com:qognitive/fast-pauli.git
