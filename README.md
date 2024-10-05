@@ -36,7 +36,6 @@
 ## Installation
 
 ### Pre-built Binaries
-:CONSTRUCTION: TODO SETUP PYPI
 ```bash
 pip install fast_pauli
 ```
@@ -47,9 +46,10 @@ There are two strategies for building `fast_pauli` from source. One is a quick a
 
 #### Requirements
 
-- CMake >= 3.25
-- C++ compiler with OpenMP and C++20 support (LLVM recommended)
-- Python >= 3.10
+- [CMake](https://pypi.org/project/cmake/) >= 3.25
+- [Ninja](https://pypi.org/project/ninja/) >= 1.11
+- C++ compiler with OpenMP and C++20 support ([LLVM](https://apt.llvm.org/) recommended)
+- [Python](https://www.python.org/downloads/) >= 3.10
 
 #### Quick Start (Users)
 ```bash
@@ -59,7 +59,7 @@ pytest -v tests/fast_pauli
 
 #### Configurable Build (Developers)
 ```bash
-cmake -B build # + other cmake flags
+cmake -B build -G Ninja # + other cmake flags
 cmake --build build --target install --parallel
 ctest --test-dir build
 
