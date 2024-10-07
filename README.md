@@ -20,7 +20,10 @@
   </tr>
   <tr>
     <td>Package</td>
-    <td>TODO PyPI INFO</td>
+    <td>
+    <td>
+    <img alt="PyPI - Version" src="https://img.shields.io/pypi/v/fast_pauli?color=green">
+    </td>
   </tr>
   <tr>
     <td>Legal</td>
@@ -37,7 +40,6 @@
 ## Installation
 
 ### Pre-built Binaries
-:CONSTRUCTION: TODO SETUP PYPI
 ```bash
 pip install fast_pauli
 ```
