@@ -152,6 +152,7 @@ qiskit_params_sm = [
     pytest.param(nq, npauli, nstate, m)
     for nq, npauli, nstate, m in it.product([2, 8, 10, 12], [1024], [1, 10], ["qiskit"])
 ]
+
 qiskit_params_big = [
     pytest.param(nq, npauli, nstate, m, marks=extra_benchmark_mark)
     for nq, npauli, nstate, m in it.product(

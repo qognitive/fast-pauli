@@ -270,10 +270,10 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
 
         for (size_t i = 0; i < n_threads; ++i)
         {
-            for (auto const &[pauli_str, coeff] : dedupe_strings[i])
+            for (auto &[pauli_str, coeff] : dedupe_strings[i])
             {
                 coefficients.push_back(coeff);
-                strings.push_back(pauli_str);
+                strings.push_back(std::move(pauli_str));
             }
         }
 

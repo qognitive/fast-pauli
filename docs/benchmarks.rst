@@ -63,7 +63,7 @@ Next we benchmarked applying a Pauli Operator (a linear combination of Pauli Str
 
 Again, we saw significant performance improvements for the same reasons stated above and are often an order of magnitude faster than :code:`qiskit`.
 :math:`N_{\text{pauli strings}}` is the number of Pauli Strings in the Pauli Operator, i.e. the number of terms in the linear combination shown in :eq:`pauli_op_apply`.
-Note that :code:`fast-pauli` performs better when the Pauli Operator is more sparse.
+Note that :code:`fast-pauli` performs better relative to :code:`qiskit` when the Pauli Operator is more sparse, i.e. when there are fewer Pauli Strings in the operator.
 
 
 Expectation Value of a Pauli Operator
@@ -79,6 +79,12 @@ Finally, we benchmarked the expectation value of a Pauli Operator applied to a *
 .. raw:: html
     :file: benchmark_results/figs/qiskit_pauli_op_expectation_value_batch.html
 
+In this benchmark, we chose a single number of Pauli Strings, :math:`N_{\text{pauli strings}} = 1024`, and varied the number of qubits and states.
 Similar to the previous benchmarks, we saw significant performance improvements for :code:`fast-pauli` compared to :code:`qiskit`.
-In general, we tend to perform better when applying to a larger batch of states, but we point out that our advantage compared to :code:`qiskit` narrows as the number of qubits increases.
+In this benchmark, we tend to perform better when applying to a larger batch of states, but we point out that our advantage compared to :code:`qiskit` narrows as the number of qubits increases.
 With that said, we're still more than 2x faster for these larger operators!
+
+.. note::
+    The data point for :code:`qiskit` with :math:`N_{\text{qubits}} = 16` and :math:`N_{\text{states}} = 1000` was not shown in the above plot because of OOM errors.
+
+
