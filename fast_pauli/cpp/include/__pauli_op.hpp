@@ -279,28 +279,6 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
             }
         }
 
-        // std::unordered_map<PauliString, size_t> dedupe_strings;
-        // for (size_t i = 0; i < lhs.n_pauli_strings(); ++i)
-        // {
-        //     for (size_t j = 0; j < rhs.n_pauli_strings(); ++j)
-        //     {
-        //         auto [phase, pauli_str] = lhs.pauli_strings[i] * rhs.pauli_strings[j];
-        //         auto coeff_ij = phase * lhs.coeffs[i] * rhs.coeffs[j];
-
-        //         if (dedupe_strings.contains(pauli_str))
-        //         {
-        //             size_t idx = dedupe_strings[pauli_str];
-        //             coefficients[idx] += coeff_ij;
-        //         }
-        //         else
-        //         {
-        //             dedupe_strings[pauli_str] = coefficients.size();
-        //             coefficients.push_back(coeff_ij);
-        //             strings.push_back(std::move(pauli_str));
-        //         }
-        //     }
-        // }
-
         return PauliOp<T, H>(std::move(coefficients), std::move(strings));
     }
 
@@ -592,9 +570,6 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
                 output(j, cols[j]) += c * vals[j];
             }
         }
-
-        // eof
-        //
     }
 
     /**

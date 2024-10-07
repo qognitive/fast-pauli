@@ -1,4 +1,18 @@
-"""Process benchmark data."""
+#############################################################################
+# This code is part of Fast Pauli.
+#
+# (C) Copyright Qognitive Inc 2024.
+#
+# This code is licensed under the BSD 2-Clause License. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+#############################################################################
+
+"""Process benchmark data from test_qiskit_adv.py."""
 
 import os
 import sys
@@ -12,9 +26,9 @@ OUTPUT_DIR = os.path.join(FILE_DIR, "../../docs/benchmark_results/figs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-#
+################################################################################
 # Helper functions
-#
+################################################################################
 def format_fix(fig: Any) -> None:
     """Add consistent formatting to a plotly figure."""
     fig.update_layout(
@@ -25,18 +39,16 @@ def format_fix(fig: Any) -> None:
     fig.update_traces(marker=dict(size=12))
     fig.update_yaxes(exponentformat="power")
 
-    # fig.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
-    # fig.show()
-
 
 COLOR_MAP = {
     "qiskit": "#0530AD",  # IBM blue
-    "fast_pauli": "#f64135",  # red
+    "fast_pauli": "#fb8501",  # orange
 }
 
-#
+
+################################################################################
 # Load data
-#
+################################################################################
 
 # WARNING DANGEROUS CLI (just don't wanna deal with argparse or click)
 if len(sys.argv) != 2:
@@ -44,6 +56,8 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 df = pd.read_csv(sys.argv[1])
+
+# Rename columns to be more readable in final HTML plots
 df.rename(
     columns={
         "param:n_qubits": "N<sub>qubits</sub>",
@@ -87,9 +101,9 @@ def get_sorted_unique_n_states(df: pd.DataFrame) -> list[int]:
         return rv
 
 
-#
+################################################################################
 # Pauli string apply
-#
+################################################################################
 df_ps = df[df["name"].str.contains("test_pauli_string_apply")]
 
 fig = px.scatter(
@@ -101,7 +115,7 @@ fig = px.scatter(
     color_discrete_map=COLOR_MAP,
     # facet_col="N<sub>pauli strings</sub>",
     log_y=True,
-    title="Pauli String Applied to a State Vector",
+    # title="Pauli String Applied to a State Vector",
 )
 format_fix(fig)
 
@@ -111,60 +125,10 @@ fig.write_html(
     include_plotlyjs="cdn",
 )
 
-
-#
-# Pauli String Expectation Value
-#
-# df_ps = df[df["name"].str.contains("test_pauli_string_expectation_value")]
-
-# fig = px.scatter(
-#     df_ps,
-#     x="N<sub>qubits</sub>",
-#     y="mean",
-#     error_y="stddev",
-#     color="Library",
-#     color_discrete_map=COLOR_MAP,
-#     log_y=True,
-# )
-# format_fix(fig)
-# fig.write_html(
-#     f"{OUTPUT_DIR}/qiskit_pauli_string_expectation_value.html",
-#     full_html=False,
-#     include_plotlyjs="cdn",
-# )
-
-
-#
-# Pauli Op to dense
-#
-# df_op_dense = df[df["name"].str.contains("test_pauli_op_to_dense")]
-
-# fig = px.scatter(
-#     df_op_dense,
-#     x="N<sub>qubits</sub>",
-#     y="mean",
-#     error_y="stddev",
-#     color="Library",
-#     color_discrete_map=COLOR_MAP,
-#     facet_col="N<sub>pauli strings</sub>",
-#     log_y=True,
-#     category_orders={
-#         "N<sub>pauli strings</sub>": sorted_unique_n_pauli_strings,
-#     },
-#     title="Pauli Op to Dense",
-# )
-
-# format_fix(fig)
-# fig.write_html(
-#     f"{OUTPUT_DIR}/qiskit_pauli_op_to_dense.html",
-#     full_html=False,
-#     include_plotlyjs="cdn",
-# )
-
-#
+################################################################################
 # Pauli Op applied to a statevector
-#
-df_op_app = df[df["name"].str.contains("test_sparse_pauli_op_apply")]
+################################################################################
+df_op_app = df[df["name"].str.contains("test_pauli_op_apply")]
 
 fig = px.scatter(
     df_op_app,
@@ -175,10 +139,11 @@ fig = px.scatter(
     color_discrete_map=COLOR_MAP,
     facet_col="N<sub>pauli strings</sub>",
     log_y=True,
+    # Make sure the subplots are ordered correctly
     category_orders={
         "N<sub>pauli strings</sub>": get_sorted_unique_n_pauli_strings(df_op_app),
     },
-    title="Pauli Operator Applied to a State Vector",
+    # title="Pauli Operator Applied to a State Vector",
 )
 
 format_fix(fig)
@@ -188,35 +153,9 @@ fig.write_html(
     include_plotlyjs="cdn",
 )
 
-# #
-# # Pauli Op Expectation Value
-# #
-# df_op_exp = df[df["name"].str.contains("test_pauli_op_expectation_value")]
-
-# fig = px.scatter(
-#     df_op_exp,
-#     x="N<sub>qubits</sub>",
-#     y="mean",
-#     error_y="stddev",
-#     color="Library",
-#     color_discrete_map=COLOR_MAP,
-#     facet_col="N<sub>pauli strings</sub>",
-#     log_y=True,
-#     category_orders={
-#         "N<sub>pauli strings</sub>": sorted_unique_n_pauli_strings,
-#     },
-# )
-# format_fix(fig)
-# fig.write_html(
-#     f"{OUTPUT_DIR}/qiskit_pauli_op_expectation_value.html",
-#     full_html=False,
-#     include_plotlyjs="cdn",
-# )
-
-
-#
+################################################################################
 # Pauli Op Expectation Value Batch
-#
+################################################################################
 df_op_exp_batch = df[df["name"].str.contains("test_pauli_op_expectation_value_batch")]
 
 fig = px.scatter(
@@ -231,7 +170,7 @@ fig = px.scatter(
     category_orders={
         "N<sub>states</sub>": get_sorted_unique_n_states(df_op_exp_batch),
     },
-    title="Expectation Value of Pauli Operator for Batch of States",
+    # title="Expectation Value of Pauli Operator for Batch of States",
 )
 format_fix(fig)
 fig.write_html(

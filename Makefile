@@ -66,8 +66,12 @@ benchmark:
 	--benchmark-columns='mean,median,min,max,stddev,iqr,outliers,ops,rounds,iterations'
 
 benchmark-qiskit-adv:
-	EXTRA_BENCHMARKS=true pytest -vs tests/benchmarks/test_qiskit_adv.py --benchmark-columns='mean,stddev,rounds' --benchmark-json=qiskit_adv.json
-	py.test-benchmark compare ./qiskit_adv.json --group-by=func --csv=docs/benchmark_results/qiskit_adv.csv
+	EXTRA_BENCHMARKS=true pytest -vs tests/benchmarks/test_qiskit_adv.py \
+		--benchmark-columns='mean,stddev,rounds' \
+		--benchmark-json=qiskit_adv.json
+	py.test-benchmark compare ./qiskit_adv.json \
+		--group-by=func \
+		--csv=docs/benchmark_results/qiskit_adv.csv
 	python tests/benchmarks/process_qiskit_benchmarks.py docs/benchmark_results/qiskit_adv.csv
 
 ###############################################################################
