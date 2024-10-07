@@ -181,3 +181,7 @@ docstring-code-format = true
 cmake.build-type = "Release"
 build-dir = "build/{wheel_tag}"
 # TODO add more options here
+
+[tool.cibuildwheel]
+test-requires = "pytest"
+test-command = "pytest {project}/tests"
