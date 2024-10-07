@@ -20,7 +20,7 @@ fast_pauli documentation
 
 Installation
 ============
-Welcome to ``fast_pauli``! This package provides fast and efficient implementations of pauli operators and strings,
+Welcome to ``fast_pauli``! This package provides fast and efficient implementations of pauli strings and related operators,
 with a focus on performance and usability. In order to get started, we'll need to install the package and its dependencies.
 
 Here are a few options for installing ``fast_pauli``:

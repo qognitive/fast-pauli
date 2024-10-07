@@ -506,7 +506,6 @@ struct PauliString
         if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
         {
             size_t const n_threads = omp_get_max_threads();
-            fmt::println("n_threads: {}", n_threads);
             std::vector<std::complex<T>> expectation_vals_out_thread_raw(states.extent(1) * n_threads);
             std::mdspan expectation_vals_out_thread(expectation_vals_out_thread_raw.data(), states.extent(1),
                                                     n_threads);
