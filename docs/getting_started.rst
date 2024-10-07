@@ -133,7 +133,7 @@ Pauli Operators
 
 The ``PauliOp`` class lets us represent operators that are linear combinations of Pauli strings with complex coefficients.
 In physics, an operator is represented by a matrix in a given basis.
-For example we can represent any arbitrary operator :math:`A` as a sum of Pauli strings :math:`P_i` with complex coefficients :math:`c_i`:
+For example, we can represent any arbitrary operator :math:`A` as a sum of Pauli strings :math:`P_i` with complex coefficients :math:`c_i`:
 
 .. math::
 
