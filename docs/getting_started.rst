@@ -45,7 +45,7 @@ In ``fast_pauli``, we represent pauli matrices using the ``Pauli`` class. For ex
 
     str(pauli_0)  # returns "I"
 
-We can also multiply two ``Pauli`` objects together to get a ``Pauli`` object representing the tensor product of the two pauli matrices.
+We can also multiply two ``Pauli`` objects together to get a ``Pauli`` object representing the matrix product of the two pauli matrices.
 The result includes a phase factor because the product of two Pauli matrices is not another Pauli matrix.
 
 For example, we can compute the resulting ``Pauli`` object from multiplying :math:`\sigma_x` and :math:`\sigma_y` as follows:
@@ -123,8 +123,8 @@ We can also convert ``PauliString`` objects back to dense numpy arrays if we'd l
 
     P = fp.PauliString('XYZ')
     P_np = P.to_tensor()
-    # Returns "XYZ"
-    P_str = str(P)
+
+    P_str = str(P) # Returns "XYZ"
 
 For more details on the ``PauliString`` class, see the :doc:`python_api` or :doc:`cpp_api` documentation.
 
@@ -156,7 +156,7 @@ that represents the operator :math:`A = 0.5 * XYZ + 0.5 * YYZ`, we can do:
     A.n_pauli_strings
 
 Just like with ``PauliString`` objects, we can apply ``PauliOp`` objects to a set of vectors, or compute expectation values, as well as arithmetic
-operations and dense matrix conversions. Just like with ``PauliString`` objects, we can also convert ``PauliOp`` objects back to dense numpy arrays if we'd like
+operations. Just like with ``PauliString`` objects, we can also convert ``PauliOp`` objects back to dense numpy arrays if we'd like
 or get their string representation, in this case a list of strings:
 
 .. code-block:: python
