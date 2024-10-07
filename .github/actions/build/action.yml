@@ -11,7 +11,6 @@ runs:
     - name: Build
       shell: bash
       run: |
-        cmake --install ${{github.workspace}}/build
         python -m pip install ".[dev]" -C cmake.args="-DCMAKE_CXX_COMPILER=${CXX}"
     - name: Test C++
       shell: bash
