@@ -3,7 +3,7 @@
 Getting Started
 =====================
 
-Welcome to Fast-Pauli from `Qognitive <https://www.qognitive.io/>`_, an open-source Python / C++ library for optimized operations on Pauli matrices and Pauli strings
+Welcome to :code:`fast-pauli` from `Qognitive <https://www.qognitive.io/>`_, an open-source Python / C++ library for optimized operations on Pauli matrices and Pauli strings
 based on `PauliComposer <https://arxiv.org/abs/2301.00560>`_.
 In this guide, we'll introduce some of the important operations to help users get started as well as some conceptual background on Pauli matrices and Pauli strings.
 
