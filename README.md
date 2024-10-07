@@ -35,8 +35,8 @@
 ---
 ## Introduction
 
-Welcome to `fast-pauli` from `Qognitive <https://www.qognitive.io/>`_, an open-source Python / C++ library for optimized operations on Pauli matrices and Pauli strings
-based on `PauliComposer <https://arxiv.org/abs/2301.00560>`_.
+Welcome to `fast-pauli` from [Qognitive](https://www.qognitive.io/), an open-source Python / C++ library for optimized operations on Pauli matrices and Pauli strings
+based on [PauliComposer](https://arxiv.org/abs/2301.00560).
 `fast-pauli` aims to provide a fast and efficient alternative to existing libraries for working with Pauli matrices and strings,
 with a focus on performance and usability.
 For example, `fast-pauli` provides optimized functions to apply Pauli strings and operators to a batch of states rather than just a single state vector.
