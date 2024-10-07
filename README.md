@@ -42,6 +42,7 @@ with a focus on performance and usability.
 For example, `fast-pauli` provides optimized functions to apply Pauli strings and operators to a batch of states rather than just a single state vector.
 See our [benchmarks](https://qognitive-fast-pauli.readthedocs-hosted.com/en/latest/benchmarks.html) for more details about how `fast-pauli` can speed up certain functions compared to Qiskit.
 
+Our [getting started guide](https://qognitive-fast-pauli.readthedocs-hosted.com/en/latest/getting_started.html) offers an introduction to some of the core functionality in `fast-pauli`.
 
 ## Installation
 
