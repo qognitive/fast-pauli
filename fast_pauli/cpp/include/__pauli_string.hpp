@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <experimental/mdspan>
 #include <functional>
+#include <omp.h>
 #include <ranges>
 #include <string>
 
@@ -504,14 +505,27 @@ struct PauliString
 
         if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
         {
+            size_t const n_threads = omp_get_max_threads();
+            std::vector<std::complex<T>> expectation_vals_out_thread_raw(states.extent(1) * n_threads);
+            std::mdspan expectation_vals_out_thread(expectation_vals_out_thread_raw.data(), states.extent(1),
+                                                    n_threads);
 
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static) collapse(2)
             for (size_t t = 0; t < states.extent(1); ++t)
             {
                 for (size_t i = 0; i < states.extent(0); ++i)
                 {
                     std::complex<T> const c_m_i = c * m[i];
-                    expectation_vals_out[t] += std::conj(states(i, t)) * c_m_i * states(k[i], t);
+                    size_t const thread_id = omp_get_thread_num();
+                    expectation_vals_out_thread(t, thread_id) += std::conj(states(i, t)) * c_m_i * states(k[i], t);
+                }
+            }
+
+            for (size_t t = 0; t < states.extent(1); ++t)
+            {
+                for (size_t thread_id = 0; thread_id < n_threads; ++thread_id)
+                {
+                    expectation_vals_out[t] += expectation_vals_out_thread(t, thread_id);
                 }
             }
         }
@@ -545,6 +559,7 @@ struct PauliString
         // TODO on the calling side: based on the output shape and num of cores we should decide if we invoke parallel
         // or serial version
         auto [k, m] = get_sparse_repr<T>(paulis);
+
         for (size_t i = 0; i < k.size(); ++i)
             output(i, k[i]) = m[i];
     }

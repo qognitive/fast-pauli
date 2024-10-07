@@ -28,7 +28,7 @@ from tests.conftest import (
     resolve_parameter_repr,
 )
 
-N_OPERATORS_TO_BENCHMARK = 64
+N_OPERATORS_TO_BENCHMARK = 2
 N_STATES_TO_BENCHMARK = [16, 64, 256]
 
 

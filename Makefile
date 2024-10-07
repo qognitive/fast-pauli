@@ -35,8 +35,8 @@ rebuild:
 ###############################################################################
 
 .PHONY: docs
-docs: build
-	python -m pip install ".[docs]"
+docs:
+	python -m pip install -q ".[docs]"
 	cd docs && doxygen Doxyfile
 	sphinx-autobuild -b html docs/ docs/html --host 0.0.0.0 --port 1900
 
@@ -65,6 +65,14 @@ benchmark:
 	python -m pytest -v tests/benchmarks --benchmark-group-by=func --benchmark-sort=fullname \
 	--benchmark-columns='mean,median,min,max,stddev,iqr,outliers,ops,rounds,iterations'
 
+benchmark-qiskit-adv:
+	EXTRA_BENCHMARKS=true pytest -vs tests/benchmarks/test_qiskit_adv.py \
+		--benchmark-columns='mean,stddev,rounds' \
+		--benchmark-json=qiskit_adv.json
+	py.test-benchmark compare ./qiskit_adv.json \
+		--group-by=func \
+		--csv=docs/benchmark_results/qiskit_adv.csv
+	python tests/benchmarks/process_qiskit_benchmarks.py docs/benchmark_results/qiskit_adv.csv
 
 ###############################################################################
 # STATIC ANALYSIS

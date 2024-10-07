@@ -41,7 +41,7 @@ authors = [
   { name="Jeffrey Berger", email="jeff.berger@qognitive.io" },
 ]
 dependencies = ["numpy", "qiskit", "qiskit-algorithms"]
-version = "0.0.7"
+version = "0.0.8"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.10",
@@ -67,8 +67,9 @@ docs = [
   "cmake>=3.25",
   "sphinx",
   "sphinx-rtd-theme",
-  "sphinx-autobuild",
   "sphinx-copybutton",
+  "sphinx-autobuild",
+  "sphinxcontrib-napoleon",
   "breathe",
   "furo",
 ]

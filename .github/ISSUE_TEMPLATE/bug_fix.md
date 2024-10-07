@@ -1,3 +1,0 @@
-# Summary
-
-# Steps to Reproduce
