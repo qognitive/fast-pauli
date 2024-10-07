@@ -26,6 +26,8 @@ with a focus on performance and usability.
 For example, :code:`fast-pauli` provides optimized functions to apply Pauli strings and operators to a batch of states rather than just a single state vector.
 See our :doc:`benchmarks` for more details about how :code:`fast-pauli` can speed up certain functions compared to Qiskit.
 
+Our :doc:`getting_started` guide offers an introduction to some of the core functionality in :code:`fast-pauli`.
+
 Installation
 ============
 In order to get started, we'll need to install the package and its dependencies.
