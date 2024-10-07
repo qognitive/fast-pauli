@@ -20,7 +20,6 @@ In math and physics, a `Pauli matrix <https://en.wikipedia.org/wiki/Pauli_matric
 
 .. math::
 
-    \sigma_0 = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}
     \sigma_x = \begin{bmatrix} 0 & 1 \\ 1 & 0 \end{bmatrix}
     \sigma_y = \begin{bmatrix} 0 & -i \\ i & 0 \end{bmatrix}
     \sigma_z = \begin{bmatrix} 1 & 0 \\ 0 & -1 \end{bmatrix}
@@ -47,13 +46,7 @@ In ``fast_pauli``, we represent pauli matrices using the ``Pauli`` class. For ex
     str(pauli_0)  # returns "I"
 
 We can also multiply two ``Pauli`` objects together to get a ``Pauli`` object representing the tensor product of the two pauli matrices.
-The result includes a phase factor because Pauli matrices do not necessarily commute. They exhibit the following `commutation relations <https://en.wikipedia.org/wiki/Pauli_matrices#Algebraic_properties>`_:
-
-.. math::
-
-    \sigma_x \sigma_y = i \sigma_z \\
-    \sigma_y \sigma_z = i \sigma_x \\
-    \sigma_z \sigma_x = i \sigma_y
+The result includes a phase factor because the product of two Pauli matrices is not another Pauli matrix.
 
 For example, we can compute the resulting ``Pauli`` object from multiplying :math:`\sigma_x` and :math:`\sigma_y` as follows:
 
@@ -71,20 +64,20 @@ From here, we can also convert our ``Pauli`` object back to a dense numpy array 
 Pauli Strings
 ------------------------
 
-Pauli strings, also known as Pauli words, are tensor-product combinations of Pauli matrices. For example, the following is a valid Pauli string:
+Pauli strings are tensor-product combinations of Pauli matrices. For example, the following is a valid Pauli string:
 
 .. math::
 
     \mathcal{\hat{P}} = \sigma_x \otimes \sigma_y \otimes \sigma_z
 
-where :math:`\otimes` denotes the tensor product, and we can more simply denote by
+where :math:`\otimes` denotes the tensor or `Kronecker <https://en.wikipedia.org/wiki/Kronecker_product>`_ product, and we can more simply denote by
 
 .. math::
 
     \mathcal{\hat{P}} = XYZ
 
-Other valid Pauli strings include ``III``, ``IXYZ``, ``IZYX``, etc. In general, a Pauli string of length ``N`` is a tensor product of ``N``
-Pauli matrices. A ``N``-length Pauli String in dense form is a :math:`2^N \times 2^N` matrix, so ``XYZ`` is a :math:`8 \times 8` matrix.
+A Pauli string of length ``N`` is a tensor product of ``N``
+Pauli matrices. A ``N``-length Pauli String is a :math:`2^N \times 2^N` matrix, so ``XYZ`` is a :math:`8 \times 8` matrix.
 
 In ``fast_pauli``, we represent Pauli strings using the ``PauliString`` class. For example, to construct the Pauli string ``X, Y, Z``, we can do:
 
@@ -140,7 +133,7 @@ Pauli Operators
 
 The ``PauliOp`` class lets us represent operators that are linear combinations of Pauli strings with complex coefficients.
 In physics, an operator is represented by a matrix in a given basis.
-For example, in the Pauli basis, we can represent an arbitrary operator :math:`A` as a sum of Pauli strings :math:`P_i` with complex coefficients :math:`c_i`:
+For example we can represent any arbitrary operator :math:`A` as a sum of Pauli strings :math:`P_i` with complex coefficients :math:`c_i`:
 
 .. math::
 
@@ -151,8 +144,8 @@ that represents the operator :math:`A = 0.5 * XYZ + 0.5 * YYZ`, we can do:
 
 .. code-block:: python
 
-    coeffs = np.array([0.5, 0.5], dtype=complex)
-    pauli_strings = ['XYZ', 'YYZ']
+    coeffs = np.array([0.5, 0.5], dtype=complex)  # represent c_i in the sum above
+    pauli_strings = ['XYZ', 'YYZ']  # represent P_i in the sum above
     A = fp.PauliOp(coeffs, pauli_strings)
 
     # Get the number of qubits the operator acts on,
