@@ -1,8 +1,6 @@
 <h1 align="center">
-<img src="https://raw.githubusercontent.com/qognitive/fast-pauli/refs/heads/feature/logo/docs/logo/FP-banner.svg">
+<img src="https://raw.githubusercontent.com/qognitive/fast-pauli/refs/heads/main/docs/logo/FP-banner.svg">
 </h1>
-
----
 
 <table>
   <tr>

@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. figure:: https://raw.githubusercontent.com/qognitive/fast-pauli/refs/heads/feature/logo/docs/logo/FP-banner.svg
+.. figure:: https://raw.githubusercontent.com/qognitive/fast-pauli/refs/heads/main/docs/logo/FP-banner.svg
    :alt: Fast Pauli logo
 
 .. toctree::
