@@ -4,16 +4,34 @@ Getting Started
 =====================
 
 Welcome to Fast-Pauli from `Qognitive <https://www.qognitive.io/>`_, an open-source Python / C++ library for optimized operations on Pauli matrices and Pauli strings
-based on `PauliComposer <https://arxiv.org/abs/2301.00560>`_. In this guide,
-we'll introduce some of the important operations to help users get started. For more details,
-see the API documentation.
+based on `PauliComposer <https://arxiv.org/abs/2301.00560>`_.
+In this guide, we'll introduce some of the important operations to help users get started as well as some conceptual background on Pauli matrices and Pauli strings.
+
+For more details, see the :doc:`python_api` or :doc:`cpp_api` documentation.
 
 For tips on installing the library, check out the guide: :doc:`index`.
 
 Pauli Matrices
 ------------------------
 
-For a conceptual overview of Pauli matrices, see `here <https://en.wikipedia.org/wiki/Pauli_matrices>`_.
+For a more in-depth overview of Pauli matrices, see `here <https://en.wikipedia.org/wiki/Pauli_matrices>`_.
+
+In math and physics, a `Pauli matrix <https://en.wikipedia.org/wiki/Pauli_matrices>`_, named after the physicist Wolfgang Pauli, is any one of the special 2 x 2 complex matrices in the set (often denoted by the greek letter :math:`\sigma`) :
+
+.. math::
+
+    \sigma_0 = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}
+    \sigma_x = \begin{bmatrix} 0 & 1 \\ 1 & 0 \end{bmatrix}
+    \sigma_y = \begin{bmatrix} 0 & -i \\ i & 0 \end{bmatrix}
+    \sigma_z = \begin{bmatrix} 1 & 0 \\ 0 & -1 \end{bmatrix}
+
+All the pauli matrices share the properties that they are:
+
+1. Hermitian (equal to their own conjugate transpose) :math:`\sigma_i = \sigma_i^\dagger` for all :math:`i \in \{x, y, z\}`
+2. Involutory (they are their own inverse) :math:`\sigma_i^2 = \sigma_0` for all :math:`i \in \{x, y, z\}`
+3. Unitary (their inverse is equal to their conjugate transpose) :math:`\sigma_i^{-1} = \sigma_i^\dagger` for all :math:`i \in \{x, y, z\}`
+
+with the identity matrix :math:`\sigma_0` or the :math:`2 \times 2` Identity matrix :math:`I` being the trivial case.
 
 In ``fast_pauli``, we represent pauli matrices using the ``Pauli`` class. For example, to represent the Pauli matrices, we can do:
 
@@ -26,13 +44,23 @@ In ``fast_pauli``, we represent pauli matrices using the ``Pauli`` class. For ex
     pauli_y = fp.Pauli('Y')
     pauli_z = fp.Pauli('Z')
 
+    str(pauli_0)  # returns "I"
+
 We can also multiply two ``Pauli`` objects together to get a ``Pauli`` object representing the tensor product of the two pauli matrices.
+The result includes a phase factor because Pauli matrices do not necessarily commute. They exhibit the following `commutation relations <https://en.wikipedia.org/wiki/Pauli_matrices#Algebraic_properties>`_:
+
+.. math::
+
+    \sigma_x \sigma_y = i \sigma_z \\
+    \sigma_y \sigma_z = i \sigma_x \\
+    \sigma_z \sigma_x = i \sigma_y
+
+For example, we can compute the resulting ``Pauli`` object from multiplying :math:`\sigma_x` and :math:`\sigma_y` as follows:
 
 .. code-block:: python
 
+    # phase = i, new_pauli = fp.Pauli('Z')
     phase, new_pauli = pauli_x @ pauli_y
-    # returns "I"
-    str(pauli_0)
 
 From here, we can also convert our ``Pauli`` object back to a dense numpy array if we'd like:
 
@@ -42,6 +70,21 @@ From here, we can also convert our ``Pauli`` object back to a dense numpy array 
 
 Pauli Strings
 ------------------------
+
+Pauli strings, also known as Pauli words, are tensor-product combinations of Pauli matrices. For example, the following is a valid Pauli string:
+
+.. math::
+
+    \mathcal{\hat{P}} = \sigma_x \otimes \sigma_y \otimes \sigma_z
+
+where :math:`\otimes` denotes the tensor product, and we can more simply denote by
+
+.. math::
+
+    \mathcal{\hat{P}} = XYZ
+
+Other valid Pauli strings include ``III``, ``IXYZ``, ``IZYX``, etc. In general, a Pauli string of length ``N`` is a tensor product of ``N``
+Pauli matrices. A ``N``-length Pauli String in dense form is a :math:`2^N \times 2^N` matrix, so ``XYZ`` is a :math:`8 \times 8` matrix.
 
 In ``fast_pauli``, we represent Pauli strings using the ``PauliString`` class. For example, to construct the Pauli string ``X, Y, Z``, we can do:
 
@@ -61,16 +104,12 @@ Pauli Strings also support operations like addition, multiplication, and more. F
     P1.dim
     P1.n_qubits
 
-    # Add two Pauli strings. Return type is a PauliOp because
-    # the product is not a Pauli string
-    P3 = P1 + P2
-
     # Multiply two Pauli strings.
     phase, new_string = P1 @ P2
 
 
-We can also do more complicated things, like compute the action of a Pauli string :math:`\mathcal{\hat{P}}` on a quantum state :math:`| \psi \rangle`, :math:`\mathcal{\hat{P}}| \psi \rangle`, or
-compute the expectation value of a Pauli string with a state :math:`\langle \psi | \mathcal{\hat{P}} | \psi \rangle`:
+We can also do more complicated things, like compute the action of a Pauli string :math:`\mathcal{\hat{P}}` on a vector :math:`| \psi \rangle`, :math:`\mathcal{\hat{P}}| \psi \rangle`, or
+compute the expectation value of a Pauli string with a state :math:`\langle \psi | \mathcal{\hat{P}} | \psi \rangle`. As a side note, in this guide we will use state and vector interchangeably:
 
 .. code-block:: python
 
@@ -94,13 +133,14 @@ We can also convert ``PauliString`` objects back to dense numpy arrays if we'd l
     # Returns "XYZ"
     P_str = str(P)
 
-For more details on the ``PauliString`` class, see the Python or C++ API documentation.
+For more details on the ``PauliString`` class, see the :doc:`python_api` or :doc:`cpp_api` documentation.
 
 Pauli Operators
 ------------------------
 
-The ``PauliOp`` class lets us represent operators that are linear combinations of Pauli strings with complex coefficients. More specifically,
-we can represent an arbitrary operator :math:`A` as a sum of Pauli strings :math:`P_i` with complex coefficients :math:`c_i`:
+The ``PauliOp`` class lets us represent operators that are linear combinations of Pauli strings with complex coefficients.
+In physics, an operator is represented by a matrix in a given basis.
+For example, in the Pauli basis, we can represent an arbitrary operator :math:`A` as a sum of Pauli strings :math:`P_i` with complex coefficients :math:`c_i`:
 
 .. math::
 
@@ -122,7 +162,7 @@ that represents the operator :math:`A = 0.5 * XYZ + 0.5 * YYZ`, we can do:
     A.dim
     A.n_pauli_strings
 
-Just like with ``PauliString`` objects, we can apply ``PauliOp`` objects to a set of quantum states or compute expectation values, as well as arithmetic
+Just like with ``PauliString`` objects, we can apply ``PauliOp`` objects to a set of vectors, or compute expectation values, as well as arithmetic
 operations and dense matrix conversions. Just like with ``PauliString`` objects, we can also convert ``PauliOp`` objects back to dense numpy arrays if we'd like
 or get their string representation, in this case a list of strings:
 
@@ -131,6 +171,13 @@ or get their string representation, in this case a list of strings:
     coeffs = np.array([0.5, 0.5], dtype=complex)
     pauli_strings = ['XYZ', 'YYZ']
     A = fp.PauliOp(coeffs, pauli_strings)
+
+    # Adding two Pauli strings returns a PauliOp.
+    # The returned object is a PauliOp because
+    # the sum is a linear combination of Pauli strings
+    P1 = fp.PauliString('XYZ')
+    P2 = fp.PauliString('YZX')
+    O = P1 + P2
 
     # PauliOp supports addition, subtraction, multiplication,
     # scaling, as well as have PauliString objects
@@ -141,7 +188,7 @@ or get their string representation, in this case a list of strings:
     s = fp.PauliString('XYZ')
     A4 = A1 + s
 
-    # Apply A to a state or set of states
+    # Apply A to a state / vector or set of states
     states = np.random.rand(10, 8) + 1j * np.random.rand(10, 8)
     new_states = A.apply(states)
 
@@ -170,5 +217,5 @@ between ``PauliOp`` objects and ``SparsePauliOp`` objects from Qiskit:
     P = fp.PauliString('XYZ')
     qiskit_pauli = fp.to_qiskit(P)
 
-For more details on Qiskit conversions, see the Python or C++ API documentation.
+For more details on Qiskit conversions, see the :doc:`python_api` or :doc:`cpp_api` documentation.
 
