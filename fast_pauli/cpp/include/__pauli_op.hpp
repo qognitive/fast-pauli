@@ -247,10 +247,8 @@ template <std::floating_point T, typename H = std::complex<T>> struct PauliOp
 
         size_t const n_threads = omp_get_max_threads();
         std::vector<std::unordered_map<PauliString, H>> dedupe_strings(n_threads);
-        fmt::print("n_threads: {} lhs.size: {} rhs.size: {}\n", n_threads, lhs.n_pauli_strings(),
-                   rhs.n_pauli_strings());
 
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static) collapse(2)
         for (size_t i = 0; i < lhs.n_pauli_strings(); ++i)
         {
             for (size_t j = 0; j < rhs.n_pauli_strings(); ++j)

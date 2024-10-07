@@ -67,7 +67,6 @@ docs = [
   "cmake>=3.25",
   "sphinx",
   "sphinx-rtd-theme",
-  "sphinx-autobuild",
   "sphinx-copybutton",
   "sphinx-autobuild",
   "sphinxcontrib-napoleon",
