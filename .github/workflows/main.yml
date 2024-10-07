@@ -1,0 +1,44 @@
+# the name of this file must match the one in pypi.org config
+name: Build/Test/Release
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  release:
+    types:
+      - published
+jobs:
+  main-build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        compiler: [g++-12, clang++-17]
+        python-version: ["3.10", "3.11", "3.12"]
+        include:
+          - os: macos-13
+            compiler: g++-12
+            python-version: 3.12
+          - os: macos-14
+            compiler: g++-12
+            python-version: 3.12
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Main Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Main Build
+        uses: ./.github/actions/build
+        env:
+          BUILD_OS: ${{ matrix.os }}
+          CXX: ${{ matrix.compiler }}
+      - name: Publish release distributions to PyPI
+        if: github.event.release
+        uses: pypa/gh-action-pypi-publish@release/v1

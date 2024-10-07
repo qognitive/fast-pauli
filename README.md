@@ -5,15 +5,14 @@
   <tr>
     <td>Status</td>
     <td><a href="https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml"><img src="https://github.com/qognitive/fast-pauli/actions/workflows/all_push.yml/badge.svg" alt="Linux Build Status"></a>
-    <a href="https://github.com/qognitive/fast-pauli/actions/workflows/all_push_macos.yml"><img src="https://github.com/qognitive/fast-pauli/actions/workflows/all_push_macos.yml/badge.svg" alt="MacOS Build Status"></a>
     <a href="https://github.com/qognitive/fast-pauli/actions/workflows/pre-commit.yml"><img src="https://github.com/qognitive/fast-pauli/actions/workflows/pre-commit.yml/badge.svg" alt="Linting"></a>
     </td>
   </tr>
   <tr>
     <td>Usage</td>
     <td>
-    <a href='https://qognitive-fast-pauli.readthedocs-hosted.com/en/latest/?badge=latest'>
-    <img src='https://readthedocs.com/projects/qognitive-fast-pauli/badge/?version=latest&token=1f2057ecb832526a29bc5a72a7925336ecb7f11a46ecb9bb3cc3d5414d725bfa' alt='Documentation Status' />
+      <a href='https://qognitive-fast-pauli.readthedocs-hosted.com/en/latest/?badge=latest'>
+    <img src='https://readthedocs.com/projects/qognitive-fast-pauli/badge/?version=latest' alt='Documentation Status' />
 </a>
     <a href="https://github.com/qognitive/fast-pauli/tree/develop?tab=readme-ov-file#installation"><img src="https://img.shields.io/badge/Docs-Installation-blue" alt="Installation"></a>
      </td>

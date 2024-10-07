@@ -1,41 +1,27 @@
-name: Linux Build/Test
-on: [push]
+name: "Push Build/Test"
+on:
+  push:
+    branches-ignore:
+      - main
 jobs:
-  build:
+  push-build:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        compiler: [g++-12, clang++-17]
-        python-version: ["3.10", "3.11", "3.12"]
+        compiler: [clang++-17]
+        python-version: ["3.12"]
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Setup compiler
-        run: python3 ./.github/compiler_setup.py ${{ matrix.compiler }}
-      - name: Setup Python
+      - name: Push Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Python dependencies
-        run: python -m pip install cmake scikit-build-core
-      - name: Configure CMake
+      - name: Push Build
+        uses: ./.github/actions/build
         env:
+          BUILD_OS: ${{ matrix.os }}
           CXX: ${{ matrix.compiler }}
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_CXX_COMPILER=${CXX}
-      - name: Build
-        run: |
-          cmake --build ${{github.workspace}}/build --verbose --parallel
-      - name: Install
-        run: |
-          cmake --install ${{github.workspace}}/build
-          python -m pip install ".[dev]" --no-build-isolation
-      - name: Test C++
-        env:
-          OMP_NUM_THREADS: 2
-          CPP_TEST_DIR: build/fast_pauli/cpp/tests
-        run: make test-cpp
-      - name: Test Python
-        run: make test-py

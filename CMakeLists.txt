@@ -1,3 +1,17 @@
+# ##############################################################################
+# This code is part of Fast Pauli.
+#
+# (C) Copyright Qognitive Inc 2024.
+#
+# This code is licensed under the BSD 2-Clause License. You may obtain a copy of
+# this license in the LICENSE.txt file in the root directory of this source
+# tree.
+#
+# Any modifications or derivative works of this code must retain this copyright
+# notice, and modified files need to carry a notice indicating that they have
+# been altered from the originals.
+# ##############################################################################
+
 #
 # Boilerplate CMakeLists.txt for C++ projects
 #
@@ -67,7 +81,7 @@ add_library(fast_pauli INTERFACE)
 target_include_directories(
   fast_pauli INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/fast_pauli/cpp/include/)
 target_link_libraries(fast_pauli INTERFACE fmt::fmt mdspan OpenMP::OpenMP_CXX)
-target_compile_options(fast_pauli INTERFACE -g3 -Wall -Wextra -Werror)
+target_compile_options(fast_pauli INTERFACE -Wall -Wextra -Werror)
 
 # Testing
 include(CTest)

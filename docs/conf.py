@@ -8,12 +8,12 @@
 
 project = "fast_pauli"
 copyright = "2024, Qognitive, Inc."
-author = "James E. T. Smith"
+author = "James E. T. Smith, Eugene Rublenko, Alex Lerner, Sebastien Roy, Jeffrey Berger"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["breathe", "sphinx.ext.autodoc", "sphinx_copybutton", "sphinx.ext.napoleon"]
+extensions = ["breathe", "sphinx.ext.autodoc", "sphinx_copybutton", "sphinx.ext.mathjax", "sphinx.ext.napoleon"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -23,7 +23,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"
-html_static_path = ["_static"]
+html_static_path = []  # type: ignore
 
 
 # Breathe configuration

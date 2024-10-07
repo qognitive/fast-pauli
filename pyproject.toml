@@ -1,3 +1,18 @@
+#############################################################################
+# This code is part of Fast Pauli.
+#
+# (C) Copyright Qognitive Inc 2024.
+#
+# This code is licensed under the BSD 2-Clause License. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+#############################################################################
+
+
 ################################################################################
 # Build System
 ################################################################################
@@ -19,13 +34,13 @@ name = "fast_pauli"
 readme = "README.md"
 description = "fast pauli"
 authors = [
-  { name="James. E. T. Smith", email="james.smith@qognitive.io" },
+  { name="James E. T. Smith", email="james.smith@qognitive.io" },
   { name="Eugene Rublenko", email="eugene.rublenko@qognitive.io" },
   { name="Alex Lerner", email="alex.lerner@qognitive.io" },
   { name="Sebastien Roy", email="sebastien.roy@qognitive.io" },
   { name="Jeffrey Berger", email="jeff.berger@qognitive.io" },
 ]
-dependencies = ["numpy", "scipy", "qiskit", "qiskit-algorithms"]
+dependencies = ["numpy", "qiskit", "qiskit-algorithms"]
 version = "0.0.1"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
@@ -86,7 +101,7 @@ strict_optional = true
 ignore_missing_imports = true
 explicit_package_bases = true
 
-exclude = []
+exclude = ["docs", "build"]
 
 [tool.ruff]
 exclude = [
