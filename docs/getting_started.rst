@@ -7,7 +7,7 @@ Welcome to :code:`fast-pauli` from `Qognitive <https://www.qognitive.io/>`_, an 
 based on `PauliComposer <https://arxiv.org/abs/2301.00560>`_.
 In this guide, we'll introduce some of the important operations to help users get started as well as some conceptual background on Pauli matrices and Pauli strings.
 
-For more details, see the :doc:`python_api` or :doc:`cpp_api` documentation.
+For more details on our programmatic interface, see the :doc:`python_api` or :doc:`cpp_api` documentation.
 
 For tips on installing the library, check out the guide: :doc:`index`.
 
