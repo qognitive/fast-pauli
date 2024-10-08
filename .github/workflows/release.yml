@@ -29,8 +29,8 @@ jobs:
         env:
           BUILD_OS: ${{ matrix.os }}
           CXX: ${{ matrix.compiler }}
-      - name: Publish source dist release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+#     - name: Publish source dist release distributions to PyPI
+#       uses: pypa/gh-action-pypi-publish@release/v1
   wheels_build:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -46,7 +46,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.21.2
         with:
           config-file: "{package}/pyproject.toml"
-      - name: Publish wheel release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: wheelhouse
+#     - name: Publish wheel release distributions to PyPI
+#       uses: pypa/gh-action-pypi-publish@release/v1
+#       with:
+#         packages-dir: wheelhouse
