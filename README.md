@@ -21,7 +21,7 @@
   <tr>
     <td>Package</td>
     <td>
-    <img alt="PyPI - Version" src="https://img.shields.io/pypi/v/fast_pauli?color=4c1">
+    <a href="https://pypi.org/project/fast-pauli/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/fast_pauli?color=4c1"></a>
     </td>
   </tr>
   <tr>
@@ -73,11 +73,9 @@ pytest -v tests/fast_pauli
 
 #### Configurable Build (Developers)
 ```bash
-cmake -B build -G Ninja # + other cmake flags
-cmake --build build --target install --parallel
-ctest --test-dir build
-
-python -m pip install --no-build-isolation -ve.
+python -m pip install --upgrade pip
+python -m pip install scikit-build-core
+python -m pip install --no-build-isolation -ve ".[dev]" -C cmake.args="-DCMAKE_CXX_COMPILER=<compiler> + <other cmake flags>"
 pytest -v tests/fast_pauli # + other pytest flags
 ```
 Compiled `_fast_pauli` python module gets installed into `fast_pauli` directory.
