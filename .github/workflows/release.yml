@@ -47,4 +47,4 @@ jobs:
       - name: Publish wheel release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: ./fast_pauli/wheelhouse
+          packages-dir: wheelhouse
