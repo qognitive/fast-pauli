@@ -51,6 +51,7 @@ Build from Source (Custom Config)
 
    git clone git@github.com:qognitive/fast-pauli.git
    cd fast-pauli
+   python -m pip install scikit-build-core
    python -m pip install --no-build-isolation -ve ".[dev]" -C cmake.args="-DCMAKE_CXX_COMPILER=<compiler> + <other cmake flags>"
 
 Verify / Test Build
