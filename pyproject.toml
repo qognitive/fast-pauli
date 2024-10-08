@@ -197,5 +197,5 @@ test-requires = "pytest"
 test-command = "pytest -s -vv --import-mode importlib {project}/tests/fast_pauli"
 
 [tool.cibuildwheel.macos]
-before-build = "brew install llvm"
-environment = "CXX=clang++-19"
+before-build = "brew install llvm@18 libomp"
+environment = "CXX=clang++-18"
