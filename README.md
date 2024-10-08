@@ -21,7 +21,7 @@
   <tr>
     <td>Package</td>
     <td>
-    <img alt="PyPI - Version" src="https://img.shields.io/pypi/v/fast_pauli?color=4c1">
+    <a href="https://pypi.org/project/fast-pauli/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/fast_pauli?color=4c1"></a>
     </td>
   </tr>
   <tr>
