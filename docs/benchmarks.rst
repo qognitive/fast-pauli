@@ -66,10 +66,10 @@ Again, we saw significant performance improvements for the same reasons stated a
 Note that :code:`fast-pauli` performs better relative to :code:`qiskit` when the Pauli Operator is more sparse, i.e. when there are fewer Pauli Strings in the operator.
 
 
-Expectation Value of a Pauli Operator
+Expectation Values of a Pauli Operator
 -------------------------------------------------------------------
 
-Finally, we benchmarked the expectation value of a Pauli Operator applied to a **batch** of states:
+Finally, we benchmarked the expectation values of a Pauli Operator applied to a **batch** of states:
 
 .. math::
     :label: pauli_op_expectation_value
