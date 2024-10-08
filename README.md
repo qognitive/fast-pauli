@@ -73,11 +73,7 @@ pytest -v tests/fast_pauli
 
 #### Configurable Build (Developers)
 ```bash
-cmake -B build -G Ninja # + other cmake flags
-cmake --build build --target install --parallel
-ctest --test-dir build
-
-python -m pip install --no-build-isolation -ve.
+python -m pip install --no-build-isolation -ve ".[dev]" -C cmake.args="-DCMAKE_CXX_COMPILER=<compiler> + <other cmake flags>"
 pytest -v tests/fast_pauli # + other pytest flags
 ```
 Compiled `_fast_pauli` python module gets installed into `fast_pauli` directory.

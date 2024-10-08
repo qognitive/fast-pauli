@@ -22,9 +22,7 @@ inspired by `PauliComposer <https://arxiv.org/abs/2301.00560>`_ paper.
 :code:`fast-pauli` aims to provide a fast and efficient alternative to existing libraries for working with Pauli matrices and strings,
 with a focus on performance and usability.
 For example, :code:`fast-pauli` provides optimized functions to apply Pauli strings and operators to a batch of states rather than just a single state vector.
-See our :doc:`benchmarks` for more details about how :code:`fast-pauli` can speed up certain functions compared to Qiskit.
-
-Our :doc:`getting_started` guide offers an introduction to some of the core functionality in :code:`fast-pauli`.
+See our :doc:`getting_started` guide for an introduction to some of the core functionality in :code:`fast-pauli` and our :doc:`benchmarks` for more details about how :code:`fast-pauli` can speed up certain functions compared to Qiskit.
 
 Installation
 ============
@@ -53,14 +51,7 @@ Build from Source (Custom Config)
 
    git clone git@github.com:qognitive/fast-pauli.git
    cd fast-pauli
-
-   # Configure/Compile the project
-   cmake -B build -G Ninja # <...custom cmake flags...>
-   cmake --build build --target install --parallel
-   ctest --test-dir build
-
-   # Install the python package
-   python -m pip install -e ".[dev]" --no-build-isolation
+   python -m pip install --no-build-isolation -ve ".[dev]" -C cmake.args="-DCMAKE_CXX_COMPILER=<compiler> + <other cmake flags>"
 
 Verify / Test Build
 -------------------
