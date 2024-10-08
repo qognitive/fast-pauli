@@ -1,10 +1,10 @@
 # the name of this file must match the one in pypi.org config
 name: Build/Test/Release
 on: [push]
-on:
-  release:
-    types:
-      - published
+  # on:
+  # release:
+  # types:
+  #    - published
 permissions:
   id-token: write # This is required for requesting the JWT
 jobs:
