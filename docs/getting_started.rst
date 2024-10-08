@@ -77,9 +77,10 @@ where :math:`\otimes` denotes the tensor or `Kronecker <https://en.wikipedia.org
     \mathcal{\hat{P}} = XYZ
 
 A Pauli string of length ``N`` is a tensor product of ``N``
-Pauli matrices. A ``N``-length Pauli String is a :math:`2^N \times 2^N` matrix, so ``XYZ`` is a :math:`8 \times 8` matrix.
+Pauli matrices. We can represent a ``N``-length Pauli String as a :math:`2^N \times 2^N` operator or matrix (in physics, an operator is represented by a matrix in a given basis), so ``XYZ`` is a :math:`8 \times 8` matrix.
+Since these operators can get large very quickly, ``fast_pauli`` represents Pauli strings sparsely as an array of ``Pauli`` objects.
 
-In ``fast_pauli``, we represent Pauli strings using the ``PauliString`` class. For example, to construct the Pauli string ``X, Y, Z``, we can do:
+For example, to construct the Pauli string ``XYZ``, we can do:
 
 .. code-block:: python
 
@@ -106,6 +107,8 @@ compute the expectation value of a Pauli string with a state :math:`\langle \psi
 
 .. code-block:: python
 
+    import numpy as np
+
     # Apply P to a state
     P = fp.PauliString('XY')
     state = np.array([1, 0, 0, 1], dtype=complex)
@@ -114,7 +117,7 @@ compute the expectation value of a Pauli string with a state :math:`\langle \psi
     # Compute the expected value of P with respect to a state or a batch of states
     value = P.expectation_value(state)
 
-    states = np.random.randn(8, 8) + 1j * np.random.randn(8, 8)
+    states = np.random.randn(4, 8) + 1j * np.random.randn(4, 8)
     values = P.expectation_value(states)
 
 We can also convert ``PauliString`` objects back to dense numpy arrays if we'd like, or extract their string representation:
@@ -132,7 +135,6 @@ Pauli Operators
 ------------------------
 
 The ``PauliOp`` class lets us represent operators that are linear combinations of Pauli strings with complex coefficients.
-In physics, an operator is represented by a matrix in a given basis.
 For example, we can represent any arbitrary operator :math:`A` as a sum of Pauli strings :math:`P_i` with complex coefficients :math:`c_i`:
 
 .. math::
@@ -196,19 +198,19 @@ or get their string representation, in this case a list of strings:
 
 Qiskit Integration
 ------------------------
-``Fast-Pauli`` also has integration with `IBM's Qiskit SDK <https://www.ibm.com/quantum/qiskit>`_, allowing for easy interfacing with certain Qiskit objects. For example, we can convert
+``fast_pauli`` also has integration with `IBM's Qiskit SDK <https://www.ibm.com/quantum/qiskit>`_, allowing for easy interfacing with certain Qiskit objects. For example, we can convert
 between ``PauliOp`` objects and ``SparsePauliOp`` objects from Qiskit:
 
 .. code-block:: python
 
-    # Convert a Fast-Pauli PauliOp to a Qiskit SparsePauliOp object and back
+    # Convert a fast_pauli PauliOp to a Qiskit SparsePauliOp object and back
     O = fp.PauliOp([1], ['XYZ'])
     qiskit_op = fp.to_qiskit(O)
     fast_pauli_op = fp.from_qiskit(qiskit_op)
 
-    # Convert a Fast-Pauli PauliString to a Qiskit Pauli object
+    # Convert a fast_pauli PauliString to a Qiskit Pauli object
     P = fp.PauliString('XYZ')
     qiskit_pauli = fp.to_qiskit(P)
 
-For more details on Qiskit conversions, see the :doc:`python_api` or :doc:`cpp_api` documentation.
+For more details on Qiskit conversions, see the :doc:`python_api` documentation.
 
