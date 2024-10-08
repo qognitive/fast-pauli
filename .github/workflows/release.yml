@@ -44,6 +44,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.21.2
         with:
           config-file: "{package}/pyproject.toml"
-          output-dir: "/github/workspace/dist"
       - name: Publish wheel release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: ./fast_pauli/wheelhouse
