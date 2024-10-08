@@ -73,6 +73,7 @@ pytest -v tests/fast_pauli
 
 #### Configurable Build (Developers)
 ```bash
+python -m pip install --upgrade pip
 python -m pip install scikit-build-core
 python -m pip install --no-build-isolation -ve ".[dev]" -C cmake.args="-DCMAKE_CXX_COMPILER=<compiler> + <other cmake flags>"
 pytest -v tests/fast_pauli # + other pytest flags
