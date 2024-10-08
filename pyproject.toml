@@ -21,6 +21,7 @@
 requires = [
   # scikit-build-core uses cmake as needed (do not list it here)
   "scikit-build-core",
+  "setuptools_scm[toml]>=8",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -41,7 +42,6 @@ authors = [
   { name="Jeffrey Berger", email="jeff.berger@qognitive.io" },
 ]
 dependencies = ["numpy", "qiskit", "qiskit-algorithms"]
-version = "0.0.11"
 requires-python = ">= 3.10"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
@@ -49,6 +49,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
 ]
+dynamic = ["version"]
 
 
 [project.optional-dependencies]
@@ -182,7 +183,12 @@ docstring-code-format = true
 [tool.scikit-build]
 cmake.build-type = "Release"
 build-dir = "build/{wheel_tag}"
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = ["fast_pauli/__version__.py"]
 # TODO add more options here
+
+[tool.setuptools_scm]
+write_to = "fast_pauli/__version__.py"
 
 [tool.cibuildwheel]
 build = ["cp310-manylinux_x86_64", "cp311-manylinux_x86_64", "cp312-manylinux_x86_64", "cp313-manylinux_x86_64"]
