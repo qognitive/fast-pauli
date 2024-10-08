@@ -74,7 +74,7 @@ find_package(OpenMP REQUIRED)
 
 # Setup Python
 find_package(Python 3.10 # This is a minimum version
-             COMPONENTS Interpreter Development REQUIRED)
+             COMPONENTS Interpreter Development.Module REQUIRED)
 
 # Our primary target
 add_library(fast_pauli INTERFACE)

@@ -99,7 +99,7 @@ format:
 
 .PHONY: clean
 clean:
-	rm -rf build dist
+	rm -rf build dist wheelhouse
 
 .PHONY: pre-commit-setup
 pre-commit-setup:
