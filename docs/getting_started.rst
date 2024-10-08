@@ -45,7 +45,7 @@ In ``fast_pauli``, we represent pauli matrices using the ``Pauli`` class. For ex
     str(pauli_0)  # returns "I"
 
 We can also multiply two ``Pauli`` objects together to get a ``Pauli`` object representing the matrix product of the two pauli matrices.
-The result includes a phase factor because the product of two Pauli matrices is not another Pauli matrix.
+The result includes a phase factor because the product of two Pauli matrices is not another Pauli matrix, but rather a Pauli matrix multiplied by either ``i`` or ``-i`` which we call a phase factor.
 
 For example, we can compute the resulting ``Pauli`` object from multiplying :math:`\sigma_x` and :math:`\sigma_y` as follows:
 
