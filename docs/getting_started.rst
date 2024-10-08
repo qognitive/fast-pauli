@@ -7,9 +7,8 @@ Welcome to :code:`fast-pauli` from `Qognitive <https://www.qognitive.io/>`_, an 
 based on `PauliComposer <https://arxiv.org/abs/2301.00560>`_.
 In this guide, we'll introduce some of the important operations to help users get started as well as some conceptual background on Pauli matrices and Pauli strings.
 
+If you want to follow along with this guide, please follow the installation instructions in :doc:`index`.
 For more details on our programmatic interface, see the :doc:`python_api` or :doc:`cpp_api` documentation.
-
-For tips on installing the library, check out the guide: :doc:`index`.
 
 Pauli Matrices
 ------------------------
@@ -24,7 +23,7 @@ In math and physics, a `Pauli matrix <https://en.wikipedia.org/wiki/Pauli_matric
     \sigma_y = \begin{bmatrix} 0 & -i \\ i & 0 \end{bmatrix}
     \sigma_z = \begin{bmatrix} 1 & 0 \\ 0 & -1 \end{bmatrix}
 
-All the pauli matrices share the properties that they are:
+All the Pauli matrices share the properties that they are:
 
 1. Hermitian (equal to their own conjugate transpose) :math:`\sigma_i = \sigma_i^\dagger` for all :math:`i \in \{x, y, z\}`
 2. Involutory (they are their own inverse) :math:`\sigma_i^2 = \sigma_0` for all :math:`i \in \{x, y, z\}`
@@ -183,8 +182,8 @@ or get their string representation, in this case a list of strings:
     s = fp.PauliString('XYZ')
     A4 = A1 + s
 
-    # Apply A to a state / vector or set of states
-    states = np.random.rand(10, 8) + 1j * np.random.rand(10, 8)
+    # Apply A to a single state / vector or set
+    states = np.random.rand(8, 10) + 1j * np.random.rand(8, 10)
     new_states = A.apply(states)
 
     # Compute the expectation value of A with respect to a state
