@@ -196,5 +196,6 @@ build-frontend = "build"
 test-requires = "pytest"
 test-command = "pytest -s -vv --import-mode importlib {project}/tests/fast_pauli"
 
-[tool.cibuildwheel.macos]
+# [tool.cibuildwheel.macos]
 before-build = "brew install llvm libomp"
+environment = "-DCMAKE_CXX_COMPILER=clang++-14 -DCMAKE_CXX_FLAGS='-stdlib=libc++ -fexperimental-library'"
