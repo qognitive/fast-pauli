@@ -54,6 +54,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
+  "cibuildwheel",
   "clang-format",
   "cmake-format",
   "pre-commit",
@@ -61,6 +62,7 @@ dev = [
   "ruff",
   "pytest",
   "pytest-benchmark",
+  "setuptools_scm",
   "sphinx",
   "sphinx_rtd_theme",
   "sphinx-autobuild",
