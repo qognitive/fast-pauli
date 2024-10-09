@@ -197,6 +197,7 @@ test-command = "pytest -s -vv --import-mode importlib {project}/tests/fast_pauli
 
 [tool.cibuildwheel.linux]
 build = ["cp3*_x86_64"]
+skip = ["*musllinux*"]
 
 [tool.cibuildwheel.macos]
 environment = "CXX=g++-14"
