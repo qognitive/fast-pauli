@@ -196,4 +196,4 @@ test-requires = "pytest"
 test-command = "pytest -s -vv --import-mode importlib {project}/tests/fast_pauli"
 
 [tool.cibuildwheel.macos]
-environment = { CXX="g++-14", MACOSX_DEPLOYMENT_TARGET="13.0" }
+environment = "CXX=g++-14"
