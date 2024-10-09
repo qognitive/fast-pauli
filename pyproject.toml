@@ -199,7 +199,7 @@ test-command = "pytest -s -vv --import-mode importlib {project}/tests/fast_pauli
 
 [tool.cibuildwheel.macos]
 # before-build = "brew install llvm"
-environment = { CXX="$(brew --prefix llvm)/bin/clang++", MACOSX_DEPLOYMENT_TARGET="13.0" }
+environment = { CXX="g++-14", MACOSX_DEPLOYMENT_TARGET="13.0" }
 # environment = "CXX=g++-14"
 # build-frontend = { name = "pip", args = ['-C', "cmake.args=-DCMAKE_CXX_FLAGS='-stdlib=libc++ -fexperimental-library'"] }
 # -C cmake.args="-DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang++;-DCMAKE_CXX_FLAGS='-stdlib=libc++ -fexperimental-library'"
