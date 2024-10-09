@@ -2,8 +2,8 @@
 name: Build/Test/Release
 on:
   release:
-  types:
-    - published
+    types:
+      - published
 permissions:
   id-token: write # This is required for requesting the JWT
 jobs:
@@ -28,8 +28,8 @@ jobs:
         env:
           BUILD_OS: ${{ matrix.os }}
           CXX: ${{ matrix.compiler }}
-          #     - name: Publish source dist release distributions to PyPI
-          #       uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Publish source dist release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
   wheels_build:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
