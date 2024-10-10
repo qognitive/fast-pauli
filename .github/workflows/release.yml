@@ -29,7 +29,7 @@ jobs:
           BUILD_OS: ${{ matrix.os }}
           CXX: ${{ matrix.compiler }}
       - name: Publish source dist release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@release/v1.10
   wheels_build:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -52,6 +52,6 @@ jobs:
         env:
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.max }}
       - name: Publish wheel release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@release/v1.10
         with:
           packages-dir: wheelhouse
