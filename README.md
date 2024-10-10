@@ -15,7 +15,7 @@
       <a href='https://qognitive-fast-pauli.readthedocs-hosted.com/en/latest/?badge=latest'>
     <img src='https://readthedocs.com/projects/qognitive-fast-pauli/badge/?version=latest' alt='Documentation Status' />
 </a>
-    <a href="https://github.com/qognitive/fast-pauli/tree/develop?tab=readme-ov-file#installation"><img src="https://img.shields.io/badge/Docs-Installation-blue" alt="Installation"></a>
+    <a href="https://qognitive-fast-pauli.readthedocs-hosted.com/en/latest/#installation"><img src="https://img.shields.io/badge/Docs-Installation-blue" alt="Installation"></a>
      </td>
   </tr>
   <tr>
@@ -64,19 +64,37 @@ There are two strategies for building `fast_pauli` from source. One is a quick a
 - [Ninja](https://pypi.org/project/ninja/) >= 1.11
 - C++ compiler with OpenMP and C++20 support ([LLVM](https://apt.llvm.org/) recommended)
 - [Python](https://www.python.org/downloads/) >= 3.10
+- [scikit-build-core](https://pypi.org/project/scikit-build-core/) (ONLY for building from source with custom configuration)
 
-#### Quick Start (Users)
+#### Build from Source (Linux)
 ```bash
+# Build
 python -m pip install -e ".[dev]"
+# Test
 pytest -v tests/fast_pauli
 ```
 
-#### Configurable Build (Developers)
+#### Build from Source (MacOS)
+
 ```bash
+# Setup
 python -m pip install --upgrade pip
 python -m pip install scikit-build-core
-python -m pip install --no-build-isolation -ve ".[dev]" -C cmake.args="-DCMAKE_CXX_COMPILER=<compiler> + <other cmake flags>"
+brew install llvm
+# Build
+pip install -e . -C cmake.args="-DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang++;-DCMAKE_CXX_FLAGS='-stdlib=libc++ -fexperimental-library'"
+# Test
 pytest -v tests/fast_pauli # + other pytest flags
 ```
-Compiled `_fast_pauli` python module gets installed into `fast_pauli` directory.
+
+#### Build from Source (Custom Configuration)
+```bash
+# Setup
+python -m pip install --upgrade pip
+python -m pip install scikit-build-core
+# Build
+python -m pip install --no-build-isolation -ve ".[dev]" -C cmake.args="-DCMAKE_CXX_COMPILER=<compiler> + <other cmake flags>"
+# Test
+pytest -v tests/fast_pauli # + other pytest flags
+```
 
