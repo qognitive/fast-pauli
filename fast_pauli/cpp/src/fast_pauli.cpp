@@ -919,7 +919,17 @@ np.ndarray
         .def_prop_ro("n_operators", &fp::SummedPauliOp<float_type>::n_operators)
         .def_prop_ro("n_pauli_strings", &fp::SummedPauliOp<float_type>::n_pauli_strings)
 
+        //
         .def("apply",
+             [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states) {
+                 auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
+                 auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+                 auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
+                 self.apply(std::execution::par, new_states_mdspan, states_mdspan);
+                 return new_states;
+             })
+
+        .def("apply_weighted",
              [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states, nb::ndarray<float_type> data) {
                  auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
                  auto data_mdspan = fp::__detail::ndarray_to_mdspan<float_type, 2>(data);

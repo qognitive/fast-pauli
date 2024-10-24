@@ -22,6 +22,7 @@
 #include <stdexcept>
 
 #include "__pauli_string.hpp"
+#include "__type_traits.hpp"
 
 namespace fast_pauli
 {
@@ -34,7 +35,7 @@ template <std::floating_point T> struct SummedPauliOp
     // std::vector<PauliOp<T>> ops;
     std::vector<PauliString> pauli_strings;
     std::vector<std::complex<T>> coeffs_raw;
-    Tensor<2> coeffs;
+    Tensor<2> coeffs; // (n_pauli_strings, n_operators)
 
     // TODO dangerous
     size_t _dim;
@@ -173,11 +174,81 @@ template <std::floating_point T> struct SummedPauliOp
         return pauli_strings.size();
     }
 
+    void apply(Tensor<2> new_states, Tensor<2> states) const
+    {
+        apply(std::execution::seq, new_states, states);
+    }
+
+    template <execution_policy ExecutionPolicy>
+    void apply(ExecutionPolicy &&, Tensor<2> new_states, Tensor<2> states) const
+    {
+        if (states.extent(0) != new_states.extent(0) || states.extent(1) != new_states.extent(1))
+        {
+            throw std::invalid_argument("new_states must have the same dimensions as states");
+        }
+        size_t const n_threads = omp_get_max_threads();
+        size_t const n_ps = n_pauli_strings();
+        size_t const n_ops = n_operators();
+        size_t const n_dim = dim();
+        size_t const n_data = states.extent(1);
+
+        std::vector<std::complex<T>> new_states_thr_raw(n_threads * n_dim * n_data);
+        std::mdspan<std::complex<T>, std::dextents<size_t, 3>> new_states_thr(new_states_thr_raw.data(), n_threads,
+                                                                              n_dim, n_data);
+
+        if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
+        {
+
+#pragma omp parallel
+            {
+#pragma omp for schedule(static)
+                for (size_t j = 0; j < n_ps; ++j)
+                {
+                    std::complex<T> summed_coeff(0, 0);
+
+                    for (size_t k = 0; k < n_ops; ++k)
+                    {
+                        summed_coeff += coeffs(j, k);
+                    }
+
+                    std::mdspan new_states_j =
+                        std::submdspan(new_states_thr, omp_get_thread_num(), std::full_extent, std::full_extent);
+                    pauli_strings[j].apply_batch(new_states_j, states, summed_coeff);
+                }
+
+#pragma omp for schedule(static) collapse(2)
+                for (size_t i = 0; i < n_dim; ++i)
+                {
+                    for (size_t t = 0; t < n_data; ++t)
+                    {
+                        for (size_t j = 0; j < n_threads; ++j)
+                        {
+                            new_states(i, t) += new_states_thr(j, i, t);
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (size_t j = 0; j < n_ps; ++j)
+            {
+                pauli_strings[j].apply_batch(new_states, states, std::complex<T>(1.));
+                std::complex<T> c(0, 0);
+                for (size_t k = 0; k < n_ops; ++k)
+                {
+                    c += coeffs(j, k);
+                }
+                pauli_strings[j].apply_batch(new_states, states, c);
+            }
+        }
+    }
+
     /**
      * @brief Apply the SummedPauliOp to a set of weighted states.
      *
      * Calculates \f$
-     * \bra{\psi_t} \big(\sum_k x_{tk} \sum_i h_{ik} \mathcal{\hat{P}}_i \big) \ket{\psi_t}
+     * \big(\sum_k x_{tk} \sum_i h_{ik} \mathcal{\hat{P}}_i \big) \ket{\psi_t}
      * \f$
      *
      * @param new_states
@@ -334,6 +405,10 @@ template <std::floating_point T> struct SummedPauliOp
      * states. This function returns the expectation values of each operator for
      * each input states, so the output tensor will have shape (n_operators x
      * n_states).
+     *
+     * \f$
+     * \bra{\psi_t} \big(\sum_k x_{tk} \sum_i h_{ik} \mathcal{\hat{P}}_i \big) \ket{\psi_t}
+     * \f$
      *
      * @param expectation_vals_out Output tensor for the expectation values
      * (n_operators x n_states)
