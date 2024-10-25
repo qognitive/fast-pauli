@@ -233,7 +233,6 @@ template <std::floating_point T> struct SummedPauliOp
         {
             for (size_t j = 0; j < n_ps; ++j)
             {
-                pauli_strings[j].apply_batch(new_states, states, std::complex<T>(1.));
                 std::complex<T> c(0, 0);
                 for (size_t k = 0; k < n_ops; ++k)
                 {

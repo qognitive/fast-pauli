@@ -27,8 +27,79 @@
 using namespace std::literals;
 using namespace fast_pauli;
 
+template <execution_policy ExecutionPolicy>
+void __check_apply(ExecutionPolicy &&policy, size_t const n_qubits, size_t const n_operators, size_t const n_states)
+{
+    // Setup SummedPauliOp
+    std::vector<PauliString> pauli_strings = calculate_pauli_strings_max_weight(n_qubits, 2);
+    std::vector<std::complex<double>> coeff_raw;
+    std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff =
+        fast_pauli::rand<std::complex<double>, 2>(coeff_raw, {pauli_strings.size(), n_operators});
+
+    SummedPauliOp<double> op(pauli_strings, coeff);
+
+    // Setup states
+    std::vector<std::complex<double>> states_raw;
+    std::mdspan states = fast_pauli::rand<std::complex<double>, 2>(states_raw, {op.dim(), n_states});
+    std::vector<std::complex<double>> new_states_raw;
+    std::mdspan new_states = fast_pauli::zeros<std::complex<double>, 2>(new_states_raw, {op.dim(), n_states});
+
+    // Apply the operator to the batch of states
+    op.apply(policy, new_states, states);
+
+    //
+    // Check the result
+    //
+
+    std::vector<std::complex<double>> expected_final_raw;
+    std::mdspan expected_final = fast_pauli::zeros<std::complex<double>, 2>(expected_final_raw, {op.dim(), n_states});
+
+    for (size_t k = 0; k < n_operators; ++k)
+    {
+        std::vector<std::complex<double>> single_op_coeff_raw(pauli_strings.size());
+        for (size_t j = 0; j < pauli_strings.size(); ++j)
+        {
+            single_op_coeff_raw[j] = coeff(j, k);
+        }
+
+        PauliOp<double> pop{single_op_coeff_raw, pauli_strings};
+
+        pop.apply(policy, expected_final, states);
+    }
+
+    for (size_t t = 0; t < n_states; ++t)
+    {
+        for (size_t i = 0; i < op.dim(); ++i)
+        {
+            CHECK(abs(new_states(i, t) - expected_final(i, t)) < 1e-6);
+        }
+    }
+}
+
+TEST_CASE("apply small")
+{
+    fmt::println("SINGLE STATE");
+    __check_apply(std::execution::seq, 3, 1, 1);
+    __check_apply(std::execution::par, 3, 1, 1);
+
+    fmt::println("MULTIPLE STATES");
+    __check_apply(std::execution::seq, 3, 1, 10);
+    __check_apply(std::execution::par, 3, 1, 10);
+}
+
+TEST_CASE("apply medium")
+{
+    fmt::println("SINGLE STATE");
+    __check_apply(std::execution::seq, 8, 100, 1);
+    __check_apply(std::execution::par, 8, 100, 1);
+
+    fmt::println("MULTIPLE STATES");
+    __check_apply(std::execution::seq, 8, 100, 100);
+    __check_apply(std::execution::par, 8, 100, 100);
+}
+
 /**
- * @brief Check the apply function on a set of states for a given set of pauli
+ * @brief Check the apply_weighted function on a set of states for a given set of pauli
  * strings and coefficients.
  *
  * @tparam ExecutionPolicy
@@ -38,8 +109,9 @@ using namespace fast_pauli;
  * @param n_states
  */
 template <execution_policy ExecutionPolicy>
-void __check_apply(ExecutionPolicy &&policy, std::vector<PauliString> &pauli_strings,
-                   std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff, size_t const n_states = 10)
+void __check_apply_weighted(ExecutionPolicy &&policy, std::vector<PauliString> &pauli_strings,
+                            std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff,
+                            size_t const n_states = 10)
 {
     SummedPauliOp<double> summed_op{pauli_strings, coeff};
 
@@ -152,7 +224,7 @@ TEST_CASE("accessors")
     }
 }
 
-TEST_CASE("apply 1 operator 1 PauliString")
+TEST_CASE("apply weighted 1 operator 1 PauliString")
 {
     fmt::print("\n\napply 1 operator 1 PauliString\n");
     // Setup operator
@@ -161,11 +233,11 @@ TEST_CASE("apply 1 operator 1 PauliString")
     std::vector<std::complex<double>> coeff_raw = {1i};
     std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff(coeff_raw.data(), 1, 1);
 
-    __check_apply(std::execution::seq, pauli_strings, coeff, 1);
-    __check_apply(std::execution::par, pauli_strings, coeff, 1);
+    __check_apply_weighted(std::execution::seq, pauli_strings, coeff, 1);
+    __check_apply_weighted(std::execution::par, pauli_strings, coeff, 1);
 }
 
-TEST_CASE("apply 2 operators 1 PauliString")
+TEST_CASE("apply weighted 2 operators 1 PauliString")
 {
     fmt::print("\n\napply 2 operators 1 PauliString\n");
 
@@ -173,22 +245,22 @@ TEST_CASE("apply 2 operators 1 PauliString")
     std::vector<PauliString> pauli_strings = {"XYZ"};
     std::vector<std::complex<double>> coeff_raw = {1i, 1};
     std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff(coeff_raw.data(), 1, 2);
-    __check_apply(std::execution::seq, pauli_strings, coeff, 10);
-    __check_apply(std::execution::par, pauli_strings, coeff, 10);
+    __check_apply_weighted(std::execution::seq, pauli_strings, coeff, 10);
+    __check_apply_weighted(std::execution::par, pauli_strings, coeff, 10);
 }
 
-TEST_CASE("apply 2 operators 2 PauliString")
+TEST_CASE("apply weighted 2 operators 2 PauliString")
 {
     fmt::print("\n\napply 2 operators 2 PauliString\n");
     // Setup operator
     std::vector<std::complex<double>> coeff_raw = {1i, 1, 0.5i, -0.99};
     std::mdspan<std::complex<double>, std::dextents<size_t, 2>> coeff(coeff_raw.data(), 2, 2);
     std::vector<PauliString> pauli_strings = {"XYZ", "YYZ"};
-    __check_apply(std::execution::seq, pauli_strings, coeff, 100);
-    __check_apply(std::execution::par, pauli_strings, coeff, 100);
+    __check_apply_weighted(std::execution::seq, pauli_strings, coeff, 100);
+    __check_apply_weighted(std::execution::par, pauli_strings, coeff, 100);
 }
 
-TEST_CASE("apply many operators many PauliString")
+TEST_CASE("apply weighted many operators many PauliString")
 {
     fmt::print("\n\napply many operators many PauliString\n");
     // Setup operator
@@ -197,11 +269,11 @@ TEST_CASE("apply many operators many PauliString")
     std::vector<std::complex<double>> coeff_raw;
     std::mdspan coeff = fast_pauli::rand<std::complex<double>, 2>(coeff_raw, {pauli_strings.size(), 100});
 
-    __check_apply(std::execution::seq, pauli_strings, coeff, 100);
-    __check_apply(std::execution::par, pauli_strings, coeff, 100);
+    __check_apply_weighted(std::execution::seq, pauli_strings, coeff, 100);
+    __check_apply_weighted(std::execution::par, pauli_strings, coeff, 100);
 }
 
-TEST_CASE("apply many operators many PauliString")
+TEST_CASE("apply weighted many operators many PauliString")
 {
     fmt::print("\n\napply many operators many PauliString\n");
     // Setup operator
@@ -210,8 +282,8 @@ TEST_CASE("apply many operators many PauliString")
     std::vector<std::complex<double>> coeff_raw;
     std::mdspan coeff = fast_pauli::rand<std::complex<double>, 2>(coeff_raw, {pauli_strings.size(), 100});
 
-    __check_apply(std::execution::seq, pauli_strings, coeff, 1000);
-    __check_apply(std::execution::par, pauli_strings, coeff, 1000);
+    __check_apply_weighted(std::execution::seq, pauli_strings, coeff, 1000);
+    __check_apply_weighted(std::execution::par, pauli_strings, coeff, 1000);
 }
 
 //
