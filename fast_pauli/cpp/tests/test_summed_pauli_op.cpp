@@ -94,8 +94,18 @@ TEST_CASE("apply medium")
     __check_apply(std::execution::par, 8, 100, 1);
 
     fmt::println("MULTIPLE STATES");
+
+    auto start = std::chrono::high_resolution_clock::now();
     __check_apply(std::execution::seq, 8, 100, 100);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    fmt::println("Time taken for sequential execution: {} seconds", elapsed.count());
+
+    start = std::chrono::high_resolution_clock::now();
     __check_apply(std::execution::par, 8, 100, 100);
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = end - start;
+    fmt::println("Time taken for parallel execution: {} seconds", elapsed.count());
 }
 
 /**
