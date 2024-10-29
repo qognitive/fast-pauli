@@ -287,13 +287,22 @@ TEST_CASE("apply weighted many operators many PauliString")
 {
     fmt::print("\n\napply many operators many PauliString\n");
     // Setup operator
-    std::vector<PauliString> pauli_strings{"XIXXX", "IIXII", "ZYYZI", "ZYIIZ", "YXZZY", "IZYII"};
+    std::vector<PauliString> pauli_strings = fast_pauli::calculate_pauli_strings_max_weight(8, 2);
 
     std::vector<std::complex<double>> coeff_raw;
     std::mdspan coeff = fast_pauli::rand<std::complex<double>, 2>(coeff_raw, {pauli_strings.size(), 100});
 
-    __check_apply_weighted(std::execution::seq, pauli_strings, coeff, 1000);
-    __check_apply_weighted(std::execution::par, pauli_strings, coeff, 1000);
+    auto start_seq = std::chrono::high_resolution_clock::now();
+    __check_apply_weighted(std::execution::seq, pauli_strings, coeff, 100);
+    auto end_seq = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_seq = end_seq - start_seq;
+    fmt::println("Time taken for sequential execution: {} seconds", elapsed_seq.count());
+
+    auto start_par = std::chrono::high_resolution_clock::now();
+    __check_apply_weighted(std::execution::par, pauli_strings, coeff, 100);
+    auto end_par = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_par = end_par - start_par;
+    fmt::println("Time taken for parallel execution: {} seconds", elapsed_par.count());
 }
 
 //
@@ -380,9 +389,19 @@ TEST_CASE("expectation values multiple states")
 
 TEST_CASE("expectation values multiple operators and states")
 {
-    size_t const n_operators = 100;
-    size_t const n_qubits = 5;
+    size_t const n_operators = 1000;
+    size_t const n_qubits = 8;
     size_t const n_states = 100;
+
+    auto start = std::chrono::high_resolution_clock::now();
     __check_exp_vals(std::execution::seq, n_operators, n_qubits, n_states);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    fmt::println("Time taken for sequential execution: {} seconds", elapsed.count());
+
+    start = std::chrono::high_resolution_clock::now();
     __check_exp_vals(std::execution::par, n_operators, n_qubits, n_states);
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = end - start;
+    fmt::println("Time taken for parallel execution: {} seconds", elapsed.count());
 }

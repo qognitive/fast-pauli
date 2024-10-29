@@ -20,31 +20,28 @@
 #include "__pauli_string.hpp"
 #include "fast_pauli.hpp"
 
-using namespace fast_pauli;
+namespace fp = fast_pauli;
 
 int main()
 {
     //
     // User settings
     //
-    size_t const n_operators = 10000;
+    size_t const n_operators = 1000;
     //   size_t const n_paulis_per_operator = 631;
     size_t const n_qubits = 14;
     size_t const weight = 2;
     size_t const n_states = 1000;
-    //   std::string fake_pauli_string = "XYZXYZXYZXYZ";
     using fp_type = double;
 
     //
     // Setup the summed pauli operator
     //
-    //   std::vector<PauliString> pauli_strings(n_paulis_per_operator,
-    //                                          PauliString(fake_pauli_string));
-    std::vector<PauliString> pauli_strings = calculate_pauli_strings_max_weight(n_qubits, weight);
+    std::vector<fp::PauliString> pauli_strings = fp::calculate_pauli_strings_max_weight(n_qubits, weight);
 
     size_t const n_paulis_per_operator = pauli_strings.size();
     std::vector<std::complex<fp_type>> coeff_raw(n_paulis_per_operator * n_operators, 1);
-    SummedPauliOp<fp_type> summed_op{pauli_strings, coeff_raw};
+    fp::SummedPauliOp<fp_type> summed_op{pauli_strings, coeff_raw};
 
     //
     // Setup states
@@ -67,8 +64,7 @@ int main()
     //
     // Apply the states
     //
-    //   summed_op.apply(new_states, states, weights);
-    summed_op.apply_weighted(new_states, states, weights);
+    summed_op.apply_weighted(std::execution::par, new_states, states, weights);
 
     return 0;
 }

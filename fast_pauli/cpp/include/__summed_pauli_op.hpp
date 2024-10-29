@@ -299,7 +299,7 @@ template <std::floating_point T> struct SummedPauliOp
         size_t const n_data = new_states.extent(1);
         size_t const n_dim = dim();
 
-        if constexpr (std::is_same_v<ExecutionPolicy, std::execution::parallel_policy>)
+        if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
         {
             size_t const n_threads = omp_get_max_threads();
             std::vector<std::complex<T>> new_states_th_raw(n_threads * n_dim * n_data);
@@ -463,7 +463,7 @@ template <std::floating_point T> struct SummedPauliOp
         std::vector<std::complex<T>> expectation_vals_raw(n_pauli_strings() * n_data);
         Tensor<2> expectation_vals(expectation_vals_raw.data(), n_pauli_strings(), n_data);
 
-        if constexpr (std::is_same_v<ExecutionPolicy, std::execution::parallel_policy>)
+        if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
         {
 
 #pragma omp parallel for schedule(static)
