@@ -27,6 +27,11 @@
 namespace fast_pauli
 {
 
+/**
+ * @brief A class representing a sum of Pauli operators \f$ A = \sum_k A_k  = \sum_i h_{ik} \mathcal{\hat{P}}_i \f$.
+ * Where \f$ \mathcal{\hat{P}}_i \f$ are Pauli strings and \f$ h_{ik} \f$ are complex-valued coefficients.
+ *
+ */
 template <std::floating_point T> struct SummedPauliOp
 {
     // Short hand for complex, dynamic extent tensor with N dimension
@@ -71,8 +76,11 @@ template <std::floating_point T> struct SummedPauliOp
      * @brief Construct a new Summed Pauli Op object from a vector of PauliStrings
      * and a blob of coefficients.
      *
-     * @param pauli_strings
-     * @param coeffs_raw
+     * @param pauli_strings The PauliStrings that define the set of PauliStrings used by all operators (n_pauli_strings)
+     * @param coeffs_raw A vector of coefficients that define the weights of each PauliString in each operator.
+     * The coefficients here are a flattened version of \f$ h_{ik} \f$ in \f$ A_k = \sum_i h_{ik} \mathcal{\hat{P}}_i
+     * \f$ (n_pauli_strings * n_operators,)
+     *
      */
     SummedPauliOp(std::vector<PauliString> const &pauli_strings, std::vector<std::complex<T>> const &coeffs_raw)
         : pauli_strings(pauli_strings), coeffs_raw(coeffs_raw)
@@ -90,8 +98,11 @@ template <std::floating_point T> struct SummedPauliOp
      * @brief Construct a new Summed Pauli Op object from a vector of PauliStrings
      * and an std::mdspan of coefficients.
      *
-     * @param pauli_strings
-     * @param coeffs
+     * @param pauli_strings The PauliStrings that define the set of PauliStrings used by all operators
+     * (n_pauli_strings,)
+     * @param coeffs A 2D std::mdspan of coefficients that define the weights of each
+     * PauliString in each operator. The coefficients here are \f$ h_{ik} \f$ in
+     * \f$ A_k = \sum_i h_{ik} \mathcal{\hat{P}}_i \f$. (n_pauli_strings, n_operators)
      */
     SummedPauliOp(std::vector<PauliString> const &pauli_strings, Tensor<2> const coeffs) : pauli_strings(pauli_strings)
     {
@@ -114,8 +125,11 @@ template <std::floating_point T> struct SummedPauliOp
      * @brief Construct a new Summed Pauli Op object from a vector of strings and
      * a std::mdspan of coefficients.
      *
-     * @param pauli_strings
-     * @param coeffs
+     * @param pauli_strings A vector of strings that define the set of PauliStrings used by all operators
+     * (n_pauli_strings)
+     * @param coeffs A 2D std::mdspan of coefficients that define the weights of each
+     * PauliString in each operator. The coefficients here are \f$ h_{ik} \f$ in
+     * \f$ A_k = \sum_i h_{ik} \mathcal{\hat{P}}_i \f$. (n_pauli_strings, n_operators)
      */
     SummedPauliOp(std::vector<std::string> const &pauli_strings, Tensor<2> const coeffs)
     {
@@ -155,7 +169,7 @@ template <std::floating_point T> struct SummedPauliOp
     }
 
     /**
-     * @brief Return the number of operators in the SummedPauliOp
+     * @brief Return the number of Pauli operators in the SummedPauliOp
      *
      * @return s
      */
@@ -174,11 +188,25 @@ template <std::floating_point T> struct SummedPauliOp
         return pauli_strings.size();
     }
 
+    /**
+     * @brief Apply the SummedPauliOp to a set of states, mathematically
+     * \f$ \big(\sum_k \sum_i h_{ik} \mathcal{\hat{P}}_i \big) \ket{\psi_t} \f$
+     *
+     * @param new_states The output states after applying the SummedPauliOp (n_dim, n_states)
+     * @param states The input states to apply the SummedPauliOp to (n_dim, n_states)
+     */
     void apply(Tensor<2> new_states, Tensor<2> states) const
     {
         apply(std::execution::seq, new_states, states);
     }
 
+    /**
+     * @brief \copydoc SummedPauliOp::apply(Tensor<2>, Tensor<2>) const
+     *
+     * @tparam ExecutionPolicy
+     * @param new_states The output states after applying the SummedPauliOp (n_dim, n_states)
+     * @param states The input states to apply the SummedPauliOp to (n_dim, n_states)
+     */
     template <execution_policy ExecutionPolicy>
     void apply(ExecutionPolicy &&, Tensor<2> new_states, Tensor<2> states) const
     {
@@ -250,13 +278,14 @@ template <std::floating_point T> struct SummedPauliOp
      * \big(\sum_k x_{tk} \sum_i h_{ik} \mathcal{\hat{P}}_i \big) \ket{\psi_t}
      * \f$
      *
-     * @param new_states
-     * @param new_states
-     * @param states
-     * @param data
+     * @tparam data_dtype The floating point type of the weights \f$ x_{kt} \f$ (n_operators, n_states)
+     * @param new_states The output states after applying the SummedPauliOp (n_dim, n_states)
+     * @param states The input states to apply the SummedPauliOp to (n_dim, n_states)
+     * @param data A 2D std::mdspan of the weights \f$ x_{tk} \f$ in the expression above (n_operators, n_states)
      */
+    template <std::floating_point data_dtype>
     void apply_weighted(Tensor<2> new_states, Tensor<2> states,
-                        std::mdspan<double, std::dextents<size_t, 2>> data) const
+                        std::mdspan<data_dtype, std::dextents<size_t, 2>> data) const
     {
         apply_weighted(std::execution::seq, new_states, states, data);
     }
@@ -265,13 +294,10 @@ template <std::floating_point T> struct SummedPauliOp
      * @brief \copydoc SummedPauliOp::apply_weighted(Tensor<2>, Tensor<2>,
      * std::mdspan<double, std::dextents<size_t, 2>>) const
      *
-     * @tparam data_dtype
-     * @tparam ExecutionPolicy
-     * @param new_states
-     * @param states
-     * @param data
+     * @tparam ExecutionPolicy Execution policy for parallelization
+     * @tparam data_dtype The floating point type of the weights \f$ x_{kt} \f$ (n_operators, n_states)
      */
-    template <std::floating_point data_dtype, execution_policy ExecutionPolicy>
+    template <execution_policy ExecutionPolicy, std::floating_point data_dtype>
     void apply_weighted(ExecutionPolicy &&, Tensor<2> new_states, Tensor<2> states,
                         std::mdspan<data_dtype, std::dextents<size_t, 2>> data) const
     {
@@ -319,6 +345,7 @@ template <std::floating_point T> struct SummedPauliOp
                     {
                         for (size_t k = 0; k < n_ops; ++k)
                         {
+                            // TODO we should transpose the data here for better memory access
                             weighted_coeffs(j, t) += coeffs(j, k) * data(k, t);
                         }
                     }
@@ -406,12 +433,12 @@ template <std::floating_point T> struct SummedPauliOp
      * n_states).
      *
      * \f$
-     * \bra{\psi_t} \big(\sum_k x_{tk} \sum_i h_{ik} \mathcal{\hat{P}}_i \big) \ket{\psi_t}
+     * \bra{\psi_t} \big(\sum_k \sum_i h_{ik} \mathcal{\hat{P}}_i \big) \ket{\psi_t}
      * \f$
      *
      * @param expectation_vals_out Output tensor for the expectation values
      * (n_operators x n_states)
-     * @param states The states used to calculate the expectation values (n_dim x
+     * @param states The states used to calculate the expectation values (n_dim,
      * n_states)
      */
     void expectation_value(Tensor<2> expectation_vals_out, Tensor<2> states) const
@@ -422,9 +449,7 @@ template <std::floating_point T> struct SummedPauliOp
     /**
      * @brief \copydoc SummedPauliOp::expectation_value(Tensor<2>, Tensor<2>) const
      *
-     * @tparam ExecutionPolicy
-     * @param expectation_vals_out
-     * @param states
+     * @tparam ExecutionPolicy Execution policy for parallelization
      */
     template <execution_policy ExecutionPolicy>
     void expectation_value(ExecutionPolicy &&, Tensor<2> expectation_vals_out, Tensor<2> states) const

@@ -900,20 +900,50 @@ np.ndarray
         // See
         // https://nanobind.readthedocs.io/en/latest/api_core.html#_CPPv4IDpEN8nanobind4initE
         .def(nb::init<>())
-        .def("__init__",
-             [](fp::SummedPauliOp<float_type> *new_obj, std::vector<fp::PauliString> const &pauli_strings,
-                nb::ndarray<cfloat_t> coeffs) {
-                 auto coeffs_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(coeffs);
-                 new (new_obj) fp::SummedPauliOp<float_type>(pauli_strings, coeffs_mdspan);
-             })
-        .def("__init__",
-             [](fp::SummedPauliOp<float_type> *new_obj, std::vector<std::string> &pauli_strings,
-                nb::ndarray<cfloat_t> coeffs) {
-                 //
-                 auto coeffs_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(coeffs);
+        .def(
+            "__init__",
+            [](fp::SummedPauliOp<float_type> *new_obj, std::vector<fp::PauliString> const &pauli_strings,
+               nb::ndarray<cfloat_t> coeffs) {
+                auto coeffs_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(coeffs);
+                new (new_obj) fp::SummedPauliOp<float_type>(pauli_strings, coeffs_mdspan);
+            },
+            "pauli_strings"_a, "coeffs"_a, R"%(Initialize SummedPauliOp from PauliStrings and coefficients.
 
-                 new (new_obj) fp::SummedPauliOp<float_type>(pauli_strings, coeffs_mdspan);
-             })
+Parameters
+----------
+pauli_strings : List[PauliString]
+    List of PauliStrings to use in the SummedPauliOp (n_pauli_strings,)
+coeffs : np.ndarray
+    Array of coefficients corresponding to the PauliStrings (n_pauli_strings, n_operators)
+
+Returns
+-------
+SummedPauliOp
+    New SummedPauliOp instance
+)%")
+        .def(
+            "__init__",
+            [](fp::SummedPauliOp<float_type> *new_obj, std::vector<std::string> &pauli_strings,
+               nb::ndarray<cfloat_t> coeffs) {
+                //
+                auto coeffs_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(coeffs);
+
+                new (new_obj) fp::SummedPauliOp<float_type>(pauli_strings, coeffs_mdspan);
+            },
+            "pauli_strings"_a, "coeffs"_a, R"%(Initialize SummedPauliOp from PauliStrings and coefficients.
+
+Parameters
+----------
+pauli_strings : List[str]
+    List of PauliStrings to use in the SummedPauliOp (n_pauli_strings,)
+coeffs : np.ndarray
+    Array of coefficients corresponding to the PauliStrings (n_pauli_strings, n_operators)
+
+Returns
+-------
+SummedPauliOp
+    New SummedPauliOp instance
+)%")
 
         .def_prop_ro("dim", &fp::SummedPauliOp<float_type>::dim)
         .def_prop_ro("n_operators", &fp::SummedPauliOp<float_type>::n_operators)
@@ -937,7 +967,7 @@ np.ndarray
                  auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
                  auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
 
-                 self.apply_weighted<float_type>(std::execution::par, new_states_mdspan, states_mdspan, data_mdspan);
+                 self.apply_weighted(std::execution::par, new_states_mdspan, states_mdspan, data_mdspan);
 
                  return new_states;
              })
