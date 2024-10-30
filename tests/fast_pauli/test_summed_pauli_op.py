@@ -95,3 +95,41 @@ def test_apply(
 
     # Check
     np.testing.assert_allclose(new_states, new_states_naive, atol=1e-13)
+
+
+@pytest.mark.parametrize(
+    "summed_pauli_op", [fp.SummedPauliOp], ids=resolve_parameter_repr
+)
+@pytest.mark.parametrize(
+    "n_states,n_operators,n_qubits",
+    [(s, o, q) for s in [1, 10, 1000] for o in [1, 10, 100] for q in [1, 2, 6]],
+)
+def test_to_tensor(
+    summed_pauli_op: type[fp.SummedPauliOp],
+    n_states: int,
+    n_operators: int,
+    n_qubits: int,
+) -> None:
+    """Test the dense representation of the SummedPauliOp."""
+    # initialize SummedPauliOp
+    pauli_strings = fp.helpers.calculate_pauli_strings_max_weight(n_qubits, 2)
+    n_strings = len(pauli_strings)
+    coeffs_2d = np.random.rand(n_strings, n_operators).astype(np.complex128)
+    op = summed_pauli_op(pauli_strings, coeffs_2d)
+
+    # get dense representation
+    dense_op = op.to_tensor()
+
+    # Check against doing it manually
+    # Get dense representation of each PauliString
+    ps_dense = np.array([ps.to_tensor() for ps in pauli_strings])
+
+    summed_pauli_op_check = np.zeros(
+        (n_operators, 2**n_qubits, 2**n_qubits), dtype=np.complex128
+    )
+
+    for k in range(n_operators):
+        for j in range(n_strings):
+            summed_pauli_op_check[k] += coeffs_2d[j, k] * ps_dense[j]
+
+    np.testing.assert_allclose(dense_op, summed_pauli_op_check)

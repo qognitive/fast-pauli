@@ -1056,6 +1056,21 @@ Returns
 -------
 np.ndarray
     Expectation value(s) in a form of 2D numpy array (n_operators, n_states) according to the shape of input states
+)%")
+        .def(
+            "to_tensor",
+            [](fp::SummedPauliOp<float_type> const &self) {
+                auto dense_op =
+                    fp::__detail::owning_ndarray_from_shape<cfloat_t, 3>({self.n_operators(), self.dim(), self.dim()});
+                self.to_tensor(fp::__detail::ndarray_to_mdspan<cfloat_t, 3>(dense_op));
+                return dense_op;
+            },
+            R"%(Returns a dense representation of SummedPauliOp.
+
+Returns
+-------
+np.ndarray
+    3D numpy array of complex numbers with a shape of (n_operators, 2^n_qubits, 2^n_qubits)
 )%");
     //
     ;
