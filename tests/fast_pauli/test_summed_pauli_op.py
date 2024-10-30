@@ -101,12 +101,11 @@ def test_apply(
     "summed_pauli_op", [fp.SummedPauliOp], ids=resolve_parameter_repr
 )
 @pytest.mark.parametrize(
-    "n_states,n_operators,n_qubits",
-    [(s, o, q) for s in [1, 10, 1000] for o in [1, 10, 100] for q in [1, 2, 6]],
+    "n_operators,n_qubits",
+    [(o, q) for o in [1, 10, 100] for q in [1, 2, 6]],
 )
 def test_to_tensor(
     summed_pauli_op: type[fp.SummedPauliOp],
-    n_states: int,
     n_operators: int,
     n_qubits: int,
 ) -> None:

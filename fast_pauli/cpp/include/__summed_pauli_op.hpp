@@ -539,13 +539,16 @@ template <std::floating_point T> struct SummedPauliOp
      */
     void to_tensor(Tensor<3> A_k_out) const
     {
-        for (size_t i = 0; i < pauli_strings.size(); ++i)
+#pragma omp parallel for schedule(static)
+        for (size_t k = 0; k < n_operators(); ++k)
         {
-            PauliString const &ps = pauli_strings[i];
-            auto [cols, vals] = get_sparse_repr<T>(ps.paulis);
-
-            for (size_t k = 0; k < n_operators(); ++k)
+            for (size_t i = 0; i < pauli_strings.size(); ++i)
             {
+                PauliString const &ps = pauli_strings[i];
+                std::vector<size_t> cols;
+                std::vector<std::complex<T>> vals;
+                std::tie(cols, vals) = get_sparse_repr<T>(ps.paulis);
+
                 for (size_t j = 0; j < dim(); ++j)
                 {
                     A_k_out(k, j, cols[j]) += coeffs(i, k) * vals[j];
