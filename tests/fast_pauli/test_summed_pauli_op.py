@@ -30,6 +30,77 @@ from tests.conftest import resolve_parameter_repr
     "n_states,n_operators,n_qubits",
     [(s, o, q) for s in [1, 10, 1000] for o in [1, 10, 100] for q in [1, 2, 6]],
 )
+def test_apply(
+    summed_pauli_op: type[fp.SummedPauliOp],
+    n_states: int,
+    n_operators: int,
+    n_qubits: int,
+) -> None:
+    """Test applying the summed pauli operator method."""
+    pauli_strings = fp.helpers.calculate_pauli_strings_max_weight(n_qubits, 2)
+    n_strings = len(pauli_strings)
+
+    coeffs_2d = np.random.rand(n_strings, n_operators).astype(np.complex128)
+    psi = np.random.rand(2**n_qubits, n_states).astype(np.complex128)
+
+    op = summed_pauli_op(pauli_strings, coeffs_2d)
+
+    # The new_states we want to check
+    new_states = op.apply(psi)
+
+    # Trusted new_states
+    new_states_naive = np.zeros((2**n_qubits, n_states), dtype=np.complex128)
+    for k in range(n_operators):
+        A_k = fp.PauliOp(coeffs_2d[:, k].copy(), pauli_strings)
+        new_states_naive += A_k.apply(psi)
+
+    # Check
+    np.testing.assert_allclose(new_states, new_states_naive, atol=1e-13)
+
+
+@pytest.mark.parametrize(
+    "summed_pauli_op", [fp.SummedPauliOp], ids=resolve_parameter_repr
+)
+@pytest.mark.parametrize(
+    "n_states,n_operators,n_qubits",
+    [(s, o, q) for s in [1, 10, 1000] for o in [1, 10, 100] for q in [1, 2, 6]],
+)
+def test_apply_weighted(
+    summed_pauli_op: type[fp.SummedPauliOp],
+    n_states: int,
+    n_operators: int,
+    n_qubits: int,
+) -> None:
+    """Test applying the summed pauli operator method."""
+    pauli_strings = fp.helpers.calculate_pauli_strings_max_weight(n_qubits, 2)
+    n_strings = len(pauli_strings)
+
+    coeffs_2d = np.random.rand(n_strings, n_operators).astype(np.complex128)
+    psi = np.random.rand(2**n_qubits, n_states).astype(np.complex128)
+    data_weights = np.random.rand(n_operators, n_states).astype(np.float64)
+
+    op = summed_pauli_op(pauli_strings, coeffs_2d)
+
+    # The new_states we want to check
+    new_states = op.apply_weighted(psi, data_weights)
+
+    # Trusted new_states
+    new_states_naive = np.zeros((2**n_qubits, n_states), dtype=np.complex128)
+    for k in range(n_operators):
+        A_k = fp.PauliOp(coeffs_2d[:, k].copy(), pauli_strings)
+        new_states_naive += A_k.apply(psi) * data_weights[k]
+
+    # Check
+    np.testing.assert_allclose(new_states, new_states_naive, atol=1e-13)
+
+
+@pytest.mark.parametrize(
+    "summed_pauli_op", [fp.SummedPauliOp], ids=resolve_parameter_repr
+)
+@pytest.mark.parametrize(
+    "n_states,n_operators,n_qubits",
+    [(s, o, q) for s in [1, 10, 1000] for o in [1, 10, 100] for q in [1, 2, 6]],
+)
 def test_expectation_values(
     summed_pauli_op: type[fp.SummedPauliOp],
     n_states: int,
@@ -60,41 +131,6 @@ def test_expectation_values(
 
     # Check
     np.testing.assert_allclose(expectation_vals, expectation_vals_naive, atol=1e-13)
-
-
-@pytest.mark.parametrize(
-    "summed_pauli_op", [fp.SummedPauliOp], ids=resolve_parameter_repr
-)
-@pytest.mark.parametrize(
-    "n_states,n_operators,n_qubits",
-    [(s, o, q) for s in [1, 10, 1000] for o in [1, 10, 100] for q in [1, 2, 6]],
-)
-def test_apply(
-    summed_pauli_op: type[fp.SummedPauliOp],
-    n_states: int,
-    n_operators: int,
-    n_qubits: int,
-) -> None:
-    """Test applying the summed pauli operator method."""
-    pauli_strings = fp.helpers.calculate_pauli_strings_max_weight(n_qubits, 2)
-    n_strings = len(pauli_strings)
-
-    coeffs_2d = np.random.rand(n_strings, n_operators).astype(np.complex128)
-    psi = np.random.rand(2**n_qubits, n_states).astype(np.complex128)
-
-    op = summed_pauli_op(pauli_strings, coeffs_2d)
-
-    # The new_states we want to check
-    new_states = op.apply(psi)
-
-    # Trusted new_states
-    new_states_naive = np.zeros((2**n_qubits, n_states), dtype=np.complex128)
-    for k in range(n_operators):
-        A_k = fp.PauliOp(coeffs_2d[:, k].copy(), pauli_strings)
-        new_states_naive += A_k.apply(psi)
-
-    # Check
-    np.testing.assert_allclose(new_states, new_states_naive, atol=1e-13)
 
 
 @pytest.mark.parametrize(

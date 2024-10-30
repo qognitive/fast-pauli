@@ -542,6 +542,8 @@ template <std::floating_point T> struct SummedPauliOp
 #pragma omp parallel for schedule(static)
         for (size_t k = 0; k < n_operators(); ++k)
         {
+            // This is a lot of wasted work, but in some quick tests with n_ops = 1000, n_qubits = 10, weight = 2 this
+            // strategy was slightly faster than have the loop over i being the outer-most loop.
             for (size_t i = 0; i < pauli_strings.size(); ++i)
             {
                 PauliString const &ps = pauli_strings[i];
