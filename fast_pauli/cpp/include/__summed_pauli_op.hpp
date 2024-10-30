@@ -204,8 +204,6 @@ template <std::floating_point T> struct SummedPauliOp
      * @brief \copydoc SummedPauliOp::apply(Tensor<2>, Tensor<2>) const
      *
      * @tparam ExecutionPolicy
-     * @param new_states The output states after applying the SummedPauliOp (n_dim, n_states)
-     * @param states The input states to apply the SummedPauliOp to (n_dim, n_states)
      */
     template <execution_policy ExecutionPolicy>
     void apply(ExecutionPolicy &&, Tensor<2> new_states, Tensor<2> states) const
@@ -281,7 +279,8 @@ template <std::floating_point T> struct SummedPauliOp
      * @tparam data_dtype The floating point type of the weights \f$ x_{kt} \f$ (n_operators, n_states)
      * @param new_states The output states after applying the SummedPauliOp (n_dim, n_states)
      * @param states The input states to apply the SummedPauliOp to (n_dim, n_states)
-     * @param data A 2D std::mdspan of the weights \f$ x_{tk} \f$ in the expression above (n_operators, n_states)
+     * @param data A 2D std::mdspan of the data \f$ x_{tk} \f$ that weights the operators in the expression above
+     * (n_operators, n_states)
      */
     template <std::floating_point data_dtype>
     void apply_weighted(Tensor<2> new_states, Tensor<2> states,

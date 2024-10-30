@@ -945,46 +945,120 @@ SummedPauliOp
     New SummedPauliOp instance
 )%")
 
-        .def_prop_ro("dim", &fp::SummedPauliOp<float_type>::dim)
-        .def_prop_ro("n_operators", &fp::SummedPauliOp<float_type>::n_operators)
-        .def_prop_ro("n_pauli_strings", &fp::SummedPauliOp<float_type>::n_pauli_strings)
+        .def_prop_ro("dim", &fp::SummedPauliOp<float_type>::dim,
+                     R"%(Return the Hilbert space dimension of the SummedPauliOp.
+
+Returns
+-------
+int
+    Hilbert space dimension
+)%")
+        .def_prop_ro("n_operators", &fp::SummedPauliOp<float_type>::n_operators,
+                     R"%(Return the number of Pauli operators in the SummedPauliOp.
+
+Returns
+-------
+int
+    Number of operators
+)%")
+        .def_prop_ro("n_pauli_strings", &fp::SummedPauliOp<float_type>::n_pauli_strings,
+                     R"%(Return the number of PauliStrings in the SummedPauliOp.
+
+Returns
+-------
+int
+    Number of PauliStrings
+)%")
 
         //
-        .def("apply",
-             [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states) {
-                 auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
-                 auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
-                 auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
-                 self.apply(std::execution::par, new_states_mdspan, states_mdspan);
-                 return new_states;
-             })
+        .def(
+            "apply",
+            [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states) {
+                auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
+                auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+                auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
+                self.apply(std::execution::par, new_states_mdspan, states_mdspan);
+                return new_states;
+            },
+            "states"_a,
+            R"%(Apply the SummedPauliOp to a batch of states.
 
-        .def("apply_weighted",
-             [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states, nb::ndarray<float_type> data) {
-                 auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
-                 auto data_mdspan = fp::__detail::ndarray_to_mdspan<float_type, 2>(data);
+.. math::
+    \big(\sum_k \sum_i h_{ik} \mathcal{\hat{P}}_i \big) \ket{\psi_t}
 
-                 auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
-                 auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
+Parameters
+----------
+states : np.ndarray
+    The original state(s) represented as 2D numpy array (n_operators, n_states) for batched calculation.
 
-                 self.apply_weighted(std::execution::par, new_states_mdspan, states_mdspan, data_mdspan);
+Returns
+-------
+np.ndarray
+    New state(s) in a form of 2D numpy array (n_operators, n_states) according to the shape of input states
+)%")
 
-                 return new_states;
-             })
-        .def("expectation_value",
-             [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states) {
-                 auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
+        .def(
+            "apply_weighted",
+            [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states, nb::ndarray<float_type> data) {
+                auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
+                auto data_mdspan = fp::__detail::ndarray_to_mdspan<float_type, 2>(data);
 
-                 std::array<size_t, 2> out_shape = {self.n_operators(), states_mdspan.extent(1)};
-                 auto expected_vals_out = fp::__detail::owning_ndarray_from_shape<cfloat_t, 2>(out_shape);
-                 auto expected_vals_out_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(expected_vals_out);
+                auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+                auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
 
-                 self.expectation_value(std::execution::par, expected_vals_out_mdspan, states_mdspan);
+                self.apply_weighted(std::execution::par, new_states_mdspan, states_mdspan, data_mdspan);
 
-                 return expected_vals_out;
-             })
-        //
-        ;
+                return new_states;
+            },
+            "states"_a, "data"_a,
+            R"%(Apply the SummedPauliOp to a batch of states with corresponding weights.
+
+.. math::
+    \big(\sum_k x_{tk} \sum_i h_{ik} \mathcal{\hat{P}}_i \big) \ket{\psi_t}
+
+Parameters
+----------
+states : np.ndarray
+    The original state(s) represented as 2D numpy array (n_operators, n_states) for batched calculation.
+data : np.ndarray
+    The data to weight the operators corresponding to the states (n_operators, n_states)
+
+Returns
+-------
+np.ndarray
+    New state(s) in a form of 2D numpy array (n_operators, n_states) according to the shape of input states
+)%")
+        .def(
+            "expectation_value",
+            [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states) {
+                auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
+
+                std::array<size_t, 2> out_shape = {self.n_operators(), states_mdspan.extent(1)};
+                auto expected_vals_out = fp::__detail::owning_ndarray_from_shape<cfloat_t, 2>(out_shape);
+                auto expected_vals_out_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(expected_vals_out);
+
+                self.expectation_value(std::execution::par, expected_vals_out_mdspan, states_mdspan);
+
+                return expected_vals_out;
+            },
+            "states"_a,
+            R"%(Calculate expectation value(s) for a given batch of states.
+
+.. math::
+    \bra{\psi_t} \big(\sum_k \sum_i h_{ik} \mathcal{\hat{P}}_i \big) \ket{\psi_t}
+
+Parameters
+----------
+states : np.ndarray
+    The state(s) represented as 2D numpy array (n_operators, n_states) for batched calculation.
+
+Returns
+-------
+np.ndarray
+    Expectation value(s) in a form of 2D numpy array (n_operators, n_states) according to the shape of input states
+)%");
+    //
+    ;
 
     //
     // Helpers
