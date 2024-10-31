@@ -28,7 +28,7 @@ int main()
     // User settings
     //
     size_t const n_operators = 1000;
-    size_t const n_qubits = 12;
+    size_t const n_qubits = 10;
     size_t const weight = 2;
     size_t const n_states = 1000;
     using fp_type = double;
@@ -63,7 +63,17 @@ int main()
     //
     // Apply the states
     //
+    auto start_seq = std::chrono::high_resolution_clock::now();
+    summed_op.apply_weighted(std::execution::seq, new_states, states, weights);
+    auto end_seq = std::chrono::high_resolution_clock::now();
+    fmt::println("Time taken for sequential execution: {} seconds",
+                 std::chrono::duration_cast<std::chrono::seconds>(end_seq - start_seq).count());
+
+    auto start_par = std::chrono::high_resolution_clock::now();
     summed_op.apply_weighted(std::execution::par, new_states, states, weights);
+    auto end_par = std::chrono::high_resolution_clock::now();
+    fmt::println("Time taken for parallel execution:   {} seconds",
+                 std::chrono::duration_cast<std::chrono::seconds>(end_par - start_par).count());
 
     return 0;
 }

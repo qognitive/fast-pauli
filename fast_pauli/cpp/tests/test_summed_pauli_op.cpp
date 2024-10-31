@@ -292,6 +292,8 @@ TEST_CASE("apply weighted many operators many PauliString")
     std::vector<std::complex<double>> coeff_raw;
     std::mdspan coeff = fast_pauli::rand<std::complex<double>, 2>(coeff_raw, {pauli_strings.size(), 1000});
 
+    // These timers report nearly equal times for serial vs parallel which is NOT the case when we benchmark this
+    // elsewhere. It's not clear what's going on here. See examples/03_summed_pauli_op.cpp for benchmarks.
     auto start_seq = std::chrono::high_resolution_clock::now();
     __check_apply_weighted(std::execution::seq, pauli_strings, coeff, 100);
     auto end_seq = std::chrono::high_resolution_clock::now();
@@ -391,7 +393,7 @@ TEST_CASE("expectation values multiple operators and states")
 {
     size_t const n_operators = 1000;
     size_t const n_qubits = 8;
-    size_t const n_states = 100;
+    size_t const n_states = 1000;
 
     auto start = std::chrono::high_resolution_clock::now();
     __check_exp_vals(std::execution::seq, n_operators, n_qubits, n_states);
