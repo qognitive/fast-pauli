@@ -28,8 +28,7 @@ int main()
     // User settings
     //
     size_t const n_operators = 1000;
-    //   size_t const n_paulis_per_operator = 631;
-    size_t const n_qubits = 14;
+    size_t const n_qubits = 12;
     size_t const weight = 2;
     size_t const n_states = 1000;
     using fp_type = double;

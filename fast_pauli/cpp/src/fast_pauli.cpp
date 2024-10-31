@@ -1068,7 +1068,7 @@ np.ndarray
                 {
                     auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(states);
                     auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(), states_mdspan.size(), 1);
-                    std::array<size_t, 1> out_shape = {1};
+                    std::array<size_t, 1> out_shape = {self.n_operators()};
                     auto expected_vals_out = fp::__detail::owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
                     auto expected_vals_out_mdspan = std::mdspan(expected_vals_out.data(), expected_vals_out.size(), 1);
                     self.expectation_value(std::execution::par, expected_vals_out_mdspan, states_mdspan_2d);

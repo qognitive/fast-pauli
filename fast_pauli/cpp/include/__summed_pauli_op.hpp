@@ -336,8 +336,9 @@ template <std::floating_point T> struct SummedPauliOp
 
 #pragma omp parallel
             {
+
                 // Contract the coeffs with the data since we can reuse this below
-#pragma omp for schedule(static) collapse(2)
+#pragma omp for schedule(dynamic) collapse(2)
                 for (size_t j = 0; j < n_ps; ++j)
                 {
                     for (size_t t = 0; t < n_data; ++t)
@@ -345,6 +346,7 @@ template <std::floating_point T> struct SummedPauliOp
                         for (size_t k = 0; k < n_ops; ++k)
                         {
                             // TODO we should transpose the data here for better memory access
+                            // initial tests didn't show much improvement, but something to try later
                             weighted_coeffs(j, t) += coeffs(j, k) * data(k, t);
                         }
                     }
@@ -354,13 +356,10 @@ template <std::floating_point T> struct SummedPauliOp
                 std::vector<std::complex<T>> new_states_j_raw(n_data * n_dim);
                 Tensor<2> new_states_j(new_states_j_raw.data(), n_dim, n_data);
 
-                // std::vector<std::complex<T>> states_j_T_raw(n_data * n_dim);
-                // Tensor<2> states_j_T(states_j_T_raw.data(), n_data, n_dim);
-
                 std::mdspan new_states_th_local =
                     std::submdspan(new_states_th, omp_get_thread_num(), std::full_extent, std::full_extent);
 
-#pragma omp for schedule(static)
+#pragma omp for schedule(dynamic)
                 for (size_t j = 0; j < n_ps; ++j)
                 {
                     // new psi_prime
@@ -375,9 +374,8 @@ template <std::floating_point T> struct SummedPauliOp
                         }
                     }
                 }
-
-// Reduce
-#pragma omp for schedule(static) collapse(2)
+                // Reduce
+#pragma omp for schedule(dynamic) collapse(2)
                 for (size_t l = 0; l < n_dim; ++l)
                 {
                     for (size_t t = 0; t < n_data; ++t)
@@ -490,22 +488,37 @@ template <std::floating_point T> struct SummedPauliOp
         if constexpr (is_parallel_execution_policy_v<ExecutionPolicy>)
         {
 
-#pragma omp parallel for schedule(static)
-            for (size_t j = 0; j < n_pauli_strings(); ++j)
+#pragma omp parallel
             {
-                std::mdspan expectation_vals_j = std::submdspan(expectation_vals, j, std::full_extent);
-                pauli_strings[j].expectation_value(expectation_vals_j, states);
-            }
+#pragma omp for schedule(static)
+                for (size_t j = 0; j < n_pauli_strings(); ++j)
+                {
+                    std::mdspan expectation_vals_j = std::submdspan(expectation_vals, j, std::full_extent);
+                    pauli_strings[j].expectation_value(expectation_vals_j, states);
+                }
 
-            // einsum("jk,jt->kt", coeffs, expectation_vals)
-#pragma omp parallel for collapse(2)
-            for (size_t t = 0; t < n_data; ++t)
-            {
+                // einsum("jk,jt->kt", coeffs, expectation_vals)
+                std::vector<std::complex<T>> coeffs_T_raw(n_ops * n_pauli_strings());
+                std::mdspan coeffs_T(coeffs_T_raw.data(), n_ops, n_pauli_strings());
+
+#pragma omp for schedule(static) collapse(2)
                 for (size_t k = 0; k < n_ops; ++k)
                 {
                     for (size_t j = 0; j < n_pauli_strings(); ++j)
                     {
-                        expectation_vals_out(k, t) += coeffs(j, k) * expectation_vals(j, t);
+                        coeffs_T(k, j) = coeffs(j, k);
+                    }
+                }
+
+#pragma omp for collapse(2) schedule(static)
+                for (size_t k = 0; k < n_ops; ++k)
+                {
+                    for (size_t t = 0; t < n_data; ++t)
+                    {
+                        for (size_t j = 0; j < n_pauli_strings(); ++j)
+                        {
+                            expectation_vals_out(k, t) += coeffs(j, k) * expectation_vals(j, t);
+                        }
                     }
                 }
             }

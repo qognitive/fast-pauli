@@ -287,10 +287,10 @@ TEST_CASE("apply weighted many operators many PauliString")
 {
     fmt::print("\n\napply many operators many PauliString\n");
     // Setup operator
-    std::vector<PauliString> pauli_strings = fast_pauli::calculate_pauli_strings_max_weight(8, 2);
+    std::vector<PauliString> pauli_strings = fast_pauli::calculate_pauli_strings_max_weight(6, 2);
 
     std::vector<std::complex<double>> coeff_raw;
-    std::mdspan coeff = fast_pauli::rand<std::complex<double>, 2>(coeff_raw, {pauli_strings.size(), 100});
+    std::mdspan coeff = fast_pauli::rand<std::complex<double>, 2>(coeff_raw, {pauli_strings.size(), 1000});
 
     auto start_seq = std::chrono::high_resolution_clock::now();
     __check_apply_weighted(std::execution::seq, pauli_strings, coeff, 100);

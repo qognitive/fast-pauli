@@ -150,28 +150,29 @@ def test_expectation_values(
     n_strings = len(pauli_strings)
 
     coeffs_2d = np.random.rand(n_strings, n_operators).astype(np.complex128)
-    psi = np.random.rand(2**n_qubits, n_states).astype(np.complex128)
 
-    # For a single state, test that a 1D array works
     if n_states == 1:
-        psi = psi[:, 0]
+        psi = np.random.rand(2**n_qubits).astype(np.complex128)
+        op = summed_pauli_op(pauli_strings, coeffs_2d)
+        # The expectation values we want to test
+        expectation_vals = op.expectation_value(psi)
+        # The "trusted" expectation_values
+        expectation_vals_naive = np.zeros((n_operators), dtype=np.complex128)
+        for k in range(n_operators):
+            A_k = pp.helpers.naive_pauli_operator(coeffs_2d[:, k], pauli_strings_str)
+            expectation_vals_naive[k] = np.einsum("i,ij,j->", psi.conj(), A_k, psi)
 
-    op = summed_pauli_op(pauli_strings, coeffs_2d)
+    else:
+        psi = np.random.rand(2**n_qubits, n_states).astype(np.complex128)
+        op = summed_pauli_op(pauli_strings, coeffs_2d)
+        # The expectation values we want to test
+        expectation_vals = op.expectation_value(psi)
+        # The "trusted" expectation_values
+        expectation_vals_naive = np.zeros((n_operators, n_states), dtype=np.complex128)
 
-    # The expectation values we want to test
-    expectation_vals = op.expectation_value(psi)
-
-    # The "trusted" expectation_values
-    expectation_vals_naive = np.zeros((n_operators, n_states), dtype=np.complex128)
-
-    # For a single state, test that a 1D array works
-    if n_states == 1:
-        expectation_vals_naive = expectation_vals_naive[:, 0]
-
-    # Calculate using brute force
-    for k in range(n_operators):
-        A_k = pp.helpers.naive_pauli_operator(coeffs_2d[:, k], pauli_strings_str)
-        expectation_vals_naive[k] = np.einsum("it,ij,jt->t", psi.conj(), A_k, psi)
+        for k in range(n_operators):
+            A_k = pp.helpers.naive_pauli_operator(coeffs_2d[:, k], pauli_strings_str)
+            expectation_vals_naive[k] = np.einsum("it,ij,jt->t", psi.conj(), A_k, psi)
 
     # Check
     np.testing.assert_allclose(expectation_vals, expectation_vals_naive, atol=1e-13)
