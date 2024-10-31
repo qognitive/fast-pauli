@@ -23,6 +23,25 @@ import fast_pauli.pypauli as pp
 from tests.conftest import resolve_parameter_repr
 
 
+@pytest.mark.parametrize("n_qubits,n_operators", [(2, 2), (3, 2), (4, 3)])
+def test_ctors(n_qubits: int, n_operators: int) -> None:
+    """Test the constructor of SummedPauliOp."""
+    # Test with PauliStrings
+    pauli_strings = fp.helpers.calculate_pauli_strings_max_weight(n_qubits, 2)
+    coeffs_2d = np.random.rand(len(pauli_strings), n_operators).astype(np.complex128)
+    op = fp.SummedPauliOp(pauli_strings, coeffs_2d)
+    assert op.dim == 2**n_qubits
+    assert op.n_operators == n_operators
+    assert op.n_pauli_strings == len(pauli_strings)
+
+    # Test with list of strings
+    pauli_strings_str = [str(s) for s in pauli_strings]
+    op = fp.SummedPauliOp(pauli_strings_str, coeffs_2d)
+    assert op.dim == 2**n_qubits
+    assert op.n_operators == n_operators
+    assert op.n_pauli_strings == len(pauli_strings)
+
+
 @pytest.mark.parametrize(
     "summed_pauli_op", [fp.SummedPauliOp], ids=resolve_parameter_repr
 )
@@ -43,6 +62,10 @@ def test_apply(
     coeffs_2d = np.random.rand(n_strings, n_operators).astype(np.complex128)
     psi = np.random.rand(2**n_qubits, n_states).astype(np.complex128)
 
+    # For a single state, test that a 1D array works
+    if n_states == 1:
+        psi = psi[:, 0]
+
     op = summed_pauli_op(pauli_strings, coeffs_2d)
 
     # The new_states we want to check
@@ -50,6 +73,10 @@ def test_apply(
 
     # Trusted new_states
     new_states_naive = np.zeros((2**n_qubits, n_states), dtype=np.complex128)
+    # For a single state, test that a 1D array works
+    if n_states == 1:
+        new_states_naive = new_states_naive[:, 0]
+
     for k in range(n_operators):
         A_k = fp.PauliOp(coeffs_2d[:, k].copy(), pauli_strings)
         new_states_naive += A_k.apply(psi)
@@ -79,6 +106,11 @@ def test_apply_weighted(
     psi = np.random.rand(2**n_qubits, n_states).astype(np.complex128)
     data_weights = np.random.rand(n_operators, n_states).astype(np.float64)
 
+    # For a single state, test that a 1D array works
+    if n_states == 1:
+        psi = psi[:, 0]
+        data_weights = data_weights[:, 0]
+
     op = summed_pauli_op(pauli_strings, coeffs_2d)
 
     # The new_states we want to check
@@ -86,6 +118,10 @@ def test_apply_weighted(
 
     # Trusted new_states
     new_states_naive = np.zeros((2**n_qubits, n_states), dtype=np.complex128)
+    # For a single state, test that a 1D array works
+    if n_states == 1:
+        new_states_naive = new_states_naive[:, 0]
+
     for k in range(n_operators):
         A_k = fp.PauliOp(coeffs_2d[:, k].copy(), pauli_strings)
         new_states_naive += A_k.apply(psi) * data_weights[k]
@@ -116,6 +152,10 @@ def test_expectation_values(
     coeffs_2d = np.random.rand(n_strings, n_operators).astype(np.complex128)
     psi = np.random.rand(2**n_qubits, n_states).astype(np.complex128)
 
+    # For a single state, test that a 1D array works
+    if n_states == 1:
+        psi = psi[:, 0]
+
     op = summed_pauli_op(pauli_strings, coeffs_2d)
 
     # The expectation values we want to test
@@ -123,6 +163,10 @@ def test_expectation_values(
 
     # The "trusted" expectation_values
     expectation_vals_naive = np.zeros((n_operators, n_states), dtype=np.complex128)
+
+    # For a single state, test that a 1D array works
+    if n_states == 1:
+        expectation_vals_naive = expectation_vals_naive[:, 0]
 
     # Calculate using brute force
     for k in range(n_operators):

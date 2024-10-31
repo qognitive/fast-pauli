@@ -974,11 +974,28 @@ int
         .def(
             "apply",
             [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states) {
-                auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
-                auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
-                auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
-                self.apply(std::execution::par, new_states_mdspan, states_mdspan);
-                return new_states;
+                if (states.ndim() == 1)
+                {
+                    auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(states);
+                    auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(), states_mdspan.extent(0), 1);
+                    auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
+                    auto new_states_mdspan = std::mdspan(new_states.data(), new_states.size(), 1);
+                    self.apply(std::execution::par, new_states_mdspan, states_mdspan_2d);
+                    return new_states;
+                }
+                else if (states.ndim() == 2)
+                {
+                    auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
+                    auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+                    auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
+                    self.apply(std::execution::par, new_states_mdspan, states_mdspan);
+                    return new_states;
+                }
+                else
+                {
+                    throw std::invalid_argument(
+                        fmt::format("apply: expected 1 or 2 dimensions, got {}", states.ndim()));
+                }
             },
             "states"_a,
             R"%(Apply the SummedPauliOp to a batch of states.
@@ -1000,15 +1017,31 @@ np.ndarray
         .def(
             "apply_weighted",
             [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states, nb::ndarray<float_type> data) {
-                auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
-                auto data_mdspan = fp::__detail::ndarray_to_mdspan<float_type, 2>(data);
-
-                auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
-                auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
-
-                self.apply_weighted(std::execution::par, new_states_mdspan, states_mdspan, data_mdspan);
-
-                return new_states;
+                if (states.ndim() == 1)
+                {
+                    auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(states);
+                    auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(), states_mdspan.size(), 1);
+                    auto data_mdspan = fp::__detail::ndarray_to_mdspan<float_type, 1>(data);
+                    auto data_mdspan_2d = std::mdspan(data_mdspan.data_handle(), data_mdspan.size(), 1);
+                    auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 1>(states_mdspan);
+                    auto new_states_mdspan = std::mdspan(new_states.data(), new_states.size(), 1);
+                    self.apply_weighted(std::execution::par, new_states_mdspan, states_mdspan_2d, data_mdspan_2d);
+                    return new_states;
+                }
+                else if (states.ndim() == 2)
+                {
+                    auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
+                    auto data_mdspan = fp::__detail::ndarray_to_mdspan<float_type, 2>(data);
+                    auto new_states = fp::__detail::owning_ndarray_like_mdspan<cfloat_t, 2>(states_mdspan);
+                    auto new_states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(new_states);
+                    self.apply_weighted(std::execution::par, new_states_mdspan, states_mdspan, data_mdspan);
+                    return new_states;
+                }
+                else
+                {
+                    throw std::invalid_argument(
+                        fmt::format("apply_weighted: expected 1 or 2 dimensions for states, got {}", states.ndim()));
+                }
             },
             "states"_a, "data"_a,
             R"%(Apply the SummedPauliOp to a batch of states with corresponding weights.
@@ -1031,15 +1064,30 @@ np.ndarray
         .def(
             "expectation_value",
             [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states) {
-                auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
-
-                std::array<size_t, 2> out_shape = {self.n_operators(), states_mdspan.extent(1)};
-                auto expected_vals_out = fp::__detail::owning_ndarray_from_shape<cfloat_t, 2>(out_shape);
-                auto expected_vals_out_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(expected_vals_out);
-
-                self.expectation_value(std::execution::par, expected_vals_out_mdspan, states_mdspan);
-
-                return expected_vals_out;
+                if (states.ndim() == 1)
+                {
+                    auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 1>(states);
+                    auto states_mdspan_2d = std::mdspan(states_mdspan.data_handle(), states_mdspan.size(), 1);
+                    std::array<size_t, 1> out_shape = {1};
+                    auto expected_vals_out = fp::__detail::owning_ndarray_from_shape<cfloat_t, 1>(out_shape);
+                    auto expected_vals_out_mdspan = std::mdspan(expected_vals_out.data(), expected_vals_out.size(), 1);
+                    self.expectation_value(std::execution::par, expected_vals_out_mdspan, states_mdspan_2d);
+                    return expected_vals_out;
+                }
+                else if (states.ndim() == 2)
+                {
+                    auto states_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(states);
+                    std::array<size_t, 2> out_shape = {self.n_operators(), states_mdspan.extent(1)};
+                    auto expected_vals_out = fp::__detail::owning_ndarray_from_shape<cfloat_t, 2>(out_shape);
+                    auto expected_vals_out_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(expected_vals_out);
+                    self.expectation_value(std::execution::par, expected_vals_out_mdspan, states_mdspan);
+                    return expected_vals_out;
+                }
+                else
+                {
+                    throw std::invalid_argument(
+                        fmt::format("expectation_value: expected 1 or 2 dimensions for states, got {}", states.ndim()));
+                }
             },
             "states"_a,
             R"%(Calculate expectation value(s) for a given batch of states.
