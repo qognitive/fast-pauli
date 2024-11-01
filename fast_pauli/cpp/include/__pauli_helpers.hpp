@@ -112,8 +112,8 @@ std::vector<PauliString> calcutate_pauli_strings(size_t const n_qubits, size_t c
     size_t n_pauli_strings = nontrivial_paulis.size() * idx_combos.size();
     std::vector<PauliString> result(n_pauli_strings);
 
-    fmt::println("n_qubits = {}  weight = {}  n_nontrivial_paulis = {}  n_combos = {}", n_qubits, weight,
-                 nontrivial_paulis.size(), idx_combos.size());
+    // fmt::println("n_qubits = {}  weight = {}  n_nontrivial_paulis = {}  n_combos = {}", n_qubits, weight,
+    //              nontrivial_paulis.size(), idx_combos.size());
 
     // Iterate through all the nontrivial paulis and all the combinations
     for (size_t i = 0; i < nontrivial_paulis.size(); ++i)
@@ -153,7 +153,7 @@ std::vector<PauliString> calculate_pauli_strings_max_weight(size_t n_qubits, siz
         result.insert(result.end(), ps.begin(), ps.end());
     }
 
-    fmt::println("n_qubits = {}  weight = {}  n_pauli_strings = {}", n_qubits, weight, result.size());
+    // fmt::println("n_qubits = {}  weight = {}  n_pauli_strings = {}", n_qubits, weight, result.size());
     return result;
 }
 
