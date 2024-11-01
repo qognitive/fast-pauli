@@ -20,6 +20,7 @@
 
 #include <cstddef>
 #include <stdexcept>
+#include <unordered_map>
 
 #include "__pauli_string.hpp"
 #include "__type_traits.hpp"
@@ -45,6 +46,7 @@ template <std::floating_point T> struct SummedPauliOp
     // TODO dangerous
     size_t _dim;
     size_t _n_operators;
+    size_t _n_qubits;
 
     void __check_ctor_inputs(std::vector<fast_pauli::PauliString> const &pauli_strings, Tensor<2> const coeffs)
     {
@@ -88,6 +90,7 @@ template <std::floating_point T> struct SummedPauliOp
         // TODO add more checks
         size_t const n_pauli_strings = pauli_strings.size();
         _dim = pauli_strings[0].dim();
+        _n_qubits = pauli_strings[0].n_qubits();
         _n_operators = coeffs_raw.size() / n_pauli_strings;
         coeffs = Tensor<2>(this->coeffs_raw.data(), n_pauli_strings, _n_operators);
 
@@ -111,6 +114,7 @@ template <std::floating_point T> struct SummedPauliOp
 
         //
         _dim = pauli_strings[0].dim();
+        _n_qubits = pauli_strings[0].n_qubits();
         _n_operators = coeffs.extent(1);
 
         // Copy over the coeffs so our std::mdspan points at the memory owned by
@@ -145,6 +149,7 @@ template <std::floating_point T> struct SummedPauliOp
 
         //
         _dim = this->pauli_strings.front().dim();
+        _n_qubits = this->pauli_strings.front().n_qubits();
         _n_operators = coeffs.extent(1);
 
         // Copy over the coeffs so our std::mdspan points at the memory owned by
@@ -169,6 +174,16 @@ template <std::floating_point T> struct SummedPauliOp
     }
 
     /**
+     * @brief Return the number of qubits in the SummedPauliOp
+     *
+     * @return size_t
+     */
+    size_t n_qubits() const noexcept
+    {
+        return _n_qubits;
+    }
+
+    /**
      * @brief Return the number of Pauli operators in the SummedPauliOp
      *
      * @return s
@@ -186,6 +201,69 @@ template <std::floating_point T> struct SummedPauliOp
     size_t n_pauli_strings() const noexcept
     {
         return pauli_strings.size();
+    }
+
+    fast_pauli::SummedPauliOp<T> square() const
+    {
+        // Get the squared pauli strings
+        size_t weight = std::reduce(
+            pauli_strings.begin(), pauli_strings.end(), size_t(0),
+            [](size_t a, fast_pauli::PauliString const &ps) { return std::max(a, static_cast<size_t>(ps.weight)); });
+        fmt::println("weight: {}", weight);
+        std::vector<PauliString> pauli_strings_sq =
+            fast_pauli::calculate_pauli_strings_max_weight(_n_qubits, std::min(_n_qubits, 2UL * weight));
+
+        std::unordered_map<fast_pauli::PauliString, size_t> sq_idx_map;
+        for (size_t i = 0; i < pauli_strings_sq.size(); ++i)
+        {
+            sq_idx_map[pauli_strings_sq[i]] = i;
+        }
+
+        // Create the T_aij tensor that maps the coeffiencts from h_i * h_j to h'_a
+        // these are the same for all k operators
+        std::vector<std::complex<T>> t_aij_raw(pauli_strings_sq.size() * pauli_strings.size() * pauli_strings.size());
+        Tensor<3> t_aij(t_aij_raw.data(), pauli_strings_sq.size(), pauli_strings.size(), pauli_strings.size());
+
+        // #pragma omp parallel for collapse(2)
+        for (size_t i = 0; i < pauli_strings.size(); ++i)
+        {
+            for (size_t j = 0; j < pauli_strings.size(); ++j)
+            {
+                std::complex<T> phase;
+                fast_pauli::PauliString prod;
+                std::tie(phase, prod) = pauli_strings[i] * pauli_strings[j];
+                size_t a = sq_idx_map[prod];
+                t_aij(a, i, j) = phase;
+            }
+        }
+
+        // Contract the T_aij tensor with the coeffs to get the new coeffs
+        std::vector<std::complex<T>> coeffs_sq_raw(pauli_strings_sq.size() * _n_operators);
+        Tensor<2> coeffs_sq(coeffs_sq_raw.data(), pauli_strings_sq.size(), _n_operators);
+
+        // We want to do the following einsum:
+        // coeffs_sq(a, k) = sum_{i,j} t_aij(a, i, j) * coeffs(i, k) * coeffs(j, k)
+        // If we break it up into two steps, the intermediates will be too big, so we're
+        // just going to do it all at once
+
+        // #pragma omp parallel for collapse(2)
+        fmt::println("{} {} {} {}", pauli_strings_sq.size(), _n_operators, pauli_strings.size(), pauli_strings.size());
+        for (size_t a = 0; a < pauli_strings_sq.size(); ++a)
+        {
+            for (size_t k = 0; k < _n_operators; ++k)
+            {
+                for (size_t i = 0; i < pauli_strings.size(); ++i)
+                {
+                    for (size_t j = 0; j < pauli_strings.size(); ++j)
+                    {
+                        // fmt::println("{} {} {} {}", a, k, i, j);
+                        coeffs_sq(a, k) += t_aij(a, i, j) * coeffs(i, k) * coeffs(j, k);
+                    }
+                }
+            }
+        }
+
+        return SummedPauliOp<T>(pauli_strings_sq, coeffs_sq);
     }
 
     /**

@@ -407,3 +407,64 @@ TEST_CASE("expectation values multiple operators and states")
     elapsed = end - start;
     fmt::println("Time taken for parallel execution: {} seconds", elapsed.count());
 }
+
+void __check_square(size_t const n_qubits, size_t const n_operators)
+{
+    // Check that the square function works by use op.to_tensor() to create a dense tensor and then squaring the
+    // operators manually
+    size_t const dim = 1UL << n_qubits;
+    std::vector<PauliString> pauli_strings = fast_pauli::calculate_pauli_strings_max_weight(n_qubits, 2);
+    std::vector<std::complex<double>> coeff_raw;
+    std::mdspan coeff = fast_pauli::rand<std::complex<double>, 2>(coeff_raw, {pauli_strings.size(), n_operators});
+    SummedPauliOp<double> op(pauli_strings, coeff);
+
+    fmt::println("Squaring operator");
+    SummedPauliOp<double> op2 = op.square();
+
+    fmt::println("Converting to dense tensor");
+    std::vector<std::complex<double>> op1_dense_raw(n_operators * dim * dim);
+    std::mdspan op1_dense(op1_dense_raw.data(), n_operators, dim, dim);
+    op.to_tensor(op1_dense);
+
+    std::vector<std::complex<double>> op2_dense_raw(n_operators * dim * dim);
+    std::mdspan op2_dense(op2_dense_raw.data(), n_operators, dim, dim);
+    op2.to_tensor(op2_dense);
+
+    std::vector<std::complex<double>> op1_sq_raw(n_operators * dim * dim);
+    std::mdspan op1_sq(op1_sq_raw.data(), n_operators, dim, dim);
+
+    fmt::println("Squaring dense tensor");
+    // Doing the einsum
+    // op1_sq(k,a,c) = sum_b op1_dense(k,a,b) * op1_dense(k,b,c)
+#pragma omp parallel for collapse(3)
+    for (size_t k = 0; k < n_operators; ++k)
+    {
+        for (size_t i = 0; i < dim; ++i)
+        {
+            for (size_t j = 0; j < dim; ++j)
+            {
+                for (size_t b = 0; b < dim; ++b)
+                {
+                    op1_sq(k, i, j) += op1_dense(k, i, b) * op1_dense(k, b, j);
+                }
+            }
+        }
+    }
+
+    fmt::println("Checking results");
+    // Check the results
+    for (size_t k = 0; k < n_operators; ++k)
+    {
+        for (size_t i = 0; i < dim; ++i)
+        {
+            for (size_t j = 0; j < dim; ++j)
+            {
+                CHECK(abs(op1_sq(k, i, j) - op2_dense(k, i, j)) < 1e-6);
+            }
+        }
+    }
+}
+TEST_CASE("square")
+{
+    __check_square(4, 10);
+}

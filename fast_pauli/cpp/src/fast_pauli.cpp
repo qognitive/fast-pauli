@@ -1119,6 +1119,14 @@ Returns
 -------
 np.ndarray
     3D numpy array of complex numbers with a shape of (n_operators, 2^n_qubits, 2^n_qubits)
+)%")
+        //
+        .def("square", &fp::SummedPauliOp<float_type>::square, R"%(Square the SummedPauliOp.
+
+Returns
+-------
+SummedPauliOp
+    New SummedPauliOp instance
 )%");
     //
     ;
