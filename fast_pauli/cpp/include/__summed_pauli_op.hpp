@@ -204,11 +204,15 @@ template <std::floating_point T> struct SummedPauliOp
         return pauli_strings.size();
     }
 
+    /**
+     * @brief Square the SummedPauliOp, mathematically \f$ A_k \rightarrow A_k^2 = \sum_{a,b} T_{ab} A_a A_b \f$.
+     *
+     * We use the sprarse structure of A_k operators and PauliString products to calculate the new coefficients.
+     *
+     * @return SummedPauliOp<T>
+     */
     fast_pauli::SummedPauliOp<T> square() const
     {
-        using namespace std::chrono;
-        auto start = high_resolution_clock::now();
-
         // Part 1: Get the squared pauli strings
         size_t weight = std::reduce(
             pauli_strings.begin(), pauli_strings.end(), size_t(0),
@@ -223,37 +227,28 @@ template <std::floating_point T> struct SummedPauliOp
             sq_idx_map[pauli_strings_sq[i]] = i;
         }
 
-        auto end = high_resolution_clock::now();
-        fmt::print("Part 1 took {} ms\n", duration_cast<milliseconds>(end - start).count());
-
         // Part 2: Create the T_aij tensor that maps the coeffiencts from h_i * h_j to h'_a
-        start = high_resolution_clock::now();
+        // Create t_aij sparse tensor
+        std::vector<std::vector<std::tuple<size_t, size_t, std::complex<T>>>> t_aij(
+            pauli_strings_sq.size(), std::vector<std::tuple<size_t, size_t, std::complex<T>>>());
 
-        // std::vector<std::complex<T>> t_aij_raw(pauli_strings_sq.size() * pauli_strings.size() *
-        // pauli_strings.size()); Tensor<3> t_aij(t_aij_raw.data(), pauli_strings_sq.size(), pauli_strings.size(),
-        // pauli_strings.size());
+        // Serial because we'll have a race condition on the t_aij[a] vector
+        for (size_t i = 0; i < pauli_strings.size(); ++i)
+        {
+            for (size_t j = 0; j < pauli_strings.size(); ++j)
+            {
+                std::complex<T> phase;
+                fast_pauli::PauliString prod;
+                std::tie(phase, prod) = pauli_strings[i] * pauli_strings[j];
+                size_t a = sq_idx_map[prod];
+                t_aij[a].emplace_back(i, j, phase);
+            }
+        }
 
-        // #pragma omp parallel for collapse(2)
-        //         for (size_t i = 0; i < pauli_strings.size(); ++i)
-        //         {
-        //             for (size_t j = 0; j < pauli_strings.size(); ++j)
-        //             {
-        //                 std::complex<T> phase;
-        //                 fast_pauli::PauliString prod;
-        //                 std::tie(phase, prod) = pauli_strings[i] * pauli_strings[j];
-        //                 size_t a = sq_idx_map[prod];
-        //                 t_aij(a, i, j) = phase;
-        //             }
-        //         }
-
-        end = high_resolution_clock::now();
-        fmt::print("Part 2 took {} ms\n", duration_cast<milliseconds>(end - start).count());
-
-        // Part 3: Create the new coeffs tensor
-        start = high_resolution_clock::now();
-
+        // Part 3: Create the new coeffs tensor (transpose of the old one for better memory access)
         std::vector<std::complex<T>> coeffs_t_raw(coeffs.size());
         Tensor<2> coeffs_t(coeffs_t_raw.data(), coeffs.extent(1), coeffs.extent(0));
+
 #pragma omp parallel for collapse(2)
         for (size_t i = 0; i < coeffs.extent(0); ++i)
         {
@@ -263,34 +258,25 @@ template <std::floating_point T> struct SummedPauliOp
             }
         }
 
-        end = high_resolution_clock::now();
-        fmt::print("Part 3 took {} ms\n", duration_cast<milliseconds>(end - start).count());
-
         // Part 4: Contract the T_aij tensor with the coeffs to get the new coeffs
-        start = high_resolution_clock::now();
-
         std::vector<std::complex<T>> coeffs_sq_raw(pauli_strings_sq.size() * _n_operators);
         Tensor<2> coeffs_sq(coeffs_sq_raw.data(), pauli_strings_sq.size(), _n_operators);
 
-#pragma omp parallel for
-        for (size_t k = 0; k < _n_operators; ++k)
+        size_t i, j;
+        std::complex<T> phase;
+
+#pragma omp parallel for schedule(dynamic) collapse(2) private(i, j, phase)
+        for (size_t a = 0; a < pauli_strings_sq.size(); ++a)
         {
-            for (size_t i = 0; i < pauli_strings.size(); ++i)
+            for (size_t k = 0; k < _n_operators; ++k)
             {
-                for (size_t j = 0; j < pauli_strings.size(); ++j)
+                for (size_t x = 0; x < t_aij[a].size(); ++x)
                 {
-                    // coeffs_sq(a, k) += t_aij(a, i, j) * coeffs_t(k, i) * coeffs_t(k, j);
-                    std::complex<T> phase;
-                    fast_pauli::PauliString prod;
-                    std::tie(phase, prod) = pauli_strings[i] * pauli_strings[j];
-                    size_t a = sq_idx_map[prod];
+                    std::tie(i, j, phase) = t_aij[a][x];
                     coeffs_sq(a, k) += phase * coeffs_t(k, i) * coeffs_t(k, j);
                 }
             }
         }
-
-        end = high_resolution_clock::now();
-        fmt::print("Part 4 took {} ms\n", duration_cast<milliseconds>(end - start).count());
 
         return SummedPauliOp<T>(pauli_strings_sq, coeffs_sq);
     }

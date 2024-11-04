@@ -28,10 +28,9 @@ int main()
     //
     // User settings
     //
-    size_t const n_operators = 100;
+    size_t const n_operators = 1000;
     size_t const n_qubits = 12;
     size_t const weight = 2;
-    size_t const n_states = 100;
     using fp_type = float;
 
     //
@@ -42,24 +41,6 @@ int main()
     size_t const n_paulis_per_operator = pauli_strings.size();
     std::vector<std::complex<fp_type>> coeff_raw(n_paulis_per_operator * n_operators, 1);
     fp::SummedPauliOp<fp_type> summed_op{pauli_strings, coeff_raw};
-
-    //
-    // Setup states
-    //
-    size_t const dim = summed_op.dim();
-    size_t const n_ops = summed_op.n_operators();
-
-    std::vector<std::complex<fp_type>> states_raw(dim * n_states, 1);
-    std::mdspan<std::complex<fp_type>, std::dextents<size_t, 2>> states(states_raw.data(), dim, n_states);
-
-    auto new_states_raw = std::vector<std::complex<fp_type>>(dim * n_states, 0);
-    std::mdspan<std::complex<fp_type>, std::dextents<size_t, 2>> new_states(new_states_raw.data(), dim, n_states);
-
-    //
-    // Init weights (aka data)
-    //
-    std::vector<fp_type> weights_raw(n_ops * n_states, 1);
-    std::mdspan<fp_type, std::dextents<size_t, 2>> weights(weights_raw.data(), n_ops, n_states);
 
     //
     // Apply the states
