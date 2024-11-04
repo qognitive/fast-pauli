@@ -15,6 +15,7 @@
 #ifndef __SUMMED_PAULI_OP_HPP
 #define __SUMMED_PAULI_OP_HPP
 
+#include <chrono>
 #include <fmt/core.h>
 #include <omp.h>
 
@@ -205,11 +206,14 @@ template <std::floating_point T> struct SummedPauliOp
 
     fast_pauli::SummedPauliOp<T> square() const
     {
-        // Get the squared pauli strings
+        using namespace std::chrono;
+        auto start = high_resolution_clock::now();
+
+        // Part 1: Get the squared pauli strings
         size_t weight = std::reduce(
             pauli_strings.begin(), pauli_strings.end(), size_t(0),
             [](size_t a, fast_pauli::PauliString const &ps) { return std::max(a, static_cast<size_t>(ps.weight)); });
-        fmt::println("weight: {}", weight);
+
         std::vector<PauliString> pauli_strings_sq =
             fast_pauli::calculate_pauli_strings_max_weight(_n_qubits, std::min(_n_qubits, 2UL * weight));
 
@@ -219,12 +223,16 @@ template <std::floating_point T> struct SummedPauliOp
             sq_idx_map[pauli_strings_sq[i]] = i;
         }
 
-        // Create the T_aij tensor that maps the coeffiencts from h_i * h_j to h'_a
-        // these are the same for all k operators
+        auto end = high_resolution_clock::now();
+        fmt::print("Part 1 took {} ms\n", duration_cast<milliseconds>(end - start).count());
+
+        // Part 2: Create the T_aij tensor that maps the coeffiencts from h_i * h_j to h'_a
+        start = high_resolution_clock::now();
+
         std::vector<std::complex<T>> t_aij_raw(pauli_strings_sq.size() * pauli_strings.size() * pauli_strings.size());
         Tensor<3> t_aij(t_aij_raw.data(), pauli_strings_sq.size(), pauli_strings.size(), pauli_strings.size());
 
-        // #pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(2)
         for (size_t i = 0; i < pauli_strings.size(); ++i)
         {
             for (size_t j = 0; j < pauli_strings.size(); ++j)
@@ -237,17 +245,33 @@ template <std::floating_point T> struct SummedPauliOp
             }
         }
 
-        // Contract the T_aij tensor with the coeffs to get the new coeffs
+        end = high_resolution_clock::now();
+        fmt::print("Part 2 took {} ms\n", duration_cast<milliseconds>(end - start).count());
+
+        // Part 3: Create the new coeffs tensor
+        start = high_resolution_clock::now();
+
+        std::vector<std::complex<T>> coeffs_t_raw(coeffs.size());
+        Tensor<2> coeffs_t(coeffs_t_raw.data(), coeffs.extent(1), coeffs.extent(0));
+#pragma omp parallel for collapse(2)
+        for (size_t i = 0; i < coeffs.extent(0); ++i)
+        {
+            for (size_t j = 0; j < coeffs.extent(1); ++j)
+            {
+                coeffs_t(j, i) = coeffs(i, j);
+            }
+        }
+
+        end = high_resolution_clock::now();
+        fmt::print("Part 3 took {} ms\n", duration_cast<milliseconds>(end - start).count());
+
+        // Part 4: Contract the T_aij tensor with the coeffs to get the new coeffs
+        start = high_resolution_clock::now();
+
         std::vector<std::complex<T>> coeffs_sq_raw(pauli_strings_sq.size() * _n_operators);
         Tensor<2> coeffs_sq(coeffs_sq_raw.data(), pauli_strings_sq.size(), _n_operators);
 
-        // We want to do the following einsum:
-        // coeffs_sq(a, k) = sum_{i,j} t_aij(a, i, j) * coeffs(i, k) * coeffs(j, k)
-        // If we break it up into two steps, the intermediates will be too big, so we're
-        // just going to do it all at once
-
-        // #pragma omp parallel for collapse(2)
-        fmt::println("{} {} {} {}", pauli_strings_sq.size(), _n_operators, pauli_strings.size(), pauli_strings.size());
+#pragma omp parallel for collapse(2)
         for (size_t a = 0; a < pauli_strings_sq.size(); ++a)
         {
             for (size_t k = 0; k < _n_operators; ++k)
@@ -256,12 +280,14 @@ template <std::floating_point T> struct SummedPauliOp
                 {
                     for (size_t j = 0; j < pauli_strings.size(); ++j)
                     {
-                        // fmt::println("{} {} {} {}", a, k, i, j);
-                        coeffs_sq(a, k) += t_aij(a, i, j) * coeffs(i, k) * coeffs(j, k);
+                        coeffs_sq(a, k) += t_aij(a, i, j) * coeffs_t(k, i) * coeffs_t(k, j);
                     }
                 }
             }
         }
+
+        end = high_resolution_clock::now();
+        fmt::print("Part 4 took {} ms\n", duration_cast<milliseconds>(end - start).count());
 
         return SummedPauliOp<T>(pauli_strings_sq, coeffs_sq);
     }
@@ -630,6 +656,7 @@ template <std::floating_point T> struct SummedPauliOp
      */
     void to_tensor(Tensor<3> A_k_out) const
     {
+        // TODO need to add input checks to this
 #pragma omp parallel for schedule(static)
         for (size_t k = 0; k < n_operators(); ++k)
         {

@@ -213,3 +213,27 @@ def test_to_tensor(
             summed_pauli_op_check[k] += coeffs_2d[j, k] * ps_dense[j]
 
     np.testing.assert_allclose(dense_op, summed_pauli_op_check)
+
+
+@pytest.mark.parametrize(
+    "summed_pauli_op", [fp.SummedPauliOp], ids=resolve_parameter_repr
+)
+@pytest.mark.parametrize(
+    "n_operators,n_qubits",
+    [(o, q) for o in [1, 10, 100] for q in [1, 2, 4, 6]],
+)
+def test_square(
+    summed_pauli_op: type[fp.SummedPauliOp],
+    n_operators: int,
+    n_qubits: int,
+) -> None:
+    """Test squaring the SummedPauliOp."""
+    pauli_strings = fp.helpers.calculate_pauli_strings_max_weight(n_qubits, 2)
+    coeffs_2d = np.random.rand(len(pauli_strings), n_operators).astype(np.complex128)
+    op = summed_pauli_op(pauli_strings, coeffs_2d)
+    op2 = op.square()
+
+    A_k = op.to_tensor()
+    A_k2 = op2.to_tensor()
+
+    np.testing.assert_allclose(A_k2, A_k @ A_k)
