@@ -29,7 +29,7 @@ int main()
     // User settings
     //
     size_t const n_operators = 100;
-    size_t const n_qubits = 8;
+    size_t const n_qubits = 12;
     size_t const weight = 2;
     size_t const n_states = 100;
     using fp_type = float;

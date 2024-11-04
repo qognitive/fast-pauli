@@ -229,21 +229,22 @@ template <std::floating_point T> struct SummedPauliOp
         // Part 2: Create the T_aij tensor that maps the coeffiencts from h_i * h_j to h'_a
         start = high_resolution_clock::now();
 
-        std::vector<std::complex<T>> t_aij_raw(pauli_strings_sq.size() * pauli_strings.size() * pauli_strings.size());
-        Tensor<3> t_aij(t_aij_raw.data(), pauli_strings_sq.size(), pauli_strings.size(), pauli_strings.size());
+        // std::vector<std::complex<T>> t_aij_raw(pauli_strings_sq.size() * pauli_strings.size() *
+        // pauli_strings.size()); Tensor<3> t_aij(t_aij_raw.data(), pauli_strings_sq.size(), pauli_strings.size(),
+        // pauli_strings.size());
 
-#pragma omp parallel for collapse(2)
-        for (size_t i = 0; i < pauli_strings.size(); ++i)
-        {
-            for (size_t j = 0; j < pauli_strings.size(); ++j)
-            {
-                std::complex<T> phase;
-                fast_pauli::PauliString prod;
-                std::tie(phase, prod) = pauli_strings[i] * pauli_strings[j];
-                size_t a = sq_idx_map[prod];
-                t_aij(a, i, j) = phase;
-            }
-        }
+        // #pragma omp parallel for collapse(2)
+        //         for (size_t i = 0; i < pauli_strings.size(); ++i)
+        //         {
+        //             for (size_t j = 0; j < pauli_strings.size(); ++j)
+        //             {
+        //                 std::complex<T> phase;
+        //                 fast_pauli::PauliString prod;
+        //                 std::tie(phase, prod) = pauli_strings[i] * pauli_strings[j];
+        //                 size_t a = sq_idx_map[prod];
+        //                 t_aij(a, i, j) = phase;
+        //             }
+        //         }
 
         end = high_resolution_clock::now();
         fmt::print("Part 2 took {} ms\n", duration_cast<milliseconds>(end - start).count());
@@ -271,17 +272,19 @@ template <std::floating_point T> struct SummedPauliOp
         std::vector<std::complex<T>> coeffs_sq_raw(pauli_strings_sq.size() * _n_operators);
         Tensor<2> coeffs_sq(coeffs_sq_raw.data(), pauli_strings_sq.size(), _n_operators);
 
-#pragma omp parallel for collapse(2)
-        for (size_t a = 0; a < pauli_strings_sq.size(); ++a)
+#pragma omp parallel for
+        for (size_t k = 0; k < _n_operators; ++k)
         {
-            for (size_t k = 0; k < _n_operators; ++k)
+            for (size_t i = 0; i < pauli_strings.size(); ++i)
             {
-                for (size_t i = 0; i < pauli_strings.size(); ++i)
+                for (size_t j = 0; j < pauli_strings.size(); ++j)
                 {
-                    for (size_t j = 0; j < pauli_strings.size(); ++j)
-                    {
-                        coeffs_sq(a, k) += t_aij(a, i, j) * coeffs_t(k, i) * coeffs_t(k, j);
-                    }
+                    // coeffs_sq(a, k) += t_aij(a, i, j) * coeffs_t(k, i) * coeffs_t(k, j);
+                    std::complex<T> phase;
+                    fast_pauli::PauliString prod;
+                    std::tie(phase, prod) = pauli_strings[i] * pauli_strings[j];
+                    size_t a = sq_idx_map[prod];
+                    coeffs_sq(a, k) += phase * coeffs_t(k, i) * coeffs_t(k, j);
                 }
             }
         }

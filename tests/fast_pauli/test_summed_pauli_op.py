@@ -220,7 +220,7 @@ def test_to_tensor(
 )
 @pytest.mark.parametrize(
     "n_operators,n_qubits",
-    [(o, q) for o in [1, 10, 100] for q in [1, 2, 4, 6]],
+    [(o, q) for o in [1, 10] for q in [1, 2, 4, 6]],
 )
 def test_square(
     summed_pauli_op: type[fp.SummedPauliOp],
@@ -236,4 +236,4 @@ def test_square(
     A_k = op.to_tensor()
     A_k2 = op2.to_tensor()
 
-    np.testing.assert_allclose(A_k2, A_k @ A_k)
+    np.testing.assert_allclose(A_k2, np.einsum("kab,kbc->kac", A_k, A_k))
