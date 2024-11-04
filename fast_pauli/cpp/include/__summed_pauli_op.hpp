@@ -214,9 +214,12 @@ template <std::floating_point T> struct SummedPauliOp
     fast_pauli::SummedPauliOp<T> square() const
     {
         // Part 1: Get the squared pauli strings
-        size_t weight = std::reduce(
+        size_t weight = std::transform_reduce(
             pauli_strings.begin(), pauli_strings.end(), size_t(0),
-            [](size_t a, fast_pauli::PauliString const &ps) { return std::max(a, static_cast<size_t>(ps.weight)); });
+            // Reduce
+            [](size_t e1, size_t e2) { return std::max(e1, e2); },
+            // Transform
+            [](fast_pauli::PauliString const &ps) { return static_cast<size_t>(ps.weight); });
 
         std::vector<PauliString> pauli_strings_sq =
             fast_pauli::calculate_pauli_strings_max_weight(_n_qubits, std::min(_n_qubits, 2UL * weight));
