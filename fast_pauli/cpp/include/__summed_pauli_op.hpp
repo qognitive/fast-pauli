@@ -30,7 +30,7 @@ namespace fast_pauli
 {
 
 /**
- * @brief A class representing a sum of Pauli operators \f$ A = \sum_k A_k  = \sum_i h_{ik} \mathcal{\hat{P}}_i \f$.
+ * @brief A class representing a sum of Pauli operators \f$ A = \sum_k A_k  = \sum_{ik} h_{ik} \mathcal{\hat{P}}_i \f$.
  * Where \f$ \mathcal{\hat{P}}_i \f$ are Pauli strings and \f$ h_{ik} \f$ are complex-valued coefficients.
  *
  */
@@ -43,11 +43,6 @@ template <std::floating_point T> struct SummedPauliOp
     std::vector<PauliString> pauli_strings;
     std::vector<std::complex<T>> coeffs_raw;
     Tensor<2> coeffs; // (n_pauli_strings, n_operators)
-
-    // TODO dangerous
-    size_t _dim;
-    size_t _n_operators;
-    size_t _n_qubits;
 
     void __check_ctor_inputs(std::vector<fast_pauli::PauliString> const &pauli_strings, Tensor<2> const coeffs)
     {
@@ -90,10 +85,8 @@ template <std::floating_point T> struct SummedPauliOp
     {
         // TODO add more checks
         size_t const n_pauli_strings = pauli_strings.size();
-        _dim = pauli_strings[0].dim();
-        _n_qubits = pauli_strings[0].n_qubits();
-        _n_operators = coeffs_raw.size() / n_pauli_strings;
-        coeffs = Tensor<2>(this->coeffs_raw.data(), n_pauli_strings, _n_operators);
+        size_t const n_operators = coeffs_raw.size() / n_pauli_strings;
+        coeffs = Tensor<2>(this->coeffs_raw.data(), n_pauli_strings, n_operators);
 
         this->__check_ctor_inputs(pauli_strings, coeffs);
     }
@@ -112,11 +105,6 @@ template <std::floating_point T> struct SummedPauliOp
     {
         //
         this->__check_ctor_inputs(pauli_strings, coeffs);
-
-        //
-        _dim = pauli_strings[0].dim();
-        _n_qubits = pauli_strings[0].n_qubits();
-        _n_operators = coeffs.extent(1);
 
         // Copy over the coeffs so our std::mdspan points at the memory owned by
         // this object
@@ -148,11 +136,6 @@ template <std::floating_point T> struct SummedPauliOp
 
         this->__check_ctor_inputs(this->pauli_strings, coeffs);
 
-        //
-        _dim = this->pauli_strings.front().dim();
-        _n_qubits = this->pauli_strings.front().n_qubits();
-        _n_operators = coeffs.extent(1);
-
         // Copy over the coeffs so our std::mdspan points at the memory owned by
         // this object
         coeffs_raw = std::vector<std::complex<T>>(coeffs.size());
@@ -171,7 +154,7 @@ template <std::floating_point T> struct SummedPauliOp
      */
     size_t dim() const noexcept
     {
-        return _dim;
+        return pauli_strings.size() ? pauli_strings[0].dim() : 0;
     }
 
     /**
@@ -181,7 +164,7 @@ template <std::floating_point T> struct SummedPauliOp
      */
     size_t n_qubits() const noexcept
     {
-        return _n_qubits;
+        return pauli_strings.size() ? pauli_strings[0].n_qubits() : 0;
     }
 
     /**
@@ -191,7 +174,7 @@ template <std::floating_point T> struct SummedPauliOp
      */
     size_t n_operators() const noexcept
     {
-        return _n_operators;
+        return coeffs.extent(1);
     }
 
     /**
@@ -222,7 +205,7 @@ template <std::floating_point T> struct SummedPauliOp
             [](fast_pauli::PauliString const &ps) { return static_cast<size_t>(ps.weight); });
 
         std::vector<PauliString> pauli_strings_sq =
-            fast_pauli::calculate_pauli_strings_max_weight(_n_qubits, std::min(_n_qubits, 2UL * weight));
+            fast_pauli::calculate_pauli_strings_max_weight(n_qubits(), std::min(n_qubits(), 2UL * weight));
 
         std::unordered_map<fast_pauli::PauliString, size_t> sq_idx_map;
         for (size_t i = 0; i < pauli_strings_sq.size(); ++i)
@@ -262,8 +245,8 @@ template <std::floating_point T> struct SummedPauliOp
         }
 
         // Part 4: Contract the T_aij tensor with the coeffs to get the new coeffs
-        std::vector<std::complex<T>> coeffs_sq_raw(pauli_strings_sq.size() * _n_operators);
-        Tensor<2> coeffs_sq(coeffs_sq_raw.data(), pauli_strings_sq.size(), _n_operators);
+        std::vector<std::complex<T>> coeffs_sq_raw(pauli_strings_sq.size() * n_operators());
+        Tensor<2> coeffs_sq(coeffs_sq_raw.data(), pauli_strings_sq.size(), n_operators());
 
         size_t i, j;
         std::complex<T> phase;
@@ -271,7 +254,7 @@ template <std::floating_point T> struct SummedPauliOp
 #pragma omp parallel for schedule(dynamic) collapse(2) private(i, j, phase)
         for (size_t a = 0; a < pauli_strings_sq.size(); ++a)
         {
-            for (size_t k = 0; k < _n_operators; ++k)
+            for (size_t k = 0; k < n_operators(); ++k)
             {
                 for (size_t x = 0; x < t_aij[a].size(); ++x)
                 {
@@ -593,19 +576,6 @@ template <std::floating_point T> struct SummedPauliOp
                     pauli_strings[j].expectation_value(expectation_vals_j, states);
                 }
 
-                // einsum("jk,jt->kt", coeffs, expectation_vals)
-                std::vector<std::complex<T>> coeffs_T_raw(n_ops * n_pauli_strings());
-                std::mdspan coeffs_T(coeffs_T_raw.data(), n_ops, n_pauli_strings());
-
-#pragma omp for schedule(static) collapse(2)
-                for (size_t k = 0; k < n_ops; ++k)
-                {
-                    for (size_t j = 0; j < n_pauli_strings(); ++j)
-                    {
-                        coeffs_T(k, j) = coeffs(j, k);
-                    }
-                }
-
 #pragma omp for collapse(2) schedule(static)
                 for (size_t k = 0; k < n_ops; ++k)
                 {
@@ -613,6 +583,8 @@ template <std::floating_point T> struct SummedPauliOp
                     {
                         for (size_t j = 0; j < n_pauli_strings(); ++j)
                         {
+                            // Could be better about memory access patterns here, but I don't think the transposes are
+                            // worth it
                             expectation_vals_out(k, t) += coeffs(j, k) * expectation_vals(j, t);
                         }
                     }
