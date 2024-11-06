@@ -27,3 +27,10 @@ PauliOp
 .. autoclass:: fast_pauli.PauliOp
    :members:
    :special-members:
+
+SummedPauliOp
+-------------
+
+.. autoclass:: fast_pauli.SummedPauliOp
+   :members:
+   :special-members:

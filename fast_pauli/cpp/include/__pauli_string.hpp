@@ -64,7 +64,7 @@ std::tuple<std::vector<size_t>, std::vector<std::complex<T>>> get_sparse_repr(st
 
     // Helper function that let's us know if a pauli matrix has diagonal (or
     // conversely off-diagonal) elements
-    auto diag = [](Pauli const &p) {
+    auto diag = [](Pauli const &p) -> size_t {
         if (p.code == 0 || p.code == 3)
         {
             return 0UL;
@@ -98,18 +98,13 @@ std::tuple<std::vector<size_t>, std::vector<std::complex<T>>> get_sparse_repr(st
     }
     m[0] = initial_value();
 
-    // Populate the rest of the values in a recursive-like manner
     for (size_t l = 0; l < n; ++l)
     {
         Pauli const &po = ps[l];
 
-        T eps = 1.0;
-        if (po.code == 2 || po.code == 3)
-        {
-            eps = -1;
-        }
+        T const eps = (po.code == 2 || po.code == 3) ? -1.0 : 1.0;
 
-        T sign = diag(po) ? -1.0 : 1.0;
+        int sign = diag(po) ? -1 : 1;
 
         auto const lower_bound = 1UL << l;
         for (size_t li = lower_bound; li < (lower_bound << 1); li++)
