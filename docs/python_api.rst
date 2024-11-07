@@ -2,9 +2,6 @@ Python API
 ==========
 
 
-.. automodule:: fast_pauli
-
-
 Pauli
 -----
 
@@ -34,3 +31,12 @@ SummedPauliOp
 .. autoclass:: fast_pauli.SummedPauliOp
    :members:
    :special-members:
+
+
+Helpers
+-------
+
+.. autofunction:: fast_pauli.helpers.calculate_pauli_strings
+.. autofunction:: fast_pauli.helpers.calculate_pauli_strings_max_weight
+.. autofunction:: fast_pauli.helpers.pauli_string_sparse_repr
+.. autofunction:: fast_pauli.helpers.get_nontrivial_paulis

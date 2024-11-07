@@ -30,7 +30,7 @@ namespace fast_pauli
 /**
  * @brief Get the nontrivial sets of pauli matrices given a weight.
  *
- * @param weight
+ * @param weight The Pauli weight to get the nontrivial paulis for.
  * @return std::vector<std::string>
  */
 std::vector<std::string> get_nontrivial_paulis(size_t const weight)
@@ -62,8 +62,8 @@ std::vector<std::string> get_nontrivial_paulis(size_t const weight)
 /**
  * @brief Get all the combinations of k indices for a given array of size n.
  *
- * @param n
- * @param k
+ * @param n The size of the array to get the combinations of.
+ * @param k The number of indices to choose.
  * @return std::vector<std::vector<size_t>>
  */
 std::vector<std::vector<size_t>> idx_combinations(size_t const n, size_t const k)
@@ -92,11 +92,11 @@ std::vector<std::vector<size_t>> idx_combinations(size_t const n, size_t const k
  * @brief Calculate all possible PauliStrings for a given number of qubits and
  * weight and return them in lexicographical order.
  *
- * @param n_qubits
- * @param weight
+ * @param n_qubits The number of qubits.
+ * @param weight The Pauli weight.
  * @return std::vector<PauliString>
  */
-std::vector<PauliString> calcutate_pauli_strings(size_t const n_qubits, size_t const weight)
+std::vector<PauliString> calculate_pauli_strings(size_t const n_qubits, size_t const weight)
 {
     // base case
     if (weight == 0)
@@ -137,8 +137,8 @@ std::vector<PauliString> calcutate_pauli_strings(size_t const n_qubits, size_t c
  * @brief Calculate all possible PauliStrings for a given number of qubits and
  * all weights less than or equal to a given weight.
  *
- * @param n_qubits
- * @param weight
+ * @param n_qubits The number of qubits.
+ * @param weight The Pauli weight.
  * @return std::vector<PauliString>
  */
 std::vector<PauliString> calculate_pauli_strings_max_weight(size_t n_qubits, size_t weight)
@@ -146,7 +146,7 @@ std::vector<PauliString> calculate_pauli_strings_max_weight(size_t n_qubits, siz
     std::vector<PauliString> result;
     for (size_t i = 0; i <= weight; ++i)
     {
-        auto ps = calcutate_pauli_strings(n_qubits, i);
+        auto ps = calculate_pauli_strings(n_qubits, i);
         result.insert(result.end(), ps.begin(), ps.end());
     }
     return result;
