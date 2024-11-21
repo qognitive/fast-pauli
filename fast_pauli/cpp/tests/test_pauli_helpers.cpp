@@ -110,13 +110,13 @@ TEST_CASE("idx combinations")
 TEST_CASE("calculate pauli strings")
 {
     {
-        auto res = calcutate_pauli_strings(4, 0);
+        auto res = calculate_pauli_strings(4, 0);
         CHECK(res.size() == 1);
         CHECK(res[0] == PauliString("IIII"));
     }
 
     {
-        auto res = calcutate_pauli_strings(2, 1);
+        auto res = calculate_pauli_strings(2, 1);
         CHECK(res.size() == 6);
         CHECK(res[0] == PauliString("XI"));
         CHECK(res[1] == PauliString("IX"));
@@ -127,7 +127,7 @@ TEST_CASE("calculate pauli strings")
     }
 
     {
-        auto res = calcutate_pauli_strings(4, 2);
+        auto res = calculate_pauli_strings(4, 2);
         CHECK(res.size() == 54);
         CHECK(res[0] == PauliString("XXII"));
         CHECK(res[1] == PauliString("XIXI"));

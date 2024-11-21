@@ -1135,9 +1135,64 @@ SummedPauliOp
     // Helpers
     //
     auto helpers_m = m.def_submodule("helpers");
-    helpers_m.def("get_nontrivial_paulis", &fp::get_nontrivial_paulis, "weight"_a);
-    helpers_m.def("calcutate_pauli_strings", &fp::calcutate_pauli_strings, "n_qubits"_a, "weight"_a);
+    helpers_m.def("get_nontrivial_paulis", &fp::get_nontrivial_paulis, "weight"_a,
+                  R"%(Get all nontrivial Pauli strings up to a given weight.
+
+Parameters
+----------
+weight : int
+    Maximum weight of Pauli strings to return
+
+Returns
+-------
+List[str]
+    List of PauliStrings as strings
+)%");
+
+    helpers_m.def("calculate_pauli_strings", &fp::calculate_pauli_strings, "n_qubits"_a, "weight"_a,
+                  R"%(Calculate all Pauli strings for a given weight.
+
+Parameters
+----------
+n_qubits : int
+    Number of qubits
+weight : int
+    Weight of Pauli strings to return
+
+Returns
+-------
+List[PauliString]
+    List of PauliStrings
+)%");
+
     helpers_m.def("calculate_pauli_strings_max_weight", &fp::calculate_pauli_strings_max_weight, "n_qubits"_a,
-                  "weight"_a);
-    helpers_m.def("pauli_string_sparse_repr", &fp::get_sparse_repr<float_type>, "paulis"_a);
+                  "weight"_a,
+                  R"%(Calculate all Pauli strings up to and including a given weight.
+
+Parameters
+----------
+n_qubits : int
+    Number of qubits
+weight : int
+    Maximum weight of Pauli strings to return
+
+Returns
+-------
+List[PauliString]
+    List of PauliStrings
+)%");
+
+    helpers_m.def("pauli_string_sparse_repr", &fp::get_sparse_repr<float_type>, "paulis"_a,
+                  R"%(Get a sparse representation of a list of Pauli strings.
+
+Parameters
+----------
+paulis : List[PauliString]
+    List of PauliStrings
+
+Returns
+-------
+List[Tuple[int, int]]
+    List of tuples representing the Pauli string in a sparse format
+)%");
 }
