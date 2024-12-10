@@ -87,6 +87,15 @@ np.ndarray
     2D numpy array of complex numbers
 )%")
         .def(
+            "clone", [](fp::Pauli const &self) { return fp::Pauli(self); },
+            R"%(Returns a copy of the Pauli object.
+
+Returns
+-------
+Pauli
+    A copy of the Pauli object
+)%")
+        .def(
             "__str__", [](fp::Pauli const &self) { return fmt::format("{}", self); },
             R"%(Returns a string representation of Pauli matrix.
 
@@ -314,7 +323,16 @@ Returns
 -------
 np.ndarray
     2D numpy array of complex numbers
-    )%");
+    )%")
+        .def(
+            "clone", [](fp::PauliString const &self) { return fp::PauliString(self); },
+            R"%(Returns a copy of the PauliString object.
+
+Returns
+-------
+PauliString
+    A copy of the PauliString object
+)%");
 
     //
     //
@@ -735,7 +753,6 @@ dedupe : bool
         .def_prop_ro("n_qubits", &fp::PauliOp<float_type>::n_qubits, "int: The number of qubits in PauliOp")
         .def_prop_ro("n_pauli_strings", &fp::PauliOp<float_type>::n_pauli_strings,
                      "int: The number of PauliString terms in PauliOp")
-        // TODO these may dangerous, keep an eye on them if users start modifying internals
         .def_prop_ro(
             "coeffs", [](fp::PauliOp<float_type> const &self) { return self.coeffs; },
             "List[complex]: Ordered list of coefficients corresponding to Pauli strings")
@@ -889,7 +906,18 @@ Returns
 -------
 np.ndarray
     2D numpy array of complex numbers with a shape of :math:`2^n \times 2^n, n` - number of qubits
-    )%");
+    )%")
+        .def(
+            "clone", [](fp::PauliOp<float_type> const &self) { return fp::PauliOp<float_type>(self); },
+            R"%(Returns a copy of the PauliOp object.
+
+Returns
+-------
+PauliOp
+    A copy of the PauliOp object
+)%")
+
+        ;
 
     //
     //
@@ -1120,7 +1148,18 @@ Returns
 np.ndarray
     3D numpy array of complex numbers with a shape of (n_operators, 2^n_qubits, 2^n_qubits)
 )%")
-        //
+        .def(
+            "clone",
+            [](fp::SummedPauliOp<float_type> const &self) {
+                return fp::SummedPauliOp<float_type>(self.pauli_strings, self.coeffs_raw);
+            },
+            R"%(Returns a copy of the SummedPauliOp object.
+
+Returns
+-------
+SummedPauliOp
+    A copy of the SummedPauliOp object
+)%")
         .def("square", &fp::SummedPauliOp<float_type>::square, R"%(Square the SummedPauliOp.
 
 Returns

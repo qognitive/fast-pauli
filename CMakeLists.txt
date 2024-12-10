@@ -68,6 +68,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
                                                "MinSizeRel" "RelWithDebInfo")
 endif()
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 # Set up OpenMP
 find_package(OpenMP REQUIRED)
