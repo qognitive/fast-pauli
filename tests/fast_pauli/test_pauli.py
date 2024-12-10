@@ -74,5 +74,19 @@ def test_exceptions(pauli: type[fp.Pauli]) -> None:
         pauli(5)
 
 
+@pytest.mark.parametrize("pauli,", [(fp.Pauli)], ids=resolve_parameter_repr)
+def test_clone(paulis: dict, pauli: type[fp.Pauli]) -> None:
+    """Test clone method."""
+    for i in paulis:
+        p1 = pauli(i)
+        p2 = p1.clone()
+
+        np.testing.assert_array_equal(
+            p1.to_tensor(),
+            p2.to_tensor(),
+        )
+        assert id(p1) != id(p2)
+
+
 if __name__ == "__main__":
     pytest.main()
