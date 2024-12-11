@@ -193,6 +193,23 @@ nb::ndarray<nb::numpy, T> owning_ndarray_like_mdspan(std::mdspan<T, std::dextent
     return owning_ndarray_from_shape<T, ndim>(shape);
 }
 
+/**
+ * @brief Creates a new nb::ndarray that owns the data and has the same content and shape
+ * as an mdspan.
+ *
+ * @tparam T Type of the underlying data in ndarray/mdspan
+ * @tparam ndim Rank of the array
+ * @param a The mdspan
+ * @return nb::ndarray<nb::numpy, T>
+ */
+template <typename T, size_t ndim>
+nb::ndarray<nb::numpy, T> owning_ndarray_from_mdspan(std::mdspan<T, std::dextents<size_t, ndim>> a)
+{
+    auto ndarray = owning_ndarray_like_mdspan<T, ndim>(a);
+    std::memcpy(ndarray.data(), a.data_handle(), a.size() * sizeof(T));
+    return ndarray;
+}
+
 } // namespace fast_pauli::__detail
 
 #endif // __NB_HELPERS_HPP

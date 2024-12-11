@@ -997,8 +997,36 @@ Returns
 int
     Number of PauliStrings
 )%")
+        .def_prop_rw(
+            "coeffs",
+            [](fp::SummedPauliOp<float_type> const &self) {
+                std::vector<cfloat_t> coeffs_transposed(self.coeffs.size());
+                auto coeffs_t = std::mdspan(coeffs_transposed.data(), self.coeffs.extent(1), self.coeffs.extent(0));
 
-        //
+                for (size_t i = 0; i < self.coeffs.extent(0); i++)
+                    for (size_t j = 0; j < self.coeffs.extent(1); j++)
+                        coeffs_t(j, i) = self.coeffs(i, j);
+
+                return fp::__detail::owning_ndarray_from_mdspan<cfloat_t, 2>(coeffs_t);
+            },
+            [](fp::SummedPauliOp<float_type> &self, nb::ndarray<cfloat_t> coeffs_new) {
+                if (coeffs_new.ndim() != 2 or coeffs_new.shape(0) != self.n_operators() or
+                    coeffs_new.shape(1) != self.n_pauli_strings())
+                    throw std::invalid_argument(
+                        "The shape of provided coeffs must match the number of operators and PauliStrings");
+
+                auto coeffs_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(coeffs_new);
+                for (size_t i = 0; i < self.coeffs.extent(0); i++)
+                    for (size_t j = 0; j < self.coeffs.extent(1); j++)
+                        self.coeffs(i, j) = coeffs_mdspan(j, i);
+            },
+            nb::rv_policy::automatic, R"%(Getter and setter for coefficients.
+
+Returns
+-------
+np.ndarray
+    Array of coefficients corresponding with shape (n_operators, n_pauli_strings)
+)%")
         .def(
             "apply",
             [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states) {
@@ -1159,6 +1187,14 @@ Returns
 -------
 SummedPauliOp
     A copy of the SummedPauliOp object
+)%")
+        .def("split", &fp::SummedPauliOp<float_type>::split,
+             R"%(Returns all components of the SummedPauliOp expressed as a vector of PauliOps.
+
+Returns
+-------
+List[fp.PauliOp]
+    Components of the SummedPauliOp object
 )%")
         .def("square", &fp::SummedPauliOp<float_type>::square, R"%(Square the SummedPauliOp.
 
