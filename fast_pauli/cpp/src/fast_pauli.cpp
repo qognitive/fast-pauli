@@ -1027,6 +1027,19 @@ Returns
 np.ndarray
     Array of coefficients corresponding with shape (n_operators, n_pauli_strings)
 )%")
+        .def_prop_ro(
+            "pauli_strings", [](fp::SummedPauliOp<float_type> const &self) { return self.pauli_strings; },
+            "List[PauliString]: Ordered list of PauliString objects in SummedPauliOp")
+        .def_prop_ro(
+            "pauli_strings_as_str",
+            [](fp::SummedPauliOp<float_type> const &self) {
+                std::vector<std::string> strings(self.n_pauli_strings());
+                std::transform(self.pauli_strings.begin(), self.pauli_strings.end(), strings.begin(),
+                               [](fp::PauliString const &ps) { return fmt::format("{}", ps); });
+                return strings;
+            },
+            "List[str]: Ordered list of Pauli Strings representations from SummedPauliOp")
+
         .def(
             "apply",
             [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states) {
