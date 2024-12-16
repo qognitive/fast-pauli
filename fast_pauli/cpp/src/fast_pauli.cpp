@@ -1075,12 +1075,12 @@ np.ndarray
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 2D numpy array (n_operators, n_states) for batched calculation.
+    The original state(s) represented as 2D numpy array (n_dims, n_states) for batched calculation.
 
 Returns
 -------
 np.ndarray
-    New state(s) in a form of 2D numpy array (n_operators, n_states) according to the shape of input states
+    New state(s) in a form of 2D numpy array (n_dims, n_states) according to the shape of input states
 )%")
 
         .def(
@@ -1121,14 +1121,14 @@ np.ndarray
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 2D numpy array (n_operators, n_states) for batched calculation.
+    The original state(s) represented as 2D numpy array (n_dims, n_states) for batched calculation.
 data : np.ndarray
     The data to weight the operators corresponding to the states (n_operators, n_states)
 
 Returns
 -------
 np.ndarray
-    New state(s) in a form of 2D numpy array (n_operators, n_states) according to the shape of input states
+    New state(s) in a form of 2D numpy array (n_dims, n_states) according to the shape of input states
 )%")
         .def(
             "expectation_value",
