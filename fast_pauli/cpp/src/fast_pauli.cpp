@@ -755,10 +755,10 @@ dedupe : bool
                      "int: The number of PauliString terms in PauliOp")
         .def_prop_ro(
             "coeffs", [](fp::PauliOp<float_type> const &self) { return self.coeffs; },
-            "List[complex]: Ordered list of coefficients corresponding to Pauli strings")
+            "List[complex]: The list of coefficients corresponding to Pauli strings")
         .def_prop_ro(
             "pauli_strings", [](fp::PauliOp<float_type> const &self) { return self.pauli_strings; },
-            "List[PauliString]: Ordered list of PauliString objects in PauliOp")
+            "List[PauliString]: The list of PauliString objects corresponding to coefficients in PauliOp")
         .def_prop_ro(
             "pauli_strings_as_str",
             [](fp::PauliOp<float_type> const &self) {
@@ -768,7 +768,7 @@ dedupe : bool
                                [](fp::PauliString const &ps) { return fmt::format("{}", ps); });
                 return strings;
             },
-            "List[str]: Ordered list of Pauli Strings representations from PauliOp")
+            "List[str]: The list of PauliString representations corresponding to coefficients in PauliOp")
 
         // Methods
         .def(
