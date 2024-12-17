@@ -620,15 +620,17 @@ template <std::floating_point T> struct SummedPauliOp
      */
     std::vector<PauliOp<T>> split() const
     {
-        std::vector<std::complex<T>> op_coeffs(n_pauli_strings());
-        std::vector<PauliOp<T>> ops;
-        ops.reserve(n_operators());
+        std::vector<PauliOp<T>> ops(n_operators());
 
-        for (size_t k = 0; k < n_operators(); k++)
+#pragma omp parallel for schedule(static)
+        for (size_t k = 0; k < n_operators(); ++k)
         {
-            for (size_t i = 0; i < n_pauli_strings(); i++)
+            std::vector<std::complex<T>> op_coeffs(n_pauli_strings());
+
+            for (size_t i = 0; i < n_pauli_strings(); ++i)
                 op_coeffs[i] = coeffs(i, k);
-            ops.push_back(PauliOp<T>(op_coeffs, pauli_strings));
+
+            ops[k] = PauliOp<T>(std::move(op_coeffs), this->pauli_strings);
         }
 
         return ops;

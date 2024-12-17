@@ -1029,7 +1029,7 @@ np.ndarray
 )%")
         .def_prop_ro(
             "pauli_strings", [](fp::SummedPauliOp<float_type> const &self) { return self.pauli_strings; },
-            "List[PauliString]: Ordered list of PauliString objects in SummedPauliOp")
+            "List[PauliString]: The list of PauliString objects corresponding to coefficients in SummedPauliOp")
         .def_prop_ro(
             "pauli_strings_as_str",
             [](fp::SummedPauliOp<float_type> const &self) {
@@ -1038,7 +1038,7 @@ np.ndarray
                                [](fp::PauliString const &ps) { return fmt::format("{}", ps); });
                 return strings;
             },
-            "List[str]: Ordered list of Pauli Strings representations from SummedPauliOp")
+            "List[str]: The list of Pauli Strings representations corresponding to coefficients from SummedPauliOp")
 
         .def(
             "apply",
