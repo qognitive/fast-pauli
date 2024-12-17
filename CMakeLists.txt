@@ -74,7 +74,10 @@ find_package(OpenMP REQUIRED)
 
 # Setup Python
 find_package(Python 3.10 # This is a minimum version
-             COMPONENTS Interpreter Development.Module REQUIRED)
+             COMPONENTS Interpreter Development REQUIRED)
+
+# Import nanobind through CMake's find_package mechanism
+find_package(nanobind CONFIG REQUIRED)
 
 # Our primary target
 add_library(fast_pauli INTERFACE)
