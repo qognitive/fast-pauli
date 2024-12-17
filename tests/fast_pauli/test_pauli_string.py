@@ -405,6 +405,26 @@ def test_exceptions(pauli_string: type[fp.PauliString] | type[pp.PauliString]) -
         pauli_string("XYZ").apply(np.eye(4))
 
 
+@pytest.mark.parametrize(
+    "pauli_string,",
+    [
+        (fp.PauliString),
+    ],
+    ids=resolve_parameter_repr,
+)
+def test_clone(sample_pauli_strings: list, pauli_string: type[fp.PauliString]) -> None:
+    """Test clone method."""
+    for ps in sample_pauli_strings:
+        pstr1 = pauli_string(ps)
+        pstr2 = pstr1.clone()
+
+        np.testing.assert_array_equal(
+            pstr1.to_tensor(),
+            pstr2.to_tensor(),
+        )
+        assert id(pstr1) != id(pstr2)
+
+
 @pytest.mark.consistency
 def test_sparse_composers(paulis: dict, pauli_strings_with_size: Callable) -> None:
     """Test consistency for sparse pauli composers."""

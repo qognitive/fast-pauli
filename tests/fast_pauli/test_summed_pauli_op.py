@@ -237,3 +237,77 @@ def test_square(
     A_k2 = op2.to_tensor()
 
     np.testing.assert_allclose(A_k2, np.einsum("kab,kbc->kac", A_k, A_k))
+
+
+@pytest.mark.parametrize(
+    "summed_pauli_op", [fp.SummedPauliOp], ids=resolve_parameter_repr
+)
+@pytest.mark.parametrize(
+    "n_operators,n_qubits",
+    [(o, q) for o in [1, 10] for q in [1, 2, 4, 6]],
+)
+def test_clone(
+    summed_pauli_op: type[fp.SummedPauliOp],
+    n_operators: int,
+    n_qubits: int,
+) -> None:
+    """Test clone method."""
+    pauli_strings = fp.helpers.calculate_pauli_strings_max_weight(n_qubits, 2)
+    coeffs_2d = np.random.rand(len(pauli_strings), n_operators).astype(np.complex128)
+    op1 = summed_pauli_op(pauli_strings, coeffs_2d)
+    op2 = op1.clone()
+
+    np.testing.assert_array_equal(
+        op1.to_tensor(),
+        op2.to_tensor(),
+    )
+    assert id(op1) != id(op2)
+
+
+@pytest.mark.parametrize(
+    "summed_pauli_op", [fp.SummedPauliOp], ids=resolve_parameter_repr
+)
+@pytest.mark.parametrize(
+    "n_operators,n_qubits",
+    [(o, q) for o in [1, 10] for q in [1, 2, 4, 6]],
+)
+def test_coeffs_prop(
+    summed_pauli_op: type[fp.SummedPauliOp],
+    n_operators: int,
+    n_qubits: int,
+) -> None:
+    """Test getter and setter for coeffs property of the SummedPauliOp."""
+    pauli_strings = fp.helpers.calculate_pauli_strings_max_weight(n_qubits, 2)
+    orig_coeffs = np.random.rand(len(pauli_strings), n_operators).astype(np.complex128)
+    spo = summed_pauli_op(pauli_strings, orig_coeffs)
+
+    np.testing.assert_allclose(spo.coeffs, orig_coeffs.T)
+    new_coeffs = np.random.rand(n_operators, len(pauli_strings)).astype(np.complex128)
+    spo.coeffs = new_coeffs
+    np.testing.assert_allclose(spo.coeffs, new_coeffs)
+    np.testing.assert_allclose(
+        spo.to_tensor(), summed_pauli_op(pauli_strings, new_coeffs.T.copy()).to_tensor()
+    )
+
+
+@pytest.mark.parametrize(
+    "summed_pauli_op", [fp.SummedPauliOp], ids=resolve_parameter_repr
+)
+@pytest.mark.parametrize(
+    "n_operators,n_qubits",
+    [(o, q) for o in [1, 10] for q in [1, 2, 4, 6]],
+)
+def test_split(
+    summed_pauli_op: type[fp.SummedPauliOp],
+    n_operators: int,
+    n_qubits: int,
+) -> None:
+    """Test split method of the SummedPauliOp."""
+    pauli_strings = fp.helpers.calculate_pauli_strings_max_weight(n_qubits, 2)
+    coeffs_2d = np.random.rand(len(pauli_strings), n_operators).astype(np.complex128)
+    spo = summed_pauli_op(pauli_strings, coeffs_2d)
+
+    components = spo.split()
+    for k, (comp, op_dense) in enumerate(zip(components, spo.to_tensor())):
+        np.testing.assert_allclose(comp.coeffs, spo.coeffs[k])
+        np.testing.assert_allclose(comp.to_tensor(), op_dense)

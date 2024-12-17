@@ -945,5 +945,37 @@ def test_exceptions(
         pauli_op([1, 1], ["XYZ", "ZYX"]).expectation_value(np.eye(16))
 
 
+@pytest.mark.parametrize(
+    "pauli_op,",
+    [
+        fp.PauliOp,
+    ],
+    ids=resolve_parameter_repr,
+)
+def test_clone(
+    pauli_strings_with_size: Callable,
+    generate_random_complex: Callable,
+    pauli_op: type[fp.PauliOp],
+) -> None:
+    """Test clone method."""
+    string_sets = [
+        ["I", "X", "Y", "Z"],
+        pauli_strings_with_size(2),
+        pauli_strings_with_size(3),
+        ["XYZXYZXYZ", "ZZZIIIXXX"],
+    ]
+
+    for strings in string_sets:
+        coeffs = generate_random_complex(len(strings))
+        op1 = pauli_op(coeffs, strings)
+        op2 = op1.clone()
+
+        np.testing.assert_array_equal(
+            op1.to_tensor(),
+            op2.to_tensor(),
+        )
+        assert id(op1) != id(op2)
+
+
 if __name__ == "__main__":
     pytest.main()

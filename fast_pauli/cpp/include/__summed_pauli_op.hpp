@@ -614,6 +614,29 @@ template <std::floating_point T> struct SummedPauliOp
     }
 
     /**
+     * @brief Return the components of the SummedPauliOp as a vector of PauliOps
+     *
+     * @return std::vector<PauliOp<T>>
+     */
+    std::vector<PauliOp<T>> split() const
+    {
+        std::vector<PauliOp<T>> ops(n_operators());
+
+#pragma omp parallel for schedule(static)
+        for (size_t k = 0; k < n_operators(); ++k)
+        {
+            std::vector<std::complex<T>> op_coeffs(n_pauli_strings());
+
+            for (size_t i = 0; i < n_pauli_strings(); ++i)
+                op_coeffs[i] = coeffs(i, k);
+
+            ops[k] = PauliOp<T>(std::move(op_coeffs), this->pauli_strings);
+        }
+
+        return ops;
+    }
+
+    /**
      * @brief Get the dense representation of the SummedPauliOp as a 3D tensor
      *
      * @param A_k_out The output tensor to fill with the dense representation

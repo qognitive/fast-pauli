@@ -87,6 +87,15 @@ np.ndarray
     2D numpy array of complex numbers
 )%")
         .def(
+            "clone", [](fp::Pauli const &self) { return fp::Pauli(self); },
+            R"%(Returns a copy of the Pauli object.
+
+Returns
+-------
+Pauli
+    A copy of the Pauli object
+)%")
+        .def(
             "__str__", [](fp::Pauli const &self) { return fmt::format("{}", self); },
             R"%(Returns a string representation of Pauli matrix.
 
@@ -314,7 +323,16 @@ Returns
 -------
 np.ndarray
     2D numpy array of complex numbers
-    )%");
+    )%")
+        .def(
+            "clone", [](fp::PauliString const &self) { return fp::PauliString(self); },
+            R"%(Returns a copy of the PauliString object.
+
+Returns
+-------
+PauliString
+    A copy of the PauliString object
+)%");
 
     //
     //
@@ -735,13 +753,12 @@ dedupe : bool
         .def_prop_ro("n_qubits", &fp::PauliOp<float_type>::n_qubits, "int: The number of qubits in PauliOp")
         .def_prop_ro("n_pauli_strings", &fp::PauliOp<float_type>::n_pauli_strings,
                      "int: The number of PauliString terms in PauliOp")
-        // TODO these may dangerous, keep an eye on them if users start modifying internals
         .def_prop_ro(
             "coeffs", [](fp::PauliOp<float_type> const &self) { return self.coeffs; },
-            "List[complex]: Ordered list of coefficients corresponding to Pauli strings")
+            "List[complex]: The list of coefficients corresponding to Pauli strings")
         .def_prop_ro(
             "pauli_strings", [](fp::PauliOp<float_type> const &self) { return self.pauli_strings; },
-            "List[PauliString]: Ordered list of PauliString objects in PauliOp")
+            "List[PauliString]: The list of PauliString objects corresponding to coefficients in PauliOp")
         .def_prop_ro(
             "pauli_strings_as_str",
             [](fp::PauliOp<float_type> const &self) {
@@ -751,7 +768,7 @@ dedupe : bool
                                [](fp::PauliString const &ps) { return fmt::format("{}", ps); });
                 return strings;
             },
-            "List[str]: Ordered list of Pauli Strings representations from PauliOp")
+            "List[str]: The list of PauliString representations corresponding to coefficients in PauliOp")
 
         // Methods
         .def(
@@ -889,7 +906,18 @@ Returns
 -------
 np.ndarray
     2D numpy array of complex numbers with a shape of :math:`2^n \times 2^n, n` - number of qubits
-    )%");
+    )%")
+        .def(
+            "clone", [](fp::PauliOp<float_type> const &self) { return fp::PauliOp<float_type>(self); },
+            R"%(Returns a copy of the PauliOp object.
+
+Returns
+-------
+PauliOp
+    A copy of the PauliOp object
+)%")
+
+        ;
 
     //
     //
@@ -969,8 +997,49 @@ Returns
 int
     Number of PauliStrings
 )%")
+        .def_prop_rw(
+            "coeffs",
+            [](fp::SummedPauliOp<float_type> const &self) {
+                std::vector<cfloat_t> coeffs_transposed(self.coeffs.size());
+                auto coeffs_t = std::mdspan(coeffs_transposed.data(), self.coeffs.extent(1), self.coeffs.extent(0));
 
-        //
+                for (size_t i = 0; i < self.coeffs.extent(0); i++)
+                    for (size_t j = 0; j < self.coeffs.extent(1); j++)
+                        coeffs_t(j, i) = self.coeffs(i, j);
+
+                return fp::__detail::owning_ndarray_from_mdspan<cfloat_t, 2>(coeffs_t);
+            },
+            [](fp::SummedPauliOp<float_type> &self, nb::ndarray<cfloat_t> coeffs_new) {
+                if (coeffs_new.ndim() != 2 or coeffs_new.shape(0) != self.n_operators() or
+                    coeffs_new.shape(1) != self.n_pauli_strings())
+                    throw std::invalid_argument(
+                        "The shape of provided coeffs must match the number of operators and PauliStrings");
+
+                auto coeffs_mdspan = fp::__detail::ndarray_to_mdspan<cfloat_t, 2>(coeffs_new);
+                for (size_t i = 0; i < self.coeffs.extent(0); i++)
+                    for (size_t j = 0; j < self.coeffs.extent(1); j++)
+                        self.coeffs(i, j) = coeffs_mdspan(j, i);
+            },
+            nb::rv_policy::automatic, R"%(Getter and setter for coefficients.
+
+Returns
+-------
+np.ndarray
+    Array of coefficients corresponding with shape (n_operators, n_pauli_strings)
+)%")
+        .def_prop_ro(
+            "pauli_strings", [](fp::SummedPauliOp<float_type> const &self) { return self.pauli_strings; },
+            "List[PauliString]: The list of PauliString objects corresponding to coefficients in SummedPauliOp")
+        .def_prop_ro(
+            "pauli_strings_as_str",
+            [](fp::SummedPauliOp<float_type> const &self) {
+                std::vector<std::string> strings(self.n_pauli_strings());
+                std::transform(self.pauli_strings.begin(), self.pauli_strings.end(), strings.begin(),
+                               [](fp::PauliString const &ps) { return fmt::format("{}", ps); });
+                return strings;
+            },
+            "List[str]: The list of Pauli Strings representations corresponding to coefficients from SummedPauliOp")
+
         .def(
             "apply",
             [](fp::SummedPauliOp<float_type> const &self, nb::ndarray<cfloat_t> states) {
@@ -1006,12 +1075,12 @@ int
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 2D numpy array (n_operators, n_states) for batched calculation.
+    The original state(s) represented as 2D numpy array (n_dims, n_states) for batched calculation.
 
 Returns
 -------
 np.ndarray
-    New state(s) in a form of 2D numpy array (n_operators, n_states) according to the shape of input states
+    New state(s) in a form of 2D numpy array (n_dims, n_states) according to the shape of input states
 )%")
 
         .def(
@@ -1052,14 +1121,14 @@ np.ndarray
 Parameters
 ----------
 states : np.ndarray
-    The original state(s) represented as 2D numpy array (n_operators, n_states) for batched calculation.
+    The original state(s) represented as 2D numpy array (n_dims, n_states) for batched calculation.
 data : np.ndarray
     The data to weight the operators corresponding to the states (n_operators, n_states)
 
 Returns
 -------
 np.ndarray
-    New state(s) in a form of 2D numpy array (n_operators, n_states) according to the shape of input states
+    New state(s) in a form of 2D numpy array (n_dims, n_states) according to the shape of input states
 )%")
         .def(
             "expectation_value",
@@ -1120,7 +1189,26 @@ Returns
 np.ndarray
     3D numpy array of complex numbers with a shape of (n_operators, 2^n_qubits, 2^n_qubits)
 )%")
-        //
+        .def(
+            "clone",
+            [](fp::SummedPauliOp<float_type> const &self) {
+                return fp::SummedPauliOp<float_type>(self.pauli_strings, self.coeffs_raw);
+            },
+            R"%(Returns a copy of the SummedPauliOp object.
+
+Returns
+-------
+SummedPauliOp
+    A copy of the SummedPauliOp object
+)%")
+        .def("split", &fp::SummedPauliOp<float_type>::split,
+             R"%(Returns all components of the SummedPauliOp expressed as a vector of PauliOps.
+
+Returns
+-------
+List[fp.PauliOp]
+    Components of the SummedPauliOp object
+)%")
         .def("square", &fp::SummedPauliOp<float_type>::square, R"%(Square the SummedPauliOp.
 
 Returns
