@@ -16,6 +16,7 @@
 """Test pauli objects from c++ against python implementations."""
 
 import itertools as it
+import pickle
 from typing import Callable
 
 import numpy as np
@@ -450,6 +451,14 @@ def test_sparse_composers(paulis: dict, pauli_strings_with_size: Callable) -> No
         )
         np.testing.assert_allclose(py_cols, cpp_cols, atol=1e-15)
         np.testing.assert_allclose(py_vals, cpp_vals, atol=1e-15)
+
+
+def test_pickle() -> None:
+    """Test that PauliString objects can be pickled and unpickled."""
+    ps = fp.PauliString("I")
+    pickled = pickle.dumps(ps)
+    unpickled = pickle.loads(pickled)
+    np.testing.assert_string_equal(str(ps), str(unpickled))
 
 
 if __name__ == "__main__":

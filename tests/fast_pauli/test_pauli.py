@@ -16,6 +16,7 @@
 """Test pauli objects from c++ against python implementations."""
 
 import itertools as it
+import pickle
 
 import numpy as np
 import pytest
@@ -86,6 +87,14 @@ def test_clone(paulis: dict, pauli: type[fp.Pauli]) -> None:
             p2.to_tensor(),
         )
         assert id(p1) != id(p2)
+
+
+def test_pickle() -> None:
+    """Test that Pauli objects can be pickled and unpickled."""
+    p = fp.Pauli("I")
+    pickled = pickle.dumps(p)
+    unpickled = pickle.loads(pickled)
+    np.testing.assert_array_equal(p.to_tensor(), unpickled.to_tensor())
 
 
 if __name__ == "__main__":

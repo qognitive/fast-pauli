@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "__nb_helpers.hpp"
+#include "__types.hpp"
 
 namespace fp = fast_pauli;
 
@@ -30,11 +31,6 @@ Python Bindings for fp::Pauli
 
 void init_pauli_bindings(nb::module_ &m)
 {
-    // TODO init default threading behavior for the module
-    // TODO give up GIL when calling into long-running C++ code
-    // TODO != and == operators for our Pauli structures
-    using float_type = double;
-    using cfloat_t = std::complex<float_type>;
 
     nb::class_<fp::Pauli>(
         m, "Pauli",

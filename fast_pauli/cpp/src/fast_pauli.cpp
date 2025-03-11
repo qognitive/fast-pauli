@@ -19,6 +19,7 @@
 #include "__pauli_op_bindings.hpp"
 #include "__pauli_string_bindings.hpp"
 #include "__summed_pauli_op_bindings.hpp"
+#include "__types.hpp"
 
 /*
 Python Bindings for PauliOp
