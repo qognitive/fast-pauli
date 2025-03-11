@@ -255,5 +255,9 @@ Returns
 -------
 PauliString
     A copy of the PauliString object
-)%");
+)%")
+        .def("__getstate__", [](fp::PauliString const &self) { return self.paulis; })
+        .def("__setstate__", [](fp::PauliString &self, std::vector<fp::Pauli> paulis) {
+            new (&self) fp::PauliString(std::move(paulis));
+        });
 }

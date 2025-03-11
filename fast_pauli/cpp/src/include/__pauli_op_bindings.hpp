@@ -611,5 +611,12 @@ PauliOp
     A copy of the PauliOp object
 )%")
 
-        ;
+        .def("__getstate__",
+             [](fp::PauliOp<float_type> const &self) { return std::make_tuple(self.coeffs, self.pauli_strings); })
+        .def("__setstate__",
+             [](fp::PauliOp<float_type> &self, std::tuple<std::vector<cfloat_t>, std::vector<fp::PauliString>> state) {
+                 new (&self) fp::PauliOp<float_type>(std::get<0>(state), std::get<1>(state));
+             });
+
+    ;
 }

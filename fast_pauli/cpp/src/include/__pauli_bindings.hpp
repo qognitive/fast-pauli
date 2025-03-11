@@ -103,5 +103,7 @@ Returns
 -------
 str
     One of :math:`I, X, Y, Z`, a single character string representing a Pauli Matrix
-)%");
+)%")
+        .def("__getstate__", [](fp::Pauli const &self) { return self.code; })
+        .def("__setstate__", [](fp::Pauli &pauli, uint8_t code) { new (&pauli) fp::Pauli(code); });
 }
