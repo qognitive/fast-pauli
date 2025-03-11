@@ -1,3 +1,6 @@
+#ifndef __FP_PAULI_STRING_BINDINGS_HPP
+#define __FP_PAULI_STRING_BINDINGS_HPP
+
 /**
  * This code is part of Fast Pauli.
  *
@@ -256,3 +259,5 @@ PauliString
             new (&self) fp::PauliString(std::move(paulis));
         });
 }
+
+#endif

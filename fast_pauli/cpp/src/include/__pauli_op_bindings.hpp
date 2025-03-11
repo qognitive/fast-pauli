@@ -1,3 +1,5 @@
+#ifndef __FP_PAULI_OP_BINDINGS_HPP
+#define __FP_PAULI_OP_BINDINGS_HPP
 /**
  * This code is part of Fast Pauli.
  *
@@ -616,3 +618,5 @@ PauliOp
 
     ;
 }
+
+#endif

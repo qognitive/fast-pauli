@@ -1,3 +1,5 @@
+#ifndef __FP_PAULI_BINDINGS_HPP
+#define __FP_PAULI_BINDINGS_HPP
 /**
  * This code is part of Fast Pauli.
  *
@@ -103,3 +105,5 @@ str
         .def("__getstate__", [](fp::Pauli const &self) { return self.code; })
         .def("__setstate__", [](fp::Pauli &pauli, uint8_t code) { new (&pauli) fp::Pauli(code); });
 }
+
+#endif
