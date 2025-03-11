@@ -35,11 +35,11 @@ name = "fast_pauli"
 readme = "README.md"
 description = "fast pauli"
 authors = [
-  { name="James E. T. Smith", email="james.smith@qognitive.io" },
-  { name="Eugene Rublenko", email="eugene.rublenko@qognitive.io" },
-  { name="Alex Lerner", email="alex.lerner@qognitive.io" },
-  { name="Sebastien Roy", email="sebastien.roy@qognitive.io" },
-  { name="Jeffrey Berger", email="jeff.berger@qognitive.io" },
+  { name = "James E. T. Smith", email = "james.smith@qognitive.io" },
+  { name = "Eugene Rublenko", email = "eugene.rublenko@qognitive.io" },
+  { name = "Alex Lerner", email = "alex.lerner@qognitive.io" },
+  { name = "Sebastien Roy", email = "sebastien.roy@qognitive.io" },
+  { name = "Jeffrey Berger", email = "jeff.berger@qognitive.io" },
 ]
 dependencies = ["numpy", "qiskit", "qiskit-algorithms"]
 requires-python = ">= 3.10"
@@ -78,8 +78,7 @@ docs = [
   "furo",
 ]
 
-examples = [
-]
+examples = []
 
 
 ################################################################################
@@ -108,35 +107,35 @@ exclude = ["docs", "build"]
 
 [tool.ruff]
 exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".git-rewrite",
-    ".hg",
-    ".ipynb_checkpoints",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".pyenv",
-    ".pytest_cache",
-    ".pytype",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    ".vscode",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "site-packages",
-    "venv",
-    ".venv",
-    "fast_pauli/__version__.py",
-    "docs",
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".git-rewrite",
+  ".hg",
+  ".ipynb_checkpoints",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pyenv",
+  ".pytest_cache",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  ".vscode",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "site-packages",
+  "venv",
+  ".venv",
+  "fast_pauli/__version__.py",
+  "docs",
 ]
 
 line-length = 88
@@ -146,16 +145,17 @@ target-version = "py38"
 
 [tool.ruff.lint]
 select = [
-  "F", # PyFlakes (https://docs.astral.sh/ruff/rules/#pyflakes-f)
-  "E", "W", # pycodestyle (https://docs.astral.sh/ruff/rules/#pycodestyle-e-w)
-  "I", # Isort (https://docs.astral.sh/ruff/rules/#isort-i)
-  "N", # PEP-8 Naming (https://docs.astral.sh/ruff/rules/#pep8-naming-n)
-  "D", # pydocstyle (https://docs.astral.sh/ruff/rules/#pydocstyle-d)
-  "YTT", # flake8-2020 (https://docs.astral.sh/ruff/rules/#flake8-2020-ytt)
+  "F",     # PyFlakes (https://docs.astral.sh/ruff/rules/#pyflakes-f)
+  "E",
+  "W",     # pycodestyle (https://docs.astral.sh/ruff/rules/#pycodestyle-e-w)
+  "I",     # Isort (https://docs.astral.sh/ruff/rules/#isort-i)
+  "N",     # PEP-8 Naming (https://docs.astral.sh/ruff/rules/#pep8-naming-n)
+  "D",     # pydocstyle (https://docs.astral.sh/ruff/rules/#pydocstyle-d)
+  "YTT",   # flake8-2020 (https://docs.astral.sh/ruff/rules/#flake8-2020-ytt)
   "ASYNC", # flake8-async (https://docs.astral.sh/ruff/rules/#flake8-async-async)
-  "B", # flake8-bugbear (https://docs.astral.sh/ruff/rules/#flake8-bugbear-b)
-  "UP", # flake8-bandit (https://docs.astral.sh/ruff/rules/#flake8-bandit-up)
-  "SIM", # flake8-simplify (https://docs.astral.sh/ruff/rules/#flake8-simplify-sim)
+  "B",     # flake8-bugbear (https://docs.astral.sh/ruff/rules/#flake8-bugbear-b)
+  "UP",    # flake8-bandit (https://docs.astral.sh/ruff/rules/#flake8-bandit-up)
+  "SIM",   # flake8-simplify (https://docs.astral.sh/ruff/rules/#flake8-simplify-sim)
 ]
 
 ignore = [
@@ -201,3 +201,15 @@ skip = ["*musllinux*"]
 
 [tool.cibuildwheel.macos]
 environment = "CXX=g++-14"
+
+################################################################################
+# UV
+################################################################################
+[tool.uv]
+cache-keys = [
+  { file = "pyproject.toml" },
+  { file = "fast_pauli/**/*.cpp" },
+  { file = "fast_pauli/**/*.hpp" },
+  { file = "fast_pauli/**/*.py" },
+  { git = true },
+]
