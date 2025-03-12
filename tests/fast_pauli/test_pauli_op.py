@@ -15,6 +15,7 @@
 
 """Test pauli operator objects from c++ and python."""
 
+import pickle
 from typing import Callable
 
 import numpy as np
@@ -975,6 +976,14 @@ def test_clone(
             op2.to_tensor(),
         )
         assert id(op1) != id(op2)
+
+
+def test_pickle() -> None:
+    """Test that PauliOp objects can be pickled and unpickled."""
+    op = fp.PauliOp([1, 1, 1], ["I", "X", "Y"])
+    pickled = pickle.dumps(op)
+    unpickled = pickle.loads(pickled)
+    np.testing.assert_array_equal(op.to_tensor(), unpickled.to_tensor())
 
 
 if __name__ == "__main__":

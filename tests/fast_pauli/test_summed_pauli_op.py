@@ -15,6 +15,8 @@
 
 """Test SummedPauliOp Python and C++ implementations."""
 
+import pickle
+
 import numpy as np
 import pytest
 
@@ -311,3 +313,13 @@ def test_split(
     for k, (comp, op_dense) in enumerate(zip(components, spo.to_tensor())):
         np.testing.assert_allclose(comp.coeffs, spo.coeffs[k])
         np.testing.assert_allclose(comp.to_tensor(), op_dense)
+
+
+def test_pickle() -> None:
+    """Test that SummedPauliOp objects can be pickled and unpickled."""
+    pauli_strings = fp.helpers.calculate_pauli_strings_max_weight(2, 2)
+    coeffs_2d = np.random.rand(len(pauli_strings), 2).astype(np.complex128)
+    op = fp.SummedPauliOp(pauli_strings, coeffs_2d)
+    pickled = pickle.dumps(op)
+    unpickled = pickle.loads(pickled)
+    np.testing.assert_allclose(op.to_tensor(), unpickled.to_tensor())

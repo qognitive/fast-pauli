@@ -21,6 +21,8 @@
 
 # TODO RENAME to fppy
 nanobind_add_module(_fast_pauli NOMINSIZE NOSTRIP PROTECT_STACK fast_pauli.cpp)
+target_include_directories(_fast_pauli
+                           PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(_fast_pauli PRIVATE fast_pauli)
 
 install(TARGETS _fast_pauli LIBRARY DESTINATION "fast_pauli")
