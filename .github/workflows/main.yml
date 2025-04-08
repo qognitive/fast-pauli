@@ -1,5 +1,5 @@
 # the name of this file must match the one in pypi.org config
-name: Build/Test/Release
+name: Build/Test
 on:
   push:
     branches:

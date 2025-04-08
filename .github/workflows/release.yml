@@ -1,57 +1,72 @@
-# the name of this file must match the one in pypi.org config
-name: Build/Test/Release
+name: Build and Publish Wheels
 on:
   release:
-    types:
-      - published
-permissions:
-  id-token: write # This is required for requesting the JWT
+    types: [published]
 jobs:
-  source_dist_build:
-    runs-on: ${{ matrix.os }}
+  build-linux-wheels:
+    runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        compiler: [clang++-17]
         python-version: ["3.10", "3.11", "3.12"]
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
-      - name: Main Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Main Build
-        uses: ./.github/actions/build
-        env:
-          BUILD_OS: ${{ matrix.os }}
-          CXX: ${{ matrix.compiler }}
-      - name: Publish source dist release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-  wheels_build:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        max: [none]
-        include:
-          - os: macos-13
-            max: 13.0
-          - os: macos-14
-            max: 14.0
+        arch: [x86_64, aarch64]
     steps:
       - uses: actions/checkout@v4
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          config-file: "{package}/pyproject.toml"
+          python-version: ${{ matrix.python-version }}
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.23.2
+      - name: Build Linux wheels
+        run: cibuildwheel --platform linux --output-dir wheelhouse
         env:
-          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.max }}
-      - name: Publish wheel release distributions to PyPI
+          CIBW_ARCHS: ${{ matrix.arch }}
+          CIBW_BUILD: cp${{ matrix.python-version.replace('.','') }}-manylinux*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-wheels
+          path: wheelhouse/*.whl
+  build-macos-wheels:
+    runs-on: ${{ matrix.macos-version }}
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        macos-version: [macos-13, macos-14]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.23.2
+      - name: Build macOS wheels
+        run: cibuildwheel --platform macos --output-dir wheelhouse
+        env:
+          CIBW_ARCHS: universal2
+          CIBW_BUILD: cp${{ matrix.python-version.replace('.','') }}-macosx*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-wheels
+          path: wheelhouse/*.whl
+  publish-all-wheels:
+    needs: [build-linux-wheels, build-macos-wheels]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download Linux wheels
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-wheels
+          path: dist
+      - name: Download macOS wheels
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-wheels
+          path: dist
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: wheelhouse
+          packages-dir: dist
