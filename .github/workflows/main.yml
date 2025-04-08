@@ -23,6 +23,9 @@ jobs:
           - os: macos-14
             compiler: g++-12
             python-version: 3.12
+          - os: macos-15
+            compiler: g++-12
+            python-version: 3.12
     steps:
       - uses: actions/checkout@v2
         with:

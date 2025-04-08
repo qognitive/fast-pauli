@@ -29,7 +29,7 @@ jobs:
           BUILD_OS: ${{ matrix.os }}
           CXX: ${{ matrix.compiler }}
       - name: Publish source dist release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.10
+        uses: pypa/gh-action-pypi-publish@release/v1.12.4
   wheels_build:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -43,15 +43,17 @@ jobs:
             max: 13.0
           - os: macos-14
             max: 14.0
+          - os: macos-15
+            max: 15.0
     steps:
       - uses: actions/checkout@v4
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.2
+        uses: pypa/cibuildwheel@v2.23.2
         with:
           config-file: "{package}/pyproject.toml"
         env:
           MACOSX_DEPLOYMENT_TARGET: ${{ matrix.max }}
       - name: Publish wheel release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.10
+        uses: pypa/gh-action-pypi-publish@release/v1.12.4
         with:
           packages-dir: wheelhouse
