@@ -7,7 +7,7 @@ runs:
       run: python3 ./.github/compiler_setup.py ${CXX} ${BUILD_OS}
     - name: Install Python dependencies
       shell: bash
-      run: python -m pip install cmake<4 scikit-build-core setuptools_scm build
+      run: python -m pip install "cmake<4.0.0" scikit-build-core setuptools_scm build
     - name: Build
       shell: bash
       run: |
