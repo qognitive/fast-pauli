@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-        arch: [x86_64, aarch64]
+        arch: [x86_64]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
@@ -22,6 +22,8 @@ jobs:
         env:
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: cp${{ matrix.python-version == '3.10' && '310' || matrix.python-version == '3.11' && '311' || '312' }}-manylinux*
+      - name: check wheelhouse
+        run: ls -la wheelhouse
       - uses: actions/upload-artifact@v4
         with:
           name: linux-wheels
@@ -32,6 +34,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
         macos-version: [macos-13, macos-14]
+        arch: [arm64]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
@@ -43,8 +46,10 @@ jobs:
       - name: Build macOS wheels
         run: cibuildwheel --platform macos --output-dir wheelhouse
         env:
-          CIBW_ARCHS: universal2
+          CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: cp${{ matrix.python-version == '3.10' && '310' || matrix.python-version == '3.11' && '311' || '312' }}-macosx*
+      - name: check wheelhouse
+        run: ls -la wheelhouse
       - uses: actions/upload-artifact@v4
         with:
           name: macos-wheels
