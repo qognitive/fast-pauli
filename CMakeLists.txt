@@ -39,9 +39,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Dependencies
 cpmaddpackage("gh:doctest/doctest@2.4.11")
-cpmaddpackage("gh:fmtlib/fmt#10.2.1")
+cpmaddpackage("gh:fmtlib/fmt#11.1.4")
 cpmaddpackage("gh:kokkos/mdspan#b885a2c60ad42f9e1aaa0d317a38105b950cbed0")
-cpmaddpackage("gh:wjakob/nanobind#v2.0.0")
+cpmaddpackage("gh:wjakob/nanobind#v2.6.1")
 
 #
 # User Options

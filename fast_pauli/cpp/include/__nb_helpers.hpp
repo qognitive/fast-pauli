@@ -24,9 +24,9 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <experimental/mdspan>
-#include <iostream>
 #include <numeric>
 #include <ranges>
 
