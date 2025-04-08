@@ -21,7 +21,7 @@ jobs:
         run: cibuildwheel --platform linux --output-dir wheelhouse
         env:
           CIBW_ARCHS: ${{ matrix.arch }}
-          CIBW_BUILD: cp${{ matrix.python-version.replace('.','') }}-manylinux*
+          CIBW_BUILD: cp${{ matrix.python-version == '3.10' && '310' || matrix.python-version == '3.11' && '311' || '312' }}-manylinux*
       - uses: actions/upload-artifact@v4
         with:
           name: linux-wheels
@@ -44,7 +44,7 @@ jobs:
         run: cibuildwheel --platform macos --output-dir wheelhouse
         env:
           CIBW_ARCHS: universal2
-          CIBW_BUILD: cp${{ matrix.python-version.replace('.','') }}-macosx*
+          CIBW_BUILD: cp${{ matrix.python-version == '3.10' && '310' || matrix.python-version == '3.11' && '311' || '312' }}-macosx*
       - uses: actions/upload-artifact@v4
         with:
           name: macos-wheels
