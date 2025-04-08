@@ -43,8 +43,6 @@ jobs:
             max: 13.0
           - os: macos-14
             max: 14.0
-          - os: macos-15
-            max: 15.0
     steps:
       - uses: actions/checkout@v4
       - name: Build wheels
