@@ -26,14 +26,14 @@ jobs:
         run: ls -la wheelhouse
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-wheels
+          name: linux-wheels-cp${{ matrix.python-version }}-${{ matrix.arch }}
           path: wheelhouse/*.whl
   build-macos-wheels:
     runs-on: ${{ matrix.macos-version }}
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-        macos-version: [macos-13, macos-14]
+        macos-version: [macos-13-arm64, macos-14-arm64]
         arch: [arm64]
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
         run: ls -la wheelhouse
       - uses: actions/upload-artifact@v4
         with:
-          name: macos-wheels
+          name: macos-wheels-cp${{ matrix.python-version }}-${{ matrix.arch }}
           path: wheelhouse/*.whl
   publish-all-wheels:
     needs: [build-linux-wheels, build-macos-wheels]
