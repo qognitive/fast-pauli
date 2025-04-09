@@ -63,7 +63,6 @@ jobs:
     if: |
       always() &&
       (needs.build-linux-wheels.result == 'success' || needs.build-macos-wheels.result == 'success')
-    environment: pypi
     permissions:
       id-token: write
     steps:
