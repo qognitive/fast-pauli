@@ -69,13 +69,13 @@ jobs:
       - name: Download Linux wheels
         uses: actions/download-artifact@v4
         with:
-          name: linux-wheels
+          name: linux-wheels-*
           path: dist
         if: needs.build-linux-wheels.result == 'success'
       - name: Download macOS wheels
         uses: actions/download-artifact@v4
         with:
-          name: macos-wheels
+          name: macos-wheels-*
           path: dist
         if: needs.build-macos-wheels.result == 'success'
       - name: Publish to PyPI
