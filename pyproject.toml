@@ -196,11 +196,11 @@ skip = "pp*"
 # test-command = "pytest -s -vv --import-mode importlib {project}/tests/fast_pauli"
 
 [tool.cibuildwheel.linux]
-build = ["cp310_manylinux*", "cp311_manylinux*", "cp312_manylinux*"]
-skip = ["*musllinux*"]
+build = ["cp310-manylinux*", "cp311-manylinux*", "cp312-manylinux*"]
+skip = ["*musllinux*", "*686*", "*ppc64le*", "*s390x*", "*armv7l*"]
 
 [tool.cibuildwheel.macos]
-build = ["cp310_macosx*", "cp311_macosx*", "cp312_macosx*"]
+build = ["cp310-macosx*", "cp311-macosx*", "cp312-macosx*"]
 environment = "CXX=g++-14"
 
 ################################################################################
