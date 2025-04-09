@@ -34,7 +34,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
         macos-version: [macos-13, macos-14]
-        arch: [x86_64]
+        arch: [auto]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
