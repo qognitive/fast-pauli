@@ -192,8 +192,8 @@ write_to = "fast_pauli/__version__.py"
 
 [tool.cibuildwheel]
 skip = "pp*"
-# test-requires = "pytest"
-# test-command = "pytest -s -vv --import-mode importlib {project}/tests/fast_pauli"
+test-requires = "pytest"
+test-command = "pytest -s -vv --import-mode importlib {project}/tests/fast_pauli"
 
 [tool.cibuildwheel.linux]
 build = ["cp310-manylinux*", "cp311-manylinux*", "cp312-manylinux*"]
