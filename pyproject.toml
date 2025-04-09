@@ -201,7 +201,7 @@ skip = ["*musllinux*", "*686*", "*ppc64le*", "*s390x*", "*armv7l*"]
 
 [tool.cibuildwheel.macos]
 build = ["cp310-macosx*", "cp311-macosx*", "cp312-macosx*"]
-environment = "CXX=g++-14"
+environment = "CXX=g++-14;MACOSX_DEPLOYMENT_TARGET=14.0"
 
 ################################################################################
 # UV
