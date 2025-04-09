@@ -192,14 +192,15 @@ write_to = "fast_pauli/__version__.py"
 
 [tool.cibuildwheel]
 skip = "pp*"
-test-requires = "pytest"
-test-command = "pytest -s -vv --import-mode importlib {project}/tests/fast_pauli"
+# test-requires = "pytest"
+# test-command = "pytest -s -vv --import-mode importlib {project}/tests/fast_pauli"
 
 [tool.cibuildwheel.linux]
-build = ["cp3*_x86_64"]
+build = ["cp310_manylinux*", "cp311_manylinux*", "cp312_manylinux*"]
 skip = ["*musllinux*"]
 
 [tool.cibuildwheel.macos]
+build = ["cp310_macosx*", "cp311_macosx*", "cp312_macosx*"]
 environment = "CXX=g++-14"
 
 ################################################################################

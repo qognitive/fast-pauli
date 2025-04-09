@@ -5,80 +5,39 @@ on:
 permissions:
   id-token: write # This is required for requesting the JWT
 jobs:
-  build-linux-wheels:
-    runs-on: ubuntu-latest
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-        arch: [x86_64]
+        # macos-13 is an intel runner, macos-14 is apple silicon
+        os: [ubuntu-latest, macos-14]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.23.2
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.23.2
-      - name: Build Linux wheels
-        run: cibuildwheel --platform linux --output-dir wheelhouse
-        env:
-          CIBW_ARCHS: ${{ matrix.arch }}
-          CIBW_BUILD: cp${{ matrix.python-version == '3.10' && '310' || matrix.python-version == '3.11' && '311' || '312' }}-manylinux*
-      - name: check wheelhouse
-        run: ls -la wheelhouse
+          package-dir: .
+          output-dir: wheelhouse
+          config-file: "{package}/pyproject.toml"
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-wheels-cp${{ matrix.python-version }}-${{ matrix.arch }}
-          path: wheelhouse/*.whl
-  build-macos-wheels:
-    runs-on: ${{ matrix.macos-version }}
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-        macos-version: [macos-14]
-        arch: [auto]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.23.2
-      - name: Build macOS wheels
-        run: cibuildwheel --platform macos --output-dir wheelhouse
-        env:
-          CIBW_ARCHS: ${{ matrix.arch }}
-          CIBW_BUILD: cp${{ matrix.python-version == '3.10' && '310' || matrix.python-version == '3.11' && '311' || '312' }}-macosx*
-          MACOSX_DEPLOYMENT_TARGET: 14.0
-      - name: check wheelhouse
-        run: ls -la wheelhouse
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos-wheels-cp${{ matrix.python-version }}-${{ matrix.arch }}
-          path: wheelhouse/*.whl
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl
   publish-all-wheels:
-    needs: [build-linux-wheels, build-macos-wheels]
+    needs: build_wheels
     runs-on: ubuntu-latest
-    if: |
-      always() &&
-      (needs.build-linux-wheels.result == 'success' || needs.build-macos-wheels.result == 'success')
     permissions:
       id-token: write
     steps:
       - name: Download Linux wheels
         uses: actions/download-artifact@v4
         with:
-          name: linux-wheels-*
+          name: linux-wheels
           path: dist
-        if: needs.build-linux-wheels.result == 'success'
-      - name: Download macOS wheels
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-wheels-*
-          path: dist
-        if: needs.build-macos-wheels.result == 'success'
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: dist
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
