@@ -58,6 +58,9 @@ jobs:
   publish-all-wheels:
     needs: [build-linux-wheels, build-macos-wheels]
     runs-on: ubuntu-latest
+    if: |
+      always() &&
+      (needs.build-linux-wheels.result == 'success' || needs.build-macos-wheels.result == 'success')
     environment: pypi
     permissions:
       id-token: write
@@ -67,11 +70,13 @@ jobs:
         with:
           name: linux-wheels
           path: dist
+        if: needs.build-linux-wheels.result == 'success'
       - name: Download macOS wheels
         uses: actions/download-artifact@v4
         with:
           name: macos-wheels
           path: dist
+        if: needs.build-macos-wheels.result == 'success'
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
